@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zolter | Извлечение кода</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FAF7F4;
+      --text: #2C2825;
+      --muted: #6B6560;
+      --light: #9B9490;
+      --accent: #B8A088;
+      --code-bg: #F2EDE7;
+      --code-text: #2C2825;
+      --success: #27AE60;
+      --error: #C0392B;
+      --transition: 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      --font-serif: 'Playfair Display', serif;
+      --font-sans: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    [data-theme="dark"] {
+      --bg: #1A1816;
+      --text: #D4C9BE;
+      --muted: #9B9490;
+      --light: #6B6560;
+      --accent: #C9A96E;
+      --code-bg: #24201C;
+      --code-text: #D4C9BE;
+      --success: #2ECC71;
+      --error: #E74C3C;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      transition: background var(--transition), color var(--transition);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    h1, h2, h3 { font-family: var(--font-serif); font-weight: 600; line-height: 1.2; margin-bottom: 1.5rem; }
+    h1 { font-size: clamp(2.8rem, 7vw, 4.5rem); letter-spacing: -0.03em; }
+    .container { max-width: 880px; margin: 0 auto; padding: 0 2rem; }
+    
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center;
+      transition: background var(--transition), padding var(--transition);
+    }
+    nav.scrolled { background: rgba(250, 247, 244, 0.85); backdrop-filter: blur(10px); padding: 1rem 2rem; }
+    [data-theme="dark"] nav.scrolled { background: rgba(26, 24, 22, 0.85); }
+    
+    .logo { font-family: var(--font-serif); font-size: 1.4rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text); text-decoration: none; }
+    .logo span { color: var(--accent); font-style: italic; }
+    
+    .theme-btn {
+      background: none; border: none; cursor: pointer; color: var(--muted);
+      font-size: 1.3rem; transition: color 0.3s, transform 0.3s;
+    }
+    .theme-btn:hover { color: var(--text); transform: rotate(15deg); }
+
+    header { min-height: 75vh; display: flex; flex-direction: column; justify-content: center; padding-top: 6rem; }
+    .divider { width: 40px; height: 1px; background: var(--light); margin: 2rem 0 2.5rem 0; transition: background var(--transition); }
+    p { font-size: 1.1rem; margin-bottom: 1.5rem; max-width: 65ch; color: var(--text); }
+
+    form { display: flex; gap: 1rem; margin: 2.5rem 0; flex-wrap: wrap; align-items: stretch; }
+    input[type="url"] {
+      flex: 1; min-width: 280px; padding: 0.9rem 1.2rem; background: transparent;
+      border: 1px solid var(--light); color: var(--text); font-family: var(--font-sans);
+      font-size: 1rem; border-radius: 0; transition: border-color 0.3s;
+    }
+    input[type="url"]:focus { outline: none; border-color: var(--accent); }
+    input[type="url"]::placeholder { color: var(--light); }
+
+    .btn {
+      padding: 0.9rem 2rem; background: transparent; color: var(--text);
+      border: 1px solid var(--muted); font-family: var(--font-sans); font-size: 0.85rem;
+      letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+      position: relative; transition: all var(--transition); display: inline-flex; align-items: center;
+    }
+    .btn:hover:not(:disabled) { border-color: var(--accent); background: var(--accent); color: var(--bg); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-loading::after {
+      content: ''; width: 14px; height: 14px; margin-left: 8px;
+      border: 2px solid var(--text); border-top-color: transparent;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #status { margin: 1.5rem 0; font-size: 0.95rem; color: var(--muted); min-height: 1.5rem; transition: color 0.3s; }
+    #status.error { color: var(--error); }
+    #status.success { color: var(--success); }
+
+    .code-window {
+      position: relative; margin: 2rem 0;
+      opacity: 0; transform: translateY(20px); transition: opacity 0.6s, transform 0.6s;
+    }
+    .code-window.visible { opacity: 1; transform: translateY(0); }
+    .code-header {
+      padding: 0.8rem 1rem; background: var(--code-bg); border-bottom: 1px solid var(--light);
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted);
+    }
+    pre {
+      background: var(--code-bg); padding: 1.5rem; overflow-x: auto;
+      margin: 0; font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6;
+      color: var(--code-text); max-height: 65vh; white-space: pre-wrap; word-break: break-all;
+    }
+    
+    footer { padding: 4rem 0 3rem; text-align: center; color: var(--light); font-size: 0.85rem; letter-spacing: 0.02em; margin-top: 2rem; }
+
+    @media (max-width: 768px) {
+      .container { padding: 0 1.5rem; }
+      form { flex-direction: column; }
+      nav { padding: 1.2rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="navbar">
+    <a href="#" class="logo">ZOLT<span>ER</span></a>
+    <button class="theme-btn" id="themeToggle" aria-label="Сменить тему">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+  </nav>
+
+  <header class="container">
+    <h1>Извлечение кода</h1>
+    <div class="divider"></div>
+    <p>Вставьте ссылку на любой сайт. Система загрузит исходный код, автоматически отформатирует его и подготовит для скачивания. Чисто. Без лишнего. Готово к анализу.</p>
+    <form id="extractForm">
+      <input type="url" id="urlInput" placeholder="https://example.com" required autocomplete="off">
+      <button type="submit" class="btn" id="submitBtn">Извлечь</button>
+    </form>
+    <div id="status"></div>
+    <div id="codeContainer" class="code-window">
+      <div class="code-header">
+        <span>index.html</span>
+        <span id="lineCount">0 строк</span>
+      </div>
+      <pre><code id="codeBlock"></code></pre>
+    </div>
+    <button id="downloadBtn" class="btn" style="display:none; margin-top:1rem">Скачать HTML</button>
+  </header>
+
+  <footer class="container">
+    <p>Zolter Developer Tools. Все права защищены. 2026.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/js-beautify@1.14.11/js/lib/beautify-html.min.js"></script>
+  <script>
+    // Theme
+    const themeBtn = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    const savedTheme = localStorage.getItem('zolter-extract-theme') || 'light';
+    html.setAttribute('data-theme', savedTheme);
+    themeBtn.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('zolter-extract-theme', next);
+    });
+
+    // Nav scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+
+    // Core logic
+    const form = document.getElementById('extractForm');
+    const urlInput = document.getElementById('urlInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const status = document.getElementById('status');
+    const codeContainer = document.getElementById('codeContainer');
+    const codeBlock = document.getElementById('codeBlock');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const lineCount = document.getElementById('lineCount');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = urlInput.value.trim();
+      if (!url || !/^https?:\/\//i.test(url)) {
+        status.textContent = 'Введите корректную ссылку (начинается с http:// или https://)';
+        status.className = 'error'; return;
+      }
+
+      status.textContent = 'Загрузка и обработка...'; status.className = '';
+      codeContainer.classList.remove('visible');
+      downloadBtn.style.display = 'none';
+      submitBtn.classList.add('btn-loading'); submitBtn.disabled = true;
+
+      try {
+        // CORS Proxy
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error('Ошибка сети');
+        const data = await res.json();
+        
+        if (data.status && data.status.http_code >= 400) throw new Error(`Сайт недоступен (код ${data.status.http_code})`);
+        let rawHtml = data.contents;
+        if (!rawHtml) throw new Error('Пустой ответ или недоступный ресурс');
+
+        // Format HTML
+        let formattedHtml = rawHtml;
+        if (typeof html_beautify === 'function') {
+          formattedHtml = html_beautify(rawHtml, { indent_size: 2, wrap_line_length: 120, indent_with_tabs: false });
+        } else {
+          formattedHtml = rawHtml.replace(/></g, '>\n<').replace(/\n+/g, '\n').trim();
+        }
+
+        codeBlock.textContent = formattedHtml;
+        lineCount.textContent = `${formattedHtml.split('\n').length.toLocaleString('ru')} строк`;
+        
+        codeContainer.classList.add('visible');
+        status.textContent = 'Код успешно извлечён и отформатирован'; status.className = 'success';
+        downloadBtn.style.display = 'inline-flex';
+        downloadBtn.classList.remove('btn-loading'); downloadBtn.disabled = false;
+
+        downloadBtn.onclick = () => {
+          const blob = new Blob([formattedHtml], { type: 'text/html;charset=utf-8' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          try { a.download = new URL(url).hostname.replace(/^www\./, '').replace(/\./g, '_') + '.html'; }
+          catch { a.download = 'extracted_page.html'; }
+          a.click(); URL.revokeObjectURL(a.href);
+        };
+
+        codeContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch (err) {
+        status.textContent = `Ошибка: ${err.message}`; status.className = 'error';
+      } finally {
+        submitBtn.classList.remove('btn-loading'); submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
+
