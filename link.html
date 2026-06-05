@@ -112,8 +112,6 @@
       margin: 0; font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6;
       color: var(--code-text); max-height: 65vh; white-space: pre-wrap; word-break: break-all;
     }
-    
-    footer { padding: 4rem 0 3rem; text-align: center; color: var(--light); font-size: 0.85rem; letter-spacing: 0.02em; margin-top: 2rem; }
 
     @media (max-width: 768px) {
       .container { padding: 0 1.5rem; }
@@ -152,7 +150,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/js-beautify@1.14.11/js/lib/beautify-html.min.js"></script>
   <script>
-    // Theme
     const themeBtn = document.getElementById('themeToggle');
     const html = document.documentElement;
     const savedTheme = localStorage.getItem('zolter-extract-theme') || 'light';
@@ -163,11 +160,9 @@
       localStorage.setItem('zolter-extract-theme', next);
     });
 
-    // Nav scroll effect
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
 
-    // Core logic
     const form = document.getElementById('extractForm');
     const urlInput = document.getElementById('urlInput');
     const submitBtn = document.getElementById('submitBtn');
@@ -191,7 +186,6 @@
       submitBtn.classList.add('btn-loading'); submitBtn.disabled = true;
 
       try {
-        // CORS Proxy
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
         const res = await fetch(proxyUrl);
         if (!res.ok) throw new Error('Ошибка сети');
@@ -201,7 +195,6 @@
         let rawHtml = data.contents;
         if (!rawHtml) throw new Error('Пустой ответ или недоступный ресурс');
 
-        // Format HTML
         let formattedHtml = rawHtml;
         if (typeof html_beautify === 'function') {
           formattedHtml = html_beautify(rawHtml, { indent_size: 2, wrap_line_length: 120, indent_with_tabs: false });
@@ -237,4 +230,3 @@
   </script>
 </body>
 </html>
-
