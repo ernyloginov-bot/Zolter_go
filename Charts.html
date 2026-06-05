@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter Конструктор графиков</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-mono@5.0.8/index.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #FAF7F4;
+  --surface: #FFFFFF;
+  --surface-alt: #F2EDE7;
+  --surface-alt2: #E8E0D8;
+  --border: #D4C9BE;
+  --text: #2C2825;
+  --text-sec: #6B6560;
+  --text-light: #9B9490;
+  --accent: #B8A088;
+  --accent-dark: #8C7560;
+  --shadow: rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] {
+  --bg: #1A1816;
+  --surface: #24201C;
+  --surface-alt: #2A2622;
+  --surface-alt2: #3A3530;
+  --border: #4A433D;
+  --text: #D4C9BE;
+  --text-sec: #9B9490;
+  --text-light: #6B6560;
+  --accent: #B8A088;
+  --accent-dark: #D4C9BE;
+  --shadow: rgba(0,0,0,0.3);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+
+.topbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.logo { font-size: 16px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--text); text-decoration: none; }
+.logo span { color: var(--accent); }
+
+.page-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); padding: 0 16px; border-left: 1px solid var(--border); margin-left: 8px; }
+
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.btn {
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-sec);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 4px;
+}
+.btn:hover { background: var(--surface-alt); color: var(--text); border-color: var(--border); }
+.btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn.primary:hover { opacity: 0.85; }
+.btn.danger { border-color: #C0392B; color: #C0392B; }
+.btn.danger:hover { background: #C0392B; color: #fff; }
+
+.theme-toggle { width: 32px; height: 32px; background: none; border: 1px solid var(--border); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: var(--text-sec); }
+.theme-toggle:hover { background: var(--surface-alt); }
+
+.workspace { flex: 1; display: flex; overflow: hidden; }
+
+/* Left Panel */
+.left-panel {
+  width: 280px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.panel-section { padding: 16px; border-bottom: 1px solid var(--border); }
+.section-title { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-light); margin-bottom: 12px; }
+
+.chart-types-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.chart-type-btn {
+  padding: 10px 8px;
+  background: var(--surface-alt);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--text-sec);
+  transition: all 0.2s;
+  text-align: center;
+}
+.chart-type-btn:hover { background: var(--surface-alt2); }
+.chart-type-btn.active { border-color: var(--accent); background: var(--surface-alt2); color: var(--accent-dark); font-weight: 600; }
+
+/* Chart Types */
+.chart-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+/* Center Panel */
+.center-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.chart-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+  background: var(--bg);
+}
+
+.chart-container {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 4px 24px var(--shadow);
+  border: 1px solid var(--border);
+  position: relative;
+  max-width: 100%;
+}
+
+.chart-canvas-wrapper {
+  position: relative;
+}
+
+#chart-canvas {
+  max-width: 100%;
+}
+
+/* Right Panel */
+.right-panel {
+  width: 320px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+.data-table th {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  text-align: left;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+}
+
+.data-table td {
+  padding: 3px 4px;
+}
+
+.data-table input {
+  width: 100%;
+  height: 30px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 0 6px;
+  border-radius: 4px;
+}
+.data-table input:focus { outline: none; border-color: var(--accent); }
+
+.data-table .color-cell { width: 36px; }
+.data-table input[type="color"] { width: 36px; height: 30px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; padding: 2px; background: var(--surface); }
+
+.remove-row-btn {
+  width: 28px; height: 28px; border: none; background: none;
+  color: var(--text-light); cursor: pointer; font-size: 16px;
+  border-radius: 4px; transition: all 0.2s; display: flex;
+  align-items: center; justify-content: center;
+}
+.remove-row-btn:hover { background: #C0392B; color: #fff; }
+
+.prop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--text-sec);
+}
+
+.prop-input {
+  width: 100px;
+  height: 30px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 0 8px;
+  border-radius: 4px;
+}
+.prop-input:focus { outline: none; border-color: var(--accent); }
+
+.prop-input-wide { width: 100%; }
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--text-sec);
+}
+
+.toggle-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: var(--border);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+}
+.toggle-switch.active { background: var(--accent); }
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch.active::after { transform: translateX(18px); }
+
+.export-row { display: flex; gap: 8px; margin-top: 8px; }
+.export-row .btn { flex: 1; justify-content: center; }
+
+.left-panel::-webkit-scrollbar, .right-panel::-webkit-scrollbar { width: 4px; }
+.left-panel::-webkit-scrollbar-thumb, .right-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+@media (max-width: 1100px) {
+  .left-panel { width: 220px; }
+  .right-panel { width: 280px; }
+}
+
+@media (max-width: 860px) {
+  .left-panel { width: 60px; }
+  .left-panel .section-title, .left-panel .chart-type-btn span { display: none; }
+  .chart-types-grid { grid-template-columns: 1fr; }
+  .right-panel { width: 240px; }
+  .page-title { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left" style="display:flex;align-items:center;gap:12px;">
+    <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+    <span class="page-title">Конструктор графиков</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn" id="btn-reset">Сбросить</button>
+    <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="workspace">
+  <!-- Left Panel: Chart Types -->
+  <div class="left-panel">
+    <div class="panel-section">
+      <div class="section-title">Тип графика</div>
+      <div class="chart-types-grid" id="chart-types"></div>
+    </div>
+    <div class="panel-section">
+      <div class="section-title">Данные</div>
+      <button class="btn" id="btn-add-row" style="width:100%;justify-content:center;">+ Добавить строку</button>
+      <button class="btn" id="btn-add-dataset" style="width:100%;justify-content:center;margin-top:6px;">+ Добавить набор</button>
+    </div>
+    <div class="panel-section">
+      <div class="section-title">Пресеты</div>
+      <button class="btn" id="btn-sample-data" style="width:100%;justify-content:center;">Пример данных</button>
+      <button class="btn" id="btn-random-data" style="width:100%;justify-content:center;margin-top:6px;">Случайные данные</button>
+    </div>
+  </div>
+
+  <!-- Center: Chart -->
+  <div class="center-panel">
+    <div class="chart-area">
+      <div class="chart-container" id="chart-container">
+        <div class="chart-canvas-wrapper">
+          <canvas id="chart-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel: Data & Settings -->
+  <div class="right-panel">
+    <div class="panel-section">
+      <div class="section-title">Данные</div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="data-table"></table>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">Настройки графика</div>
+
+      <div class="prop-row">
+        <span>Заголовок</span>
+        <input type="text" class="prop-input" id="chart-title" value="Мой график" style="width:180px;">
+      </div>
+
+      <div class="prop-row">
+        <span>Размер</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="number" class="prop-input" id="chart-width" value="700" min="200" max="1200" style="width:70px;">
+          <span style="color:var(--text-light)">×</span>
+          <input type="number" class="prop-input" id="chart-height" value="400" min="150" max="900" style="width:70px;">
+        </div>
+      </div>
+
+      <div class="prop-row">
+        <span>Размер шрифта</span>
+        <input type="number" class="prop-input" id="font-size" value="12" min="8" max="24" style="width:60px;">
+      </div>
+
+      <div class="toggle-row">
+        <span>Легенда</span>
+        <button class="toggle-switch active" id="toggle-legend"></button>
+      </div>
+
+      <div class="toggle-row">
+        <span>Сетка</span>
+        <button class="toggle-switch active" id="toggle-grid"></button>
+      </div>
+
+      <div class="toggle-row">
+        <span>Анимация</span>
+        <button class="toggle-switch active" id="toggle-animation"></button>
+      </div>
+
+      <div class="prop-row">
+        <span>Подпись оси X</span>
+        <input type="text" class="prop-input" id="x-label" value="" placeholder="Ось X" style="width:180px;">
+      </div>
+
+      <div class="prop-row">
+        <span>Подпись оси Y</span>
+        <input type="text" class="prop-input" id="y-label" value="" placeholder="Ось Y" style="width:180px;">
+      </div>
+
+      <div class="prop-row">
+        <span>Фон графика</span>
+        <input type="color" class="prop-input" id="bg-color" value="#FFFFFF" style="width:60px;height:30px;padding:2px;">
+      </div>
+
+      <div class="prop-row">
+        <span>Скругление (bar)</span>
+        <input type="number" class="prop-input" id="bar-radius" value="0" min="0" max="20" style="width:60px;">
+      </div>
+    </div>
+
+    <div class="panel-section" style="border-bottom:none;">
+      <div class="section-title">Экспорт</div>
+      <div class="export-row">
+        <button class="btn primary" id="export-png">↓ PNG</button>
+        <button class="btn primary" id="export-html">↓ HTML</button>
+      </div>
+      <button class="btn" id="export-svg" style="width:100%;justify-content:center;margin-top:6px;">↓ SVG (как PNG)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // === THEME ===
+  const savedTheme = localStorage.getItem('zolter-chart-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const nt = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nt);
+    localStorage.setItem('zolter-chart-theme', nt);
+    updateChart();
+  });
+
+  // === STATE ===
+  const chartTypes = [
+    { id: 'line', label: 'Линия', icon: '' },
+    { id: 'bar', label: 'Столбцы', icon: '' },
+    { id: 'hbar', label: 'Гориз. бар', icon: '' },
+    { id: 'radar', label: 'Радар', icon: '' },
+    { id: 'bubble', label: 'Пузыри', icon: '' }
+  ];
+
+  const defaultColors = ['#B8A088', '#2C2825', '#6B6560', '#D4C9BE', '#8C7560', '#C0392B', '#2980B9', '#27AE60', '#E67E22', '#8E44AD'];
+
+  let state = {
+    type: 'line',
+    title: 'Мой график',
+    labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+    datasets: [
+      { label: 'Данные 1', data: [12, 19, 3, 5, 2, 3], color: '#B8A088' },
+      { label: 'Данные 2', data: [8, 15, 7, 12, 9, 6], color: '#2C2825' }
+    ],
+    width: 700,
+    height: 400,
+    fontSize: 12,
+    showLegend: true,
+    showGrid: true,
+    animation: true,
+    xLabel: '',
+    yLabel: '',
+    bgColor: '#FFFFFF',
+    barRadius: 0
+  };
+
+  let chart = null;
+
+  // === CHART TYPES ===
+  function renderChartTypes() {
+    const grid = document.getElementById('chart-types');
+    grid.innerHTML = '';
+    chartTypes.forEach(ct => {
+      const btn = document.createElement('button');
+      btn.className = 'chart-type-btn' + (ct.id === state.type ? ' active' : '');
+      btn.innerHTML = `<span class="chart-icon">${ct.icon}</span><span>${ct.label}</span>`;
+      btn.addEventListener('click', () => {
+        state.type = ct.id;
+        renderChartTypes();
+        updateChart();
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  // === DATA TABLE ===
+  function renderDataTable() {
+    const table = document.getElementById('data-table');
+    const nDatasets = state.datasets.length;
+    const nLabels = state.labels.length;
+
+    let html = '<thead><tr><th class="color-cell"></th><th>Набор</th>';
+    for (let i = 0; i < nLabels; i++) {
+      html += `<th>Метка ${i + 1}</th>`;
+    }
+    html += '<th style="width:32px"></th></tr></thead><tbody>';
+
+    state.datasets.forEach((ds, di) => {
+      html += '<tr>';
+      html += `<td class="color-cell"><input type="color" value="${ds.color}" data-dset="${di}" data-prop="color"></td>`;
+      html += `<td><input type="text" value="${ds.label}" data-dset="${di}" data-prop="label" style="min-width:80px;"></td>`;
+      for (let li = 0; li < nLabels; li++) {
+        const val = ds.data[li] !== undefined ? ds.data[li] : '';
+        html += `<td><input type="number" value="${val}" data-dset="${di}" data-label="${li}" data-prop="value"></td>`;
+      }
+      html += `<td><button class="remove-row-btn" data-dset="${di}">×</button></td>`;
+      html += '</tr>';
+    });
+
+    html += '</tbody>';
+    table.innerHTML = html;
+
+    // Bind events
+    table.querySelectorAll('input[data-prop="label"]').forEach(inp => {
+      inp.addEventListener('input', e => {
+        const di = parseInt(e.target.dataset.dset);
+        state.datasets[di].label = e.target.value;
+        updateChart();
+      });
+    });
+
+    table.querySelectorAll('input[data-prop="color"]').forEach(inp => {
+      inp.addEventListener('input', e => {
+        const di = parseInt(e.target.dataset.dset);
+        state.datasets[di].color = e.target.value;
+        updateChart();
+      });
+    });
+
+    table.querySelectorAll('input[data-prop="value"]').forEach(inp => {
+      inp.addEventListener('input', e => {
+        const di = parseInt(e.target.dataset.dset);
+        const li = parseInt(e.target.dataset.label);
+        const val = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+        state.datasets[di].data[li] = val;
+        updateChart();
+      });
+    });
+
+    table.querySelectorAll('.remove-row-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const di = parseInt(e.target.dataset.dset);
+        if (state.datasets.length > 1) {
+          state.datasets.splice(di, 1);
+          renderDataTable();
+          updateChart();
+        }
+      });
+    });
+  }
+
+  document.getElementById('btn-add-row').addEventListener('click', () => {
+    state.labels.push('');
+    state.datasets.forEach(ds => ds.data.push(0));
+    renderDataTable();
+    updateChart();
+  });
+
+  document.getElementById('btn-add-dataset').addEventListener('click', () => {
+    const colorIdx = state.datasets.length % defaultColors.length;
+    const newDs = {
+      label: 'Данные ' + (state.datasets.length + 1),
+      data: state.labels.map(() => Math.round(Math.random() * 50)),
+      color: defaultColors[colorIdx]
+    };
+    state.datasets.push(newDs);
+    renderDataTable();
+    updateChart();
+  });
+
+  // === SAMPLE DATA ===
+  document.getElementById('btn-sample-data').addEventListener('click', () => {
+    state.labels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    state.datasets = [
+      { label: 'Продажи', data: [30, 45, 28, 60, 55, 20, 35], color: '#B8A088' },
+      { label: 'Заказы', data: [20, 30, 22, 40, 35, 15, 25], color: '#2C2825' }
+    ];
+    renderDataTable();
+    updateChart();
+  });
+
+  document.getElementById('btn-random-data').addEventListener('click', () => {
+    state.labels = state.labels.map((l, i) => `#${i + 1}`);
+    state.datasets.forEach(ds => {
+      ds.data = ds.data.map(() => Math.round(Math.random() * 100));
+    });
+    renderDataTable();
+    updateChart();
+  });
+
+  // === SETTINGS BINDINGS ===
+  document.getElementById('chart-title').addEventListener('input', e => { state.title = e.target.value; updateChart(); });
+  document.getElementById('chart-width').addEventListener('change', e => { state.width = parseInt(e.target.value); updateChart(); });
+  document.getElementById('chart-height').addEventListener('change', e => { state.height = parseInt(e.target.value); updateChart(); });
+  document.getElementById('font-size').addEventListener('change', e => { state.fontSize = parseInt(e.target.value); updateChart(); });
+  document.getElementById('x-label').addEventListener('input', e => { state.xLabel = e.target.value; updateChart(); });
+  document.getElementById('y-label').addEventListener('input', e => { state.yLabel = e.target.value; updateChart(); });
+  document.getElementById('bg-color').addEventListener('input', e => { state.bgColor = e.target.value; updateChart(); });
+  document.getElementById('bar-radius').addEventListener('change', e => { state.barRadius = parseInt(e.target.value); updateChart(); });
+
+  document.querySelectorAll('.toggle-switch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      const id = btn.id;
+      if (id === 'toggle-legend') state.showLegend = btn.classList.contains('active');
+      else if (id === 'toggle-grid') state.showGrid = btn.classList.contains('active');
+      else if (id === 'toggle-animation') state.animation = btn.classList.contains('active');
+      updateChart();
+    });
+  });
+
+  // === UPDATE CHART ===
+  function updateChart() {
+    const canvas = document.getElementById('chart-canvas');
+    const container = document.getElementById('chart-container');
+    
+    canvas.width = state.width;
+    canvas.height = state.height;
+    container.style.width = state.width + 'px';
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#D4C9BE' : '#2C2825';
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+    if (chart) chart.destroy();
+
+    let chartType = state.type;
+    if (state.type === 'hbar') chartType = 'bar';
+
+    const datasets = state.datasets.map(ds => {
+      const base = {
+        label: ds.label,
+        data: ds.data,
+        borderColor: ds.color,
+        backgroundColor: ds.color + (state.type === 'pie' || state.type === 'doughnut' || state.type === 'polar' ? 'CC' : '40'),
+        borderWidth: 2,
+        pointRadius: state.type === 'scatter' || state.type === 'bubble' ? 6 : 3,
+        pointBackgroundColor: ds.color,
+        tension: 0.4,
+        fill: state.type === 'area'
+      };
+
+      if (state.type === 'bubble') {
+        base.data = ds.data.map((v, i) => ({ x: i + 1, y: v, r: Math.max(3, Math.abs(v) / 3) }));
+      }
+
+      if (chartType === 'bar') {
+        base.borderRadius = state.barRadius;
+      }
+
+      return base;
+    });
+
+    const config = {
+      type: chartType,
+      data: {
+        labels: state.labels,
+        datasets: datasets
+      },
+      options: {
+        responsive: false,
+        animation: {
+          duration: state.animation ? 800 : 0
+        },
+        indexAxis: state.type === 'hbar' ? 'y' : 'x',
+        scales: (state.type === 'pie' || state.type === 'doughnut' || state.type === 'polar' || state.type === 'radar') ? {
+          r: {
+            display: state.type === 'radar' || state.type === 'polar',
+            grid: { color: gridColor },
+            ticks: { display: false }
+          }
+        } : {
+          x: {
+            grid: { color: state.showGrid ? gridColor : 'transparent', display: state.showGrid },
+            ticks: { color: textColor, font: { size: state.fontSize, family: "'IBM Plex Sans'" } },
+            title: { display: !!state.xLabel, text: state.xLabel, color: textColor, font: { size: state.fontSize } }
+          },
+          y: {
+            grid: { color: state.showGrid ? gridColor : 'transparent', display: state.showGrid },
+            ticks: { color: textColor, font: { size: state.fontSize, family: "'IBM Plex Sans'" } },
+            title: { display: !!state.yLabel, text: state.yLabel, color: textColor, font: { size: state.fontSize } },
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          legend: {
+            display: state.showLegend,
+            labels: { color: textColor, font: { size: state.fontSize, family: "'IBM Plex Sans'" } }
+          },
+          title: {
+            display: !!state.title,
+            text: state.title,
+            color: textColor,
+            font: { size: state.fontSize + 4, weight: '500', family: "'IBM Plex Sans'" }
+          },
+          tooltip: {
+            backgroundColor: isDark ? '#3A3530' : '#FFFFFF',
+            titleColor: textColor,
+            bodyColor: textColor,
+            borderColor: isDark ? '#4A433D' : '#D4C9BE',
+            borderWidth: 1,
+            cornerRadius: 4,
+            titleFont: { family: "'IBM Plex Sans'" },
+            bodyFont: { family: "'IBM Plex Mono'" }
+          }
+        }
+      }
+    };
+
+    chart = new Chart(canvas, config);
+  }
+
+  // === EXPORT PNG ===
+  document.getElementById('export-png').addEventListener('click', () => {
+    const canvas = document.getElementById('chart-canvas');
+    const link = document.createElement('a');
+    link.download = `chart-${state.type}-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+
+  document.getElementById('export-svg').addEventListener('click', () => {
+    const canvas = document.getElementById('chart-canvas');
+    const link = document.createElement('a');
+    link.download = `chart-${state.type}-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+
+  // === EXPORT HTML ===
+  document.getElementById('export-html').addEventListener('click', () => {
+    const canvas = document.getElementById('chart-canvas');
+    const imgData = canvas.toDataURL('image/png');
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+    const chartDataJSON = JSON.stringify({
+      type: state.type === 'hbar' ? 'bar' : state.type,
+      labels: state.labels,
+      datasets: state.datasets.map(ds => ({
+        label: ds.label,
+        data: state.type === 'bubble' ? ds.data.map((v, i) => ({ x: i + 1, y: v, r: Math.max(3, Math.abs(v) / 3) })) : ds.data,
+        borderColor: ds.color,
+        backgroundColor: ds.color + '40',
+        borderWidth: 2,
+        pointRadius: state.type === 'scatter' || state.type === 'bubble' ? 6 : 3,
+        pointBackgroundColor: ds.color,
+        tension: 0.4,
+        fill: state.type === 'area'
+      }))
+    });
+
+    const optionsJSON = JSON.stringify({
+      responsive: true,
+      indexAxis: state.type === 'hbar' ? 'y' : 'x',
+      plugins: {
+        legend: { display: state.showLegend },
+        title: { display: true, text: state.title, font: { size: state.fontSize + 4 } }
+      }
+    });
+
+    const html = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${state.title}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>
+<style>
+body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: ${isDark ? '#1A1816' : '#FAF7F4'}; font-family: 'IBM Plex Sans', sans-serif; }
+.chart-box { background: ${isDark ? '#24201C' : '#FFFFFF'}; padding: 24px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); max-width: ${state.width + 48}px; width: 90%; }
+h2 { text-align: center; color: ${isDark ? '#D4C9BE' : '#2C2825'}; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="chart-box">
+<h2>${state.title}</h2>
+<canvas id="exported-chart"></canvas>
+</div>
+<script>
+const chartData = ${chartDataJSON};
+const options = ${optionsJSON};
+new Chart(document.getElementById('exported-chart'), { type: chartData.type, data: { labels: chartData.labels, datasets: chartData.datasets }, options: options });
+<\/script>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chart-${state.type}-${new Date().toISOString().slice(0, 10)}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // === RESET ===
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    if (confirm('Сбросить все настройки?')) {
+      state.type = 'line';
+      state.title = 'Мой график';
+      state.labels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'];
+      state.datasets = [
+        { label: 'Данные 1', data: [12, 19, 3, 5, 2, 3], color: '#B8A088' },
+        { label: 'Данные 2', data: [8, 15, 7, 12, 9, 6], color: '#2C2825' }
+      ];
+      state.width = 700;
+      state.height = 400;
+      state.fontSize = 12;
+      state.showLegend = true;
+      state.showGrid = true;
+      state.animation = true;
+      state.xLabel = '';
+      state.yLabel = '';
+      state.bgColor = '#FFFFFF';
+      state.barRadius = 0;
+
+      document.getElementById('chart-title').value = state.title;
+      document.getElementById('chart-width').value = state.width;
+      document.getElementById('chart-height').value = state.height;
+      document.getElementById('font-size').value = state.fontSize;
+      document.getElementById('x-label').value = '';
+      document.getElementById('y-label').value = '';
+      document.getElementById('bg-color').value = state.bgColor;
+      document.getElementById('bar-radius').value = 0;
+
+      document.querySelectorAll('.toggle-switch').forEach(btn => {
+        const id = btn.id;
+        if (id === 'toggle-legend') { btn.classList.add('active'); state.showLegend = true; }
+        else if (id === 'toggle-grid') { btn.classList.add('active'); state.showGrid = true; }
+        else if (id === 'toggle-animation') { btn.classList.add('active'); state.animation = true; }
+      });
+
+      renderChartTypes();
+      renderDataTable();
+      updateChart();
+    }
+  });
+
+  // === INIT ===
+  renderChartTypes();
+  renderDataTable();
+  updateChart();
+})();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter Пиксельные анимации</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAF7F4; --surface: #FFFFFF; --surface-alt: #F2EDE7; --surface-alt2: #E8E0D8;
+  --border: #D4C9BE; --text: #2C2825; --text-sec: #6B6560; --text-light: #9B9490;
+  --accent: #B8A088; --accent-dark: #8C7560; --green: #27AE60; --red: #C0392B;
+  --shadow: rgba(0,0,0,0.06);
+}
+[data-theme="dark"] {
+  --bg: #1A1816; --surface: #24201C; --surface-alt: #2A2622; --surface-alt2: #3A3530;
+  --border: #4A433D; --text: #D4C9BE; --text-sec: #9B9490; --text-light: #6B6560;
+  --accent: #B8A088; --accent-dark: #D4C9BE; --shadow: rgba(0,0,0,0.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background .3s,color .3s}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo{font-size:16px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--text);text-decoration:none}
+.logo span{color:var(--accent)}
+.page-title{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text-light);padding:0 16px;border-left:1px solid var(--border);margin-left:8px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.btn{padding:8px 16px;background:none;border:1px solid var(--border);color:var(--text-sec);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:6px;border-radius:4px;white-space:nowrap}
+.btn:hover{background:var(--surface-alt);color:var(--text);border-color:var(--border)}
+.btn.primary{background:var(--text);color:var(--bg);border-color:var(--text)}.btn.primary:hover{opacity:.85}
+.btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn svg{width:14px;height:14px}
+.theme-toggle{width:32px;height:32px;background:none;border:1px solid var(--border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--text-sec);flex-shrink:0}
+.theme-toggle:hover{background:var(--surface-alt)}
+.workspace{flex:1;display:flex;overflow:hidden}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.panel-section{padding:16px;border-bottom:1px solid var(--border)}
+.section-title{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-light);margin-bottom:12px}
+.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tool-btn{aspect-ratio:1;background:var(--surface-alt);border:1px solid transparent;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--text-sec)}
+.tool-btn:hover{background:var(--surface-alt2);color:var(--text)}.tool-btn.active{border-color:var(--accent);background:var(--surface-alt2);color:var(--accent-dark)}
+.tool-btn svg{width:20px;height:20px}
+.palette-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px}
+.palette-name{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-dark);margin-bottom:8px;font-weight:600;display:flex;align-items:center;gap:6px}
+.palette-name::before{content:'';width:8px;height:8px;background:var(--accent);border-radius:2px}
+.swatch{aspect-ratio:1;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s}
+.swatch:hover{transform:scale(1.15)}.swatch.active{border-color:var(--text);box-shadow:0 0 0 2px var(--bg)}
+.color-row{display:flex;gap:8px;align-items:center}
+.color-input{width:36px;height:30px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:var(--surface);padding:2px}
+.hex-input{flex:1;height:30px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:0 8px;border-radius:4px;text-transform:uppercase;letter-spacing:1px}
+.hex-input:focus{outline:none;border-color:var(--accent)}
+.control-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;color:var(--text-sec)}
+.control-input{width:64px;height:28px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:0 6px;border-radius:4px;text-align:center}
+.control-input:focus{outline:none;border-color:var(--accent)}
+.canvas-area{flex:1;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden}
+.canvas-wrapper{position:relative;box-shadow:0 8px 32px var(--shadow);border-radius:4px}
+canvas#main-canvas{cursor:crosshair;touch-action:none;image-rendering:pixelated}
+.timeline-area{height:130px;background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.timeline-toolbar{height:40px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:8px;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto}
+.timeline-toolbar .spacer{flex:1;min-width:4px}
+.frames-strip{flex:1;overflow-x:auto;padding:12px 16px;display:flex;align-items:center;gap:8px}
+.frames-strip::-webkit-scrollbar{height:6px}.frames-strip::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.frame-thumb{width:64px;height:48px;border:2px solid var(--border);border-radius:4px;cursor:pointer;transition:all .2s;position:relative;flex-shrink:0;overflow:hidden;background:#fff}
+.frame-thumb.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.frame-thumb canvas{width:100%;height:100%;image-rendering:pixelated}
+.frame-thumb .frame-num{position:absolute;bottom:2px;right:2px;font-size:9px;font-family:'IBM Plex Mono',monospace;background:rgba(0,0,0,.6);color:#fff;padding:1px 4px;border-radius:2px}
+.add-frame-btn{width:64px;height:48px;border:2px dashed var(--border);border-radius:4px;cursor:pointer;color:var(--text-light);font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;background:none;font-family:inherit}
+.add-frame-btn:hover{border-color:var(--accent);color:var(--accent-dark)}
+.frame-thumb .delete-frame{position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:var(--red);color:#fff;border:none;border-radius:50%;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}
+.frame-thumb:hover .delete-frame{display:flex}
+.progress-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000}
+.progress-overlay.visible{display:flex}
+.progress-card{background:var(--surface);border-radius:12px;padding:40px;text-align:center;min-width:280px;box-shadow:0 24px 48px rgba(0,0,0,.2)}
+.progress-card h3{font-size:18px;margin-bottom:12px}
+.progress-bar{width:100%;height:6px;background:var(--surface-alt);border-radius:3px;overflow:hidden;margin:16px 0}
+.progress-fill{height:100%;background:var(--accent);transition:width .3s}
+.progress-text{font-size:12px;color:var(--text-light);letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+    <span class="page-title">Пиксельные анимации</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn" id="btn-export-png">↓ PNG кадры</button>
+    <button class="btn" id="btn-export-mp4">↓ MP4</button>
+    <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="workspace">
+  <div class="sidebar">
+    <div class="panel-section">
+      <div class="section-title">Инструменты</div>
+      <div class="tools-grid">
+        <button class="tool-btn active" data-tool="pencil" title="Карандаш"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 3l5 5-11 11H5v-5L16 3z" stroke-width="2" stroke-linejoin="round"/></svg></button>
+        <button class="tool-btn" data-tool="eraser" title="Ластик"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 20H7L3 16l8-8 9 9-4 4z" stroke-width="2" stroke-linejoin="round"/><line x1="6" y1="11" x2="14" y2="19" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <button class="tool-btn" data-tool="fill" title="Заливка"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3l5 5-5 5-5-5 5-5z" stroke-width="2" stroke-linejoin="round"/><path d="M12 13v7M9 17h6" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <button class="tool-btn" data-tool="picker" title="Пипетка"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 3l7 7-10 10-4 1 1-4 6-6z" stroke-width="2" stroke-linejoin="round"/><circle cx="18" cy="6" r="2" stroke-width="2"/></svg></button>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="section-title">Палитра</div>
+      <div class="palette-section"><div class="palette-name">Zolter</div><div class="palette-grid" id="zolter-palette"></div></div>
+      <div class="palette-section"><div class="palette-name" style="color:var(--text-light)">Стандартная</div><div class="palette-grid" id="standard-palette"></div></div>
+      <div class="color-row"><input type="color" class="color-input" id="custom-color" value="#B8A088"><input type="text" class="hex-input" id="hex-input" value="#B8A088" maxlength="7"></div>
+    </div>
+    <div class="panel-section">
+      <div class="section-title">Холст</div>
+      <div class="control-row"><span>Ширина</span><input type="number" class="control-input" id="grid-w" value="16" min="4" max="64"></div>
+      <div class="control-row"><span>Высота</span><input type="number" class="control-input" id="grid-h" value="16" min="4" max="64"></div>
+      <div class="control-row"><span>Пиксель</span><input type="number" class="control-input" id="px-size" value="20" min="4" max="64" step="1"></div>
+      <button class="btn primary" id="btn-resize" style="width:100%;margin-top:8px">Применить</button>
+    </div>
+    <div class="panel-section">
+      <div class="section-title">Onion Skin</div>
+      <div class="control-row"><span>Включить</span><input type="checkbox" id="onion-toggle"></div>
+      <div class="control-row"><span>Прозрачность</span><input type="number" class="control-input" id="onion-opacity" value="30" min="5" max="60" step="5"></div>
+    </div>
+  </div>
+
+  <div class="canvas-area" id="canvas-area">
+    <div class="canvas-wrapper">
+      <canvas id="main-canvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="timeline-area">
+  <div class="timeline-toolbar">
+    <button class="btn" id="btn-play"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg> Играть</button>
+    <button class="btn" id="btn-stop" style="display:none"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="3" width="10" height="10" rx="1"/></svg> Стоп</button>
+    <span class="spacer"></span>
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <span style="font-size:10px;letter-spacing:1px;color:var(--text-light)">СКОРОСТЬ</span>
+      <input type="range" id="speed-slider" min="1" max="24" value="8" style="width:80px;accent-color:var(--accent)">
+      <span id="fps-display" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-sec);min-width:40px">8 fps</span>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn" id="btn-clear-frame">Очистить кадр</button>
+  </div>
+  <div class="frames-strip" id="frames-strip">
+    <button class="add-frame-btn" id="add-frame-btn">+</button>
+  </div>
+</div>
+
+<div class="progress-overlay" id="progress-overlay">
+  <div class="progress-card">
+    <h3 id="progress-title">Экспорт...</h3>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-text" id="progress-text">0%</div>
+  </div>
+</div>
+
+<script>
+(function(){
+const savedTheme=localStorage.getItem('zolter-anim-theme')||'light';
+document.documentElement.setAttribute('data-theme',savedTheme);
+document.getElementById('theme-toggle').addEventListener('click',()=>{
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  const n=d?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);
+  localStorage.setItem('zolter-anim-theme',n);
+  renderAll();
+});
+
+let state={
+  width:16,height:16,pixelSize:20,
+  frames:[Array.from({length:16},()=>Array(16).fill(null))],
+  currentFrame:0,tool:'pencil',color:'#B8A088',
+  playing:false,fps:8,onionSkin:false,onionOpacity:30,
+  animTimer:null,isDrawing:false,lastX:-1,lastY:-1
+};
+
+const canvas=document.getElementById('main-canvas');
+const ctx=canvas.getContext('2d',{willReadFrequently:true});
+const area=document.getElementById('canvas-area');
+const strip=document.getElementById('frames-strip');
+
+function renderAll(){resizeCanvas();drawFrame();renderStrip()}
+
+function resizeCanvas(){
+  canvas.width=state.width*state.pixelSize+2;
+  canvas.height=state.height*state.pixelSize+2;
+  canvas.style.width=canvas.width+'px';
+  canvas.style.height=canvas.height+'px';
+}
+
+function drawFrame(){
+  ctx.imageSmoothingEnabled=false;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.save();ctx.translate(1,1);
+  for(let y=0;y<state.height;y++){for(let x=0;x<state.width;x++){if((x+y)%2===0){ctx.fillStyle='#F5F0EB';ctx.fillRect(x*state.pixelSize,y*state.pixelSize,state.pixelSize,state.pixelSize)}}}
+  if(state.onionSkin&&state.currentFrame>0){
+    ctx.globalAlpha=state.onionOpacity/100;
+    const prev=state.frames[state.currentFrame-1];
+    for(let y=0;y<state.height;y++){for(let x=0;x<state.width;x++){if(prev[y][x]){ctx.fillStyle=prev[y][x];ctx.fillRect(x*state.pixelSize,y*state.pixelSize,state.pixelSize,state.pixelSize)}}}
+    ctx.globalAlpha=1;
+  }
+  const frame=state.frames[state.currentFrame];
+  for(let y=0;y<state.height;y++){for(let x=0;x<state.width;x++){if(frame[y][x]){ctx.fillStyle=frame[y][x];ctx.fillRect(x*state.pixelSize,y*state.pixelSize,state.pixelSize,state.pixelSize)}}}
+  if(state.pixelSize>=8){ctx.strokeStyle='#00000012';ctx.lineWidth=0.5;ctx.beginPath();for(let i=0;i<=state.width;i++){ctx.moveTo(i*state.pixelSize,0);ctx.lineTo(i*state.pixelSize,state.height*state.pixelSize)}for(let i=0;i<=state.height;i++){ctx.moveTo(0,i*state.pixelSize);ctx.lineTo(state.width*state.pixelSize,i*state.pixelSize)}ctx.stroke()}
+  ctx.restore();
+}
+
+function renderStrip(){
+  strip.innerHTML='';
+  state.frames.forEach((frame,i)=>{
+    const thumb=document.createElement('div');
+    thumb.className='frame-thumb'+(i===state.currentFrame?' active':'');
+    const tc=document.createElement('canvas');
+    tc.width=state.width;tc.height=state.height;
+    const tctx=tc.getContext('2d');
+    tctx.imageSmoothingEnabled=false;
+    for(let y=0;y<state.height;y++){for(let x=0;x<state.width;x++){if(frame[y][x]){tctx.fillStyle=frame[y][x];tctx.fillRect(x,y,1,1)}}}
+    thumb.appendChild(tc);
+    const num=document.createElement('div');num.className='frame-num';num.textContent=i+1;thumb.appendChild(num);
+    const del=document.createElement('button');del.className='delete-frame';del.textContent='×';
+    del.addEventListener('click',e=>{e.stopPropagation();if(state.frames.length<=1)return;state.frames.splice(i,1);if(state.currentFrame>=state.frames.length)state.currentFrame=state.frames.length-1;renderAll()});
+    thumb.appendChild(del);
+    thumb.addEventListener('click',()=>{state.currentFrame=i;renderAll()});
+    strip.appendChild(thumb);
+  });
+  const addBtn=document.createElement('button');addBtn.className='add-frame-btn';addBtn.textContent='+';
+  addBtn.addEventListener('click',()=>{const newFrame=state.frames[state.currentFrame].map(r=>[...r]);state.frames.splice(state.currentFrame+1,0,newFrame);state.currentFrame++;renderAll()});
+  strip.appendChild(addBtn);
+}
+
+function screenToGrid(clientX,clientY){
+  const rect=canvas.getBoundingClientRect();
+  const x=Math.floor((clientX-rect.left)/rect.width*state.width);
+  const y=Math.floor((clientY-rect.top)/rect.height*state.height);
+  return{x:Math.max(0,Math.min(state.width-1,x)),y:Math.max(0,Math.min(state.height-1,y))};
+}
+
+function bresenhamLine(x0,y0,x1,y1,cb){const dx=Math.abs(x1-x0),dy=Math.abs(y1-y0);const sx=x0<x1?1:-1,sy=y0<y1?1:-1;let err=dx-dy;while(true){cb(x0,y0);if(x0===x1&&y0===y1)break;const e2=2*err;if(e2>-dy){err-=dy;x0+=sx}if(e2<dx){err+=dx;y0+=sy}}}
+function floodFill(sx,sy,color){const frame=state.frames[state.currentFrame];const target=frame[sy][sx];if(target===color)return;const q=[[sx,sy]];while(q.length>0){const[cx,cy]=q.shift();frame[cy][cx]=color;[[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]].forEach(([nx,ny])=>{if(nx>=0&&nx<state.width&&ny>=0&&ny<state.height&&frame[ny][nx]===target){frame[ny][nx]=color;q.push([nx,ny])}})}}
+
+canvas.addEventListener('mousedown',e=>{e.preventDefault();state.isDrawing=true;const p=screenToGrid(e.clientX,e.clientY);state.lastX=p.x;state.lastY=p.y;if(state.tool==='pencil'){state.frames[state.currentFrame][p.y][p.x]=state.color;drawFrame()}else if(state.tool==='eraser'){state.frames[state.currentFrame][p.y][p.x]=null;drawFrame()}else if(state.tool==='fill'){floodFill(p.x,p.y,state.color);drawFrame();state.isDrawing=false}else if(state.tool==='picker'){const c=state.frames[state.currentFrame][p.y][p.x];if(c){state.color=c;updateColorUI()}}});
+canvas.addEventListener('mousemove',e=>{const p=screenToGrid(e.clientX,e.clientY);if(!state.isDrawing)return;if(state.tool==='pencil'||state.tool==='eraser'){bresenhamLine(state.lastX,state.lastY,p.x,p.y,(x,y)=>{state.frames[state.currentFrame][y][x]=state.tool==='eraser'?null:state.color});state.lastX=p.x;state.lastY=p.y;drawFrame()}});
+canvas.addEventListener('mouseup',()=>{state.isDrawing=false;renderStrip()});
+canvas.addEventListener('mouseleave',()=>{state.isDrawing=false;drawFrame()});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];canvas.dispatchEvent(new MouseEvent('mousedown',{clientX:t.clientX,clientY:t.clientY}))},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];canvas.dispatchEvent(new MouseEvent('mousemove',{clientX:t.clientX,clientY:t.clientY}))},{passive:false});
+canvas.addEventListener('touchend',()=>{canvas.dispatchEvent(new MouseEvent('mouseup'));renderStrip()});
+
+document.querySelectorAll('.tool-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');state.tool=btn.dataset.tool})});
+
+const zolterColors=['#2C2825','#4A433D','#6B6560','#8C7560','#B8A088','#D4C9BE','#E8E0D8','#F2EDE7','#FAF7F4','#FFFFFF','#3A2D1F','#5C4A32','#7A6B52','#9B8B6E','#C4A87A','#DEBB7A','#F5D9A0','#FFF0C8','#1A2332','#2C3E50','#3D566E','#4A6F8C','#6BA3BE','#A5CBE0'];
+const stdColors=['#000000','#FFFFFF','#C0392B','#E74C3C','#E67E22','#F1C40F','#27AE60','#2ECC71','#2980B9','#3498DB','#8E44AD','#9B59B6','#D35400','#16A085'];
+function setupPalettes(){
+  const zGrid=document.getElementById('zolter-palette');
+  zolterColors.forEach((c,i)=>{const s=document.createElement('div');s.className='swatch'+(i===4?' active':'');s.style.background=c;if(['#FFFFFF','#FAF7F4','#F2EDE7','#E8E0D8','#FFF0C8'].includes(c))s.style.border='1px solid var(--border)';s.addEventListener('click',()=>selectColor(c,s));zGrid.appendChild(s)});
+  const sGrid=document.getElementById('standard-palette');
+  stdColors.forEach(c=>{const s=document.createElement('div');s.className='swatch';s.style.background=c;if(c==='#FFFFFF')s.style.border='1px solid var(--border)';s.addEventListener('click',()=>selectColor(c,s));sGrid.appendChild(s)});
+}
+function selectColor(c,swatch){state.color=c;document.getElementById('custom-color').value=c;document.getElementById('hex-input').value=c.toUpperCase();document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));if(swatch)swatch.classList.add('active')}
+function updateColorUI(){document.getElementById('custom-color').value=state.color;document.getElementById('hex-input').value=state.color.toUpperCase();document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'))}
+document.getElementById('custom-color').addEventListener('input',e=>{state.color=e.target.value;document.getElementById('hex-input').value=e.target.value.toUpperCase();document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'))});
+document.getElementById('hex-input').addEventListener('change',e=>{if(/^#[0-9A-Fa-f]{6}$/.test(e.target.value)){state.color=e.target.value;document.getElementById('custom-color').value=e.target.value;document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'))}});
+
+document.getElementById('px-size').addEventListener('change',e=>{state.pixelSize=Math.max(4,Math.min(64,parseInt(e.target.value)||20));e.target.value=state.pixelSize;renderAll()});
+document.getElementById('btn-resize').addEventListener('click',()=>{const w=parseInt(document.getElementById('grid-w').value)||16;const h=parseInt(document.getElementById('grid-h').value)||16;state.width=Math.max(4,Math.min(64,w));state.height=Math.max(4,Math.min(64,h));state.frames=state.frames.map(()=>Array.from({length:state.height},()=>Array(state.width).fill(null)));state.currentFrame=0;renderAll()});
+document.getElementById('onion-toggle').addEventListener('change',e=>{state.onionSkin=e.target.checked;drawFrame()});
+document.getElementById('onion-opacity').addEventListener('change',e=>{state.onionOpacity=parseInt(e.target.value)||30;drawFrame()});
+
+document.getElementById('btn-play').addEventListener('click',startPlay);
+document.getElementById('btn-stop').addEventListener('click',stopPlay);
+function startPlay(){if(state.frames.length<2)return;state.playing=true;document.getElementById('btn-play').style.display='none';document.getElementById('btn-stop').style.display='';let fi=0;state.animTimer=setInterval(()=>{state.currentFrame=fi%state.frames.length;drawFrame();renderStrip();fi++},1000/state.fps)}
+function stopPlay(){state.playing=false;clearInterval(state.animTimer);document.getElementById('btn-play').style.display='';document.getElementById('btn-stop').style.display='none'}
+document.getElementById('speed-slider').addEventListener('input',e=>{state.fps=parseInt(e.target.value);document.getElementById('fps-display').textContent=state.fps+' fps';if(state.playing){stopPlay();startPlay()}});
+document.getElementById('btn-clear-frame').addEventListener('click',()=>{state.frames[state.currentFrame]=Array.from({length:state.height},()=>Array(state.width).fill(null));renderAll()});
+
+function frameToCanvas(frame,sc){
+  sc=sc||state.pixelSize;
+  const ec=document.createElement('canvas');
+  ec.width=state.width*sc;ec.height=state.height*sc;
+  const ectx=ec.getContext('2d');
+  ectx.imageSmoothingEnabled=false;
+  ectx.fillStyle='#FFFFFF';
+  ectx.fillRect(0,0,ec.width,ec.height);
+  for(let y=0;y<state.height;y++){for(let x=0;x<state.width;x++){if(frame[y][x]){ectx.fillStyle=frame[y][x];ectx.fillRect(x*sc,y*sc,sc,sc)}}}
+  return ec;
+}
+
+function showProgress(title){document.getElementById('progress-title').textContent=title;document.getElementById('progress-fill').style.width='0%';document.getElementById('progress-text').textContent='0%';document.getElementById('progress-overlay').classList.add('visible')}
+function updateProgress(pct){document.getElementById('progress-fill').style.width=Math.min(pct,100)+'%';document.getElementById('progress-text').textContent=Math.round(Math.min(pct,100))+'%'}
+function hideProgress(){document.getElementById('progress-overlay').classList.remove('visible')}
+
+// PNG
+document.getElementById('btn-export-png').addEventListener('click',()=>{
+  state.frames.forEach((frame,i)=>{const ec=frameToCanvas(frame);const link=document.createElement('a');link.download='frame_'+String(i+1).padStart(3,'0')+'.png';link.href=ec.toDataURL('image/png');link.click()})
+});
+
+// MP4/WebM
+document.getElementById('btn-export-mp4').addEventListener('click',async()=>{
+  if(state.frames.length<2){alert('Нужно минимум 2 кадра');return}
+  if(!window.MediaRecorder){alert('Ваш браузер не поддерживает запись видео');return}
+  
+  showProgress('Экспорт MP4...');
+  const scale=Math.max(8,state.pixelSize);
+  const offscreen=document.createElement('canvas');
+  offscreen.width=state.width*scale;offscreen.height=state.height*scale;
+  const octx=offscreen.getContext('2d');
+  octx.imageSmoothingEnabled=false;
+  
+  const stream=offscreen.captureStream(state.fps);
+  let mimeType='video/webm;codecs=vp9';
+  if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm;codecs=vp8';
+  if(!MediaRecorder.isTypeSupported(mimeType))mimeType='video/webm';
+  
+  const recorder=new MediaRecorder(stream,{mimeType:mimeType,videoBitsPerSecond:2500000});
+  const chunks=[];
+  recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+  
+  recorder.onstop=()=>{
+    updateProgress(100);
+    const blob=new Blob(chunks,{type:mimeType});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    link.download='animation.webm';
+    link.href=url;
+    link.click();
+    setTimeout(()=>{hideProgress();URL.revokeObjectURL(url)},2000);
+  };
+  
+  recorder.start();
+  const frameDuration=1000/state.fps;
+  
+  for(let i=0;i<state.frames.length;i++){
+    const frame=state.frames[i];
+    octx.fillStyle='#FFFFFF';
+    octx.fillRect(0,0,offscreen.width,offscreen.height);
+    for(let y=0;y<state.height;y++){for(let x=0;x<state.width;x++){if(frame[y][x]){octx.fillStyle=frame[y][x];octx.fillRect(x*scale,y*scale,scale,scale)}}}
+    updateProgress((i+1)/state.frames.length*90);
+    await new Promise(r=>setTimeout(r,frameDuration));
+  }
+  
+  await new Promise(r=>setTimeout(r,200));
+  recorder.stop();
+});
+
+// Keyboard
+document.addEventListener('keydown',e=>{
+  if(e.key===' '&&state.playing){stopPlay();e.preventDefault()}
+  if(e.key===' '&&!state.playing){startPlay();e.preventDefault()}
+  if(e.key==='ArrowRight'&&state.currentFrame<state.frames.length-1){state.currentFrame++;renderAll()}
+  if(e.key==='ArrowLeft'&&state.currentFrame>0){state.currentFrame--;renderAll()}
+  if(e.key==='p')document.querySelector('[data-tool="pencil"]').click();
+  if(e.key==='e')document.querySelector('[data-tool="eraser"]').click();
+  if(e.key==='g')document.querySelector('[data-tool="fill"]').click();
+  if(e.key==='i')document.querySelector('[data-tool="picker"]').click();
+});
+
+setupPalettes();renderAll();
+})();
+</script>
+</body>
+</html>

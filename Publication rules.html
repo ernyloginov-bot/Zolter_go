@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter Правила публикации</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<style>
+:root{--bg:#FAF7F4;--text:#2C2825;--text-sec:#6B6560;--text-light:#9B9490;--accent:#B8A088;--accent-dark:#8C7560;--border:#E8E0D8}
+[data-theme="dark"]{--bg:#1A1816;--text:#D4C9BE;--text-sec:#9B9490;--text-light:#6B6560;--accent:#B8A088;--accent-dark:#D4C9BE;--border:#3A3530}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);transition:background .4s,color .4s;line-height:1.7}
+
+.topbar{position:sticky;top:0;z-index:100;padding:20px 48px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,var(--bg) 70%,transparent);pointer-events:none}
+.topbar>*{pointer-events:auto}
+.logo{font-size:16px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--text);text-decoration:none}
+.logo span{color:var(--accent)}
+.theme-toggle{width:32px;height:32px;background:none;border:1px solid var(--border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-sec);transition:all .2s}
+.theme-toggle:hover{background:rgba(184,160,136,.12)}
+
+.content{max-width:680px;margin:0 auto;padding:80px 48px 160px}
+
+.content > p{margin-bottom:24px;color:var(--text-sec);font-size:16px;line-height:1.8}
+
+h1{font-size:clamp(36px,5vw,60px);font-weight:200;letter-spacing:-2px;line-height:1.1;margin-bottom:16px}
+h1 strong{font-weight:700;color:var(--accent-dark)}
+
+h2{font-size:20px;font-weight:500;letter-spacing:-0.3px;margin-top:64px;margin-bottom:16px;color:var(--text)}
+
+h3{font-size:15px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-top:40px;margin-bottom:12px}
+
+p{margin-bottom:16px}
+
+.section-label{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:48px;margin-top:8px;display:flex;align-items:center;gap:16px}
+.section-label::before{content:'';width:40px;height:1px;background:var(--accent)}
+
+ul,ol{margin-bottom:24px;padding-left:20px}
+li{margin-bottom:8px;color:var(--text-sec);font-size:15px;line-height:1.7}
+li::marker{color:var(--accent)}
+
+.note{font-size:13px;color:var(--text-light);font-style:italic;margin-bottom:24px;padding-left:16px;border-left:2px solid var(--border)}
+
+strong{font-weight:600;color:var(--text)}
+
+@media(max-width:768px){.content{padding:40px 24px 120px}.topbar{padding:16px 24px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+  <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>
+</div>
+
+<div class="content">
+
+  <div class="section-label">Документация</div>
+
+  <h1>Правила <strong>публикации</strong> контента</h1>
+
+  <p>Этот документ определяет стандарты и требования к материалам, размещаемым на платформе Zolter. Мы стремимся к качеству, а не к количеству. Каждый опубликованный материал должен быть полезен читателю.</p>
+
+  <p>Публикуя контент, вы берёте на себя ответственность за его точность, оригинальность и соответствие стандартам сообщества.</p>
+
+  <h2>1. Общие принципы</h2>
+
+  <p>Все материалы на платформе должны соответствовать следующим принципам:</p>
+
+  <ul>
+    <li><strong>Оригинальность.</strong> Принимается только авторский контент. Копирование материалов с других ресурсов без указания источника запрещено.</li>
+    <li><strong>Точность.</strong> Факты, цифры и данные должны быть проверены перед публикацией. Ссылки на источники приветствуются.</li>
+    <li><strong>Полезность.</strong> Каждый материал должен решать конкретную задачу читателя или давать новую информацию.</li>
+    <li><strong>Ясность.</strong> Текст должен быть написан понятным языком без избыточного жаргона.</li>
+  </ul>
+
+  <div class="note">Если вы не уверены, соответствует ли ваш материал этим принципам - свяжитесь с модерацией перед публикацией.</div>
+
+  <h2>2. Форматирование и структура</h2>
+
+  <p>Правильно оформленный материал что бы легче читалось и лучше воспринималось. Следуйте этим рекомендациям (для веб-программистов):</p>
+
+  <h3>Заголовки</h3>
+  <p>Используйте иерархию заголовков логично. Заголовок h1 только один на страницу. Подзаголовки h2 и h3 помогают структурировать мысль.</p>
+
+  <h3>Абзацы</h3>
+  <p>Один абзац одна мысль. Средняя длина абзаца не должна превышать пяти предложений. Длинные блоки текста разбивайте на меньшие части.</p>
+
+  <h3>Списки и выделения</h3>
+  <p>Перечисления оформляйте списками. Важные моменты выделяйте жирным шрифтом, но не злоупотребляйте этим иначе акцент теряется.</p>
+
+  <h3>Изображения</h3>
+  <p>Все изображения должны иметь отношение к тексту. Используйте собственные изображения или прямые ссылки с других сайтов. Указывайте автора, если требуется.</p>
+
+  <h3>Код</h3>
+  <p>Фрагменты кода оформляйте как вам угодно. Проверяйте, что код работает перед публикацией.</p>
+
+  <h2>3. Запрещённый контент</h2>
+
+  <p>На платформе строго запрещено публиковать следующие типы материалов:</p>
+
+  <ol>
+    <li>Контент, содержащий оскорбления, угрозы или разжигание ненависти по любому признаку.</li>
+    <li>Материалы, нарушающие авторские права третьих лиц.</li>
+    <li>Рекламные и спам-публикации, не несущие информационной ценности.</li>
+    <li>Ложная или непроверенная информация, способная причинить вред.</li>
+    <li>Контент для взрослых и материалы порнографического характера.</li>
+    <li>Инструкции по созданию вредоносного программного обеспечения или обходу систем безопасности.</li>
+    <li>Персональные данные третьих лиц без их согласия. (модерация может попросить доказательства)</li>
+  </ol>
+
+  <div class="note">Нарушение этих правил приведёт к отмене в публикации материала.</div>
+
+  <h2>4. Редакционная политика</h2>
+
+  <p>Модерация платформы оставляет за собой право:</p>
+
+  <ul>
+    <li>Отклонять проекты/материалы, не соответствующие стандартам качества.</li>
+    <li>Вносить стилистические правки для улучшения читаемости или производительности.</li>
+    <li>Запрашивать дополнительную информацию или источники у автора публикации.</li>
+	<li>Исправлять ошибки в тексте проекта/материала.</li>
+    <li>Снимать с публикации проекты/материалы, утратившие актуальность или содержащие ошибки.</li>
+    <li>Добавлять теги и категории для улучшения навигации.</li>
+	<li>Исправлять код если в нём есть ошибки.</li>
+	<li>Компилировать код c++, python, java, c, c#.</li>
+  </ul>
+
+  <p>Мы не меняем смысл и позицию автора. Все правки носят исключительно редакционный характер и согласовываются с автором при существенных изменениях.</p>
+
+  <h2>5. Авторство и права</h2>
+
+  <p>Автор сохраняет все права на созданный контент. Публикуя материал на платформе Zolter, вы предоставляете нам неисключительную лицензию на его размещение, распространение и отображение.</p>
+
+  <p>Вы можете удалить свой материал в любое время через панель управления. Удаление вступает в силу немедленно.</p>
+
+  <p>Материалы, созданные в рамках сотрудничества с Zolter, могут иметь отдельные условия — они обсуждаются индивидуально.</p>
+
+  <h2>6. Комментарии и обсуждения</h2>
+
+  <p>Комментарии к публикациям модерируются по следующим правилам:</p>
+
+  <ul>
+    <li>Комментарий должен быть по теме публикации.</li>
+    <li>Запрещены оскорбления в адрес авторов и других участников платформы.</li>
+    <li>Спам и несогласованная с автором или модерацией реклама - удаляются.</li>
+    <li>Конструктивная критика приветствуется.</li>
+  </ul>
+
+  <p>Автор публикации может удалить любой комментарий к своему материалу. Модераторы удаляют комментарии, нарушающие правила, без предупреждения.</p>
+
+  <h2>7. Процедура подачи проекта/материала</h2>
+
+  <p>Процесс публикации состоит из нескольких этапов:</p>
+
+  <ol>
+    <li><strong>Подготовка.</strong>Напишите проект/материал с помощью инструментов платформы, проверьте факты, добавьте изображения и источники.</li>
+    <li><strong>Отправка.</strong> Загрузите html файл, укажите описание, название, примичания к проету для модерации.</li>
+    <li><strong>Рецензирование.</strong>Модерация рассматривает материал в течение 1-7 дней в зависимости от размера файла, статьи.</li>
+    <li><strong>Правки.</strong> При необходимости автору направляются рекомендации по доработке.</li>
+    <li><strong>Публикация.</strong> После одобрения модерацией, материал публикуется и появляется в ленте.</li>
+  </ol>
+
+  <div class="note">Срочные публикации обсуждаются индивидуально. Укажите «срочно» в теме письма при отправке материала.</div>
+
+  <h2>8. Ответственность</h2>
+
+  <p>Автор опубликованного контента несёт полную ответственность за содержание публикуемых материалов. Если в материале обнаружены ошибки, автор обязан внести исправления в кратчайшие сроки.</p>
+
+  <p>Платформа Zolter не несёт ответственности за содержание пользовательских материалов, но обязуется оперативно реагировать на жалобы и уведомления о нарушениях.</p>
+
+  <p>Жалобы на опубликованный контент отправляются через панель управления.</p>
+
+  <h2>9. Обновление правил</h2>
+
+  <p>Настоящие правила могут быть обновлены без предварительного уведомления. Актуальная версия всегда доступна на этой странице. Дата последнего обновления: <strong>29 апреля 2026 года</strong>.</p>
+
+  <p>Продолжая использовать платформу после обновления правил, вы соглашаетесь с новыми правилами платформы.</p>
+
+  <p style="margin-top:80px;padding-top:32px;border-top:1px solid var(--border);color:var(--text-light);font-size:13px;">Вопросы по правилам публикации: <a href="vk.com/zolter_go" style="color:var(--accent);text-decoration:none">Личное сообщение в сообщество Вконтакте</a></p>
+
+</div>
+
+<script>
+document.getElementById('theme-toggle').addEventListener('click',()=>{
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');
+  localStorage.setItem('zolter-rules-theme',d?'light':'dark');
+});
+const saved=localStorage.getItem('zolter-rules-theme');
+if(saved)document.documentElement.setAttribute('data-theme',saved);
+</script>
+</body>
+</html>

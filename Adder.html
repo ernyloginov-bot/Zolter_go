@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter Сокращение текста</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-mono@5.0.8/index.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAF7F4;
+  --surface: #FFFFFF;
+  --surface-alt: #F2EDE7;
+  --surface-alt2: #E8E0D8;
+  --border: #D4C9BE;
+  --text: #2C2825;
+  --text-sec: #6B6560;
+  --text-light: #9B9490;
+  --accent: #B8A088;
+  --accent-dark: #8C7560;
+  --green: #27AE60;
+  --orange: #E67E22;
+  --red: #C0392B;
+  --shadow: rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] {
+  --bg: #1A1816;
+  --surface: #24201C;
+  --surface-alt: #2A2622;
+  --surface-alt2: #3A3530;
+  --border: #4A433D;
+  --text: #D4C9BE;
+  --text-sec: #9B9490;
+  --text-light: #6B6560;
+  --accent: #B8A088;
+  --accent-dark: #D4C9BE;
+  --shadow: rgba(0,0,0,0.3);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+
+.topbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.logo { font-size: 16px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--text); text-decoration: none; }
+.logo span { color: var(--accent); }
+.page-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); padding: 0 16px; border-left: 1px solid var(--border); margin-left: 8px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.theme-toggle { width: 32px; height: 32px; background: none; border: 1px solid var(--border); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: var(--text-sec); }
+.theme-toggle:hover { background: var(--surface-alt); }
+
+.btn { padding: 8px 16px; background: none; border: 1px solid var(--border); color: var(--text-sec); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-family: inherit; display: flex; align-items: center; gap: 6px; border-radius: 4px; white-space: nowrap; }
+.btn:hover { background: var(--surface-alt); color: var(--text); border-color: var(--border); }
+.btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn.primary:hover { opacity: 0.85; }
+
+/* Layout */
+.workspace { flex: 1; display: flex; overflow: hidden; }
+
+.input-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+
+.output-panel {
+  width: 45%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.panel-header h2 {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.panel-header .stats {
+  font-size: 11px;
+  color: var(--text-light);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.text-area {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.8;
+  padding: 24px;
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+}
+
+.text-area::placeholder { color: var(--text-light); }
+
+.output-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.output-content .sentence {
+  display: inline;
+  transition: opacity 0.3s;
+}
+
+.output-content .sentence.kept {
+  /* normal */
+}
+
+.output-content .sentence.removed {
+  opacity: 0.25;
+  text-decoration: line-through;
+  text-decoration-color: var(--red);
+}
+
+.output-content .highlight-word {
+  background: rgba(184, 160, 136, 0.25);
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: 500;
+}
+
+/* Controls */
+.controls {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.range-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+}
+
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.range-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text-sec);
+  min-width: 36px;
+  text-align: right;
+}
+
+.mode-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mode-btn {
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.mode-btn.active { background: var(--accent); color: #fff; }
+.mode-btn:hover:not(.active) { background: var(--surface-alt); }
+
+.spacer { flex: 1; }
+
+/* Stats Bar */
+.stats-bar {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-alt);
+  display: flex;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.stat-item .stat-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.stat-item .stat-val.green { color: var(--green); }
+.stat-item .stat-val.orange { color: var(--orange); }
+
+.stat-item .stat-label {
+  color: var(--text-light);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Keywords */
+.keywords {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.keywords h4 {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+
+.keyword-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.keyword-tag {
+  padding: 4px 10px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text-sec);
+}
+
+/* Empty State */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--text-light);
+}
+
+.empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.3; }
+.empty-state h3 { font-size: 18px; font-weight: 300; margin-bottom: 8px; color: var(--text-sec); }
+.empty-state p { font-size: 13px; line-height: 1.6; max-width: 320px; }
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.4s ease-out; }
+
+@media (max-width: 900px) {
+  .workspace { flex-direction: column; }
+  .input-panel { border-right: none; border-bottom: 1px solid var(--border); }
+  .output-panel { width: 100%; }
+  .page-title { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+    <span class="page-title">Сократитель текста</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn" id="btn-demo">Пример текста</button>
+    <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="workspace">
+  <div class="input-panel">
+    <div class="panel-header">
+      <h2>Исходный текст</h2>
+      <span class="stats" id="input-stats">0 слов · 0 символов</span>
+    </div>
+    <textarea class="text-area" id="input-text" placeholder="Вставьте текст, который нужно сократить...
+
+Алгоритм автоматически определит ключевые предложения, удалит повторы и оставит только самую важную информацию."></textarea>
+    <div class="controls">
+      <div class="control-group">
+        <span class="control-label">Режим</span>
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="extract">Выжимка</button>
+          <button class="mode-btn" data-mode="compress">Сжатие</button>
+          <button class="mode-btn" data-mode="key">Ключевое</button>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="control-group">
+        <span class="control-label">Сжатие</span>
+        <div class="slider-container">
+          <input type="range" class="range-slider" id="compression" min="10" max="80" value="40" step="5">
+          <span class="range-value" id="compression-val">40%</span>
+        </div>
+      </div>
+      <button class="btn primary" id="btn-summarize">Сократить</button>
+    </div>
+  </div>
+
+  <div class="output-panel">
+    <div class="panel-header">
+      <h2>Результат</h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="stats" id="output-stats"></span>
+        <button class="btn" id="btn-copy" style="display:none;">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" width="14" height="14"><rect x="5" y="5" width="9" height="9" rx="1" stroke-width="1.5"/><path d="M3 11V3h8" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Копировать
+        </button>
+      </div>
+    </div>
+    <div class="output-content" id="output-content">
+      <div class="empty-state">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor"><path d="M8 8h32v32H8z" stroke-width="2"/><path d="M16 16h16M16 22h16M16 28h10M16 34h12" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <h3>Вставьте текст слева</h3>
+        <p>Выберите режим сжатия и нажмите «Сократить», чтобы увидеть результат.</p>
+      </div>
+    </div>
+    <div class="keywords" id="keywords-section" style="display:none;">
+      <h4>Ключевые слова</h4>
+      <div class="keyword-tags" id="keyword-tags"></div>
+    </div>
+    <div class="stats-bar" id="stats-bar" style="display:none;">
+      <div class="stat-item">
+        <span class="stat-val green" id="stat-reduction">0%</span>
+        <span class="stat-label">Сокращение</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="stat-orig-words">0</span>
+        <span class="stat-label">Было слов</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="stat-new-words">0</span>
+        <span class="stat-label">Стало слов</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="stat-sentences">0</span>
+        <span class="stat-label">Предложений</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Theme
+  const savedTheme = localStorage.getItem('zolter-summarize-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('zolter-summarize-theme', newTheme);
+  });
+
+  // Mode
+  let currentMode = 'extract';
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+    });
+  });
+
+  // Compression slider
+  const compressionSlider = document.getElementById('compression');
+  const compressionVal = document.getElementById('compression-val');
+  compressionSlider.addEventListener('input', () => {
+    compressionVal.textContent = compressionSlider.value + '%';
+  });
+
+  // Input stats
+  const inputText = document.getElementById('input-text');
+  const inputStats = document.getElementById('input-stats');
+
+  inputText.addEventListener('input', () => {
+    const text = inputText.value.trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    const chars = text.length;
+    inputStats.textContent = `${words} слов · ${chars} символов`;
+  });
+
+  // === RUSSIAN STOP WORDS ===
+  const stopWords = new Set([
+    'и','в','во','не','что','он','на','я','с','со','как','а','то','все','она','так','его','но','да','ты','к','у','же','вы','за','бы','по','только','ее','мне','было','вот','от','меня','еще','нет','о','из','ему','теперь','когда','даже','ну','вдруг','ли','если','уже','или','ни','быть','был','него','до','вас','нибудь','опять','уж','вам','сказал','ведь','там','потом','себя','ничего','ей','может','они','тут','где','есть','надо','ней','для','мы','тебя','их','чем','была','сам','чтоб','без','будто','человек','чего','раз','тоже','себе','под','жизнь','будет','ж','тогда','кто','этот','говорил','того','потому','этого','какой','совсем','ним','здесь','этом','один','почти','мой','тем','чтобы','нее','кажется','сейчас','были','куда','зачем','всех','никогда','сегодня','можно','при','наконец','два','об','другой','хоть','после','над','больше','тот','через','эти','нас','про','всего','них','какая','много','разве','сказала','три','эту','моя','впрочем','хорошо','свою','этой','перед','иногда','лучше','чуть','том','нельзя','такой','им','более','всегда','конечно','всю','между','это','его','ее','ей','их','нам','вас','мной','тобой','ним','ней','нами','вами','ими','себя','себе','собой','собою','мной','мною','тобой','тобою','им','им','ею','ею','ими','ею','меня','тебя','нас','вас','себя','мне','тебе','нам','вам','себе','мне','тебе','нам','вам','себе','меня','тебя','нас','вас','себя','мной','мною','тобой','тобою','им','ею','ею','ею','ими','ею','мной','мною','тобой','тобою','им','им','ею','ею','ими','ею','мной','мною','тобой','тобою','им','им','ею','ею','ими','ею',
+    'который','которая','которые','которое','которого','которой','которых','которому','которым','которыми',
+    'этот','эта','это','эти','этого','этой','этом','этому','этим','этими','этих',
+    'тот','та','то','те','того','той','том','тому','тем','теми','тех',
+    'весь','вся','все','всего','всей','всем','всему','всеми','всех','всём',
+    'сам','сама','само','сами','самого','самой','самому','самим','самими','самих',
+    'свой','своя','своё','свои','своего','своей','своём','своему','своим','своими','своих',
+    'друг','другой','другого','другому','другим','другими','других',
+    'такой','такая','такое','такие','такого','такой','таком','такому','таким','такими','таких',
+    'каждый','каждая','каждое','каждые','каждого','каждой','каждому','каждым','каждыми','каждых',
+    'любой','любая','любое','любые','любого','любой','любому','любым','любыми','любых',
+    'свой','своя','своё','свои',
+    'бы','ли','же','бы','б','ж','ведь','да','нет',
+    'для','через','после','перед','над','под','при','без','за','про','от','до','из','у','к','на','с','о','об','по','во','со',
+    'что','кто','где','куда','откуда','зачем','почему','как','какой','какая','какое','какие',
+    'в','на','с','к','у','о','об','из','до','по','за','про','от','над','под','при','перед','через','после','между','кроме','среди',
+    'всё','вот','уж','ну','вдруг','опять','только','лишь','просто','прямо','совсем','почти','почему','потому','поэтому','затем','потом','здесь','там','тут','куда','где','когда','тогда','теперь','сейчас','сегодня','вчера','завтра','часто','редко','иногда','всегда','никогда','очень','весьма','слишком','довольно','довольно','несколько','много','мало','немного','чуть','более','менее','больше','меньше','почти','около',
+    'этот','тот','какой','чей','который','кто','что','где','куда','откуда','зачем','почему','как','каков','каковой',
+    'я','ты','он','она','оно','мы','вы','они','меня','тебя','его','её','нас','вас','их','мне','тебе','ему','ей','нам','вам','им','мной','тобой','им','ею','нами','вами','ими','себя','себе','собой','собою',
+    'мой','твой','его','её','наш','ваш','их','свой','мой','моя','моё','мои','моего','моей','моём','моему','моим','моими','моих',
+    'твой','твоя','твоё','твои','твоего','твоей','твоём','твоему','твоим','твоими','твоих',
+    'наш','наша','наше','наши','нашего','нашей','нашем','нашему','нашим','нашими','наших',
+    'ваш','ваша','ваше','ваши','вашего','вашей','вашем','вашему','вашим','вашими','ваших',
+    'свой','своя','своё','свои','своего','своей','своём','своему','своим','своими','своих',
+    'первый','первая','первое','первые','первого','первой','первом','первому','первым','первыми','первых',
+    'второй','вторая','второе','вторые','второго','второй','втором','второму','вторым','вторыми','вторых',
+    'сам','сама','само','сами','самого','самой','самому','самим','самими','самих',
+    'один','одна','одно','одни','одного','одной','одном','одному','одним','одними','одних',
+    'два','две','двух','двум','двумя','обоих','обе','обеих','обеим','обеими',
+    'три','трёх','трём','тремя','четыре','четырёх','четырём','четырьмя','пять','пяти','пяти','пятью',
+    'был','была','было','были','будет','будут','буду','будешь','будем','будете',
+    'быть','бывать','стал','стала','стало','стали',
+    'мог','могла','могло','могли','может','могут','могу','можешь','можем','можете',
+    'хотел','хотела','хотело','хотели','хочу','хочешь','хочет','хотим','хотите','хотят',
+    'сказал','сказала','сказало','сказали','говорил','говорила','говорило','говорили',
+    'делал','делала','делало','делали','делает','делают','делаю','делаешь','делаем','делаете',
+    'сказал','говорит','говорят','думает','думают','знает','знают','понял','поняла','поняло','поняли',
+    'можно','нужно','должен','должна','должно','должны','надо','следует',
+    'потому','что','так','как','также','тоже','только','лишь','даже','именно','прямо',
+    'впрочем','однако','но','а','или','либо','ни','не','нет','да',
+    'если','бы','ли','когда','как','что','чтобы','пока','хотя','несмотря',
+    'поскольку','потому','что','так','что','затем','чтобы','для','того','чтобы',
+    'в','на','под','над','за','перед','через','после','до','от','из','к','у','о','об','с','со','по','при','между','вокруг','около','кроме','вместо','вне','внутри','сквозь','мимо','против','благодаря','согласно','вроде','подобно',
+    'о','об','обо','про','без','в','во','на','над','под','перед','за','с','со','к','ко','у','из','от','до','по','при','через','после','между',
+    'вот','вон','то','это','тот','эта','этот','это','эти','такой','такая','такое','такие',
+    'тут','там','здесь','сейчас','теперь','потом','затем','ещё','уже','только','лишь','даже','совсем','почти','чуть','немного','много','мало','больше','меньше','очень','весьма','слишком','довольно','достаточно',
+    'всегда','никогда','часто','редко','иногда','обычно','как','будто','словно','точно','видимо','кажется','пожалуй','наверное','вероятно','возможно','конечно','разумеется','бесспорно','очевидно',
+    'однако','но','а','или','либо','да','нет','не','ни','даже','же','ли','бы','б','вот','ведь','ж',
+    'и','в','во','не','что','он','на','я','с','со','как','а','то','все','она','так','его','но','да','ты','к','у','же','вы','за','бы','по','только','ее','мне','было','вот','от','меня','еще','нет','о','из','ему','теперь','когда','даже','ну','вдруг','ли','если','уже','или','ни','быть','был','него','до','вас','нибудь','опять','уж','вам','сказал','ведь','там','потом','себя','ничего','ей','может','они','тут','где','есть','надо','ней','для','мы','тебя','их','чем','была','сам','чтоб','без','будто','человек','чего','раз','тоже','себе','под','жизнь','будет','ж','тогда','кто','говорил','того','потому','этого','какой','совсем','ним','здесь','этом','один','почти','мой','тем','чтобы','нее','сейчас','были','куда','зачем','всех','никогда','сегодня','можно','при','наконец','два','об','другой','хоть','после','над','больше','тот','через','эти','нас','про','всего','них','какая','много','разве','сказала','три','эту','моя','впрочем','хорошо','свою','этой','перед','иногда','лучше','чуть','том','нельзя','такой','им','более','всегда','конечно','всю','между',
+    'таким','образом','следовательно','соответственно','аналогично','например','в частности','в целом','в целом','вообще','в принципе','в основном','в целом','в целом','в частности','в частности',
+    'так','что','так','так','так','так','так','так','так','так','так','так','так','так','так','так',
+    'его','ее','ей','их','его','ее','ей','их','его','ее','ей','их',
+    'его','её','ее','их','них','них','них','них','них','них','них','них','них','них','них','них',
+  ]);
+
+  // English stop words
+  const enStopWords = new Set([
+    'the','a','an','and','or','but','in','on','at','to','for','of','with','by','from','up','about','into','over','after',
+    'is','am','are','was','were','be','been','being','have','has','had','do','does','did','will','would','could','should','may','might',
+    'it','its','this','that','these','those','i','me','my','we','our','you','your','he','him','his','she','her','they','them','their',
+    'not','no','so','if','then','than','too','very','just','also','only','even','still','already','always','never','sometimes','often',
+    'what','which','who','whom','when','where','why','how','all','each','every','both','few','more','most','other','some','such',
+    'can','cannot','cant','wont','dont','doesnt','didnt','isnt','arent','wasnt','werent','hasnt','havent','hadnt','wouldnt','shouldnt','couldnt',
+    'because','as','until','while','though','although','whether','however','here','there','out','any','once','again','just','much','many',
+    'well','back','also','come','came','make','made','like','get','got','go','went','know','knew','think','thought','see','saw','want','wanted',
+    'give','gave','take','took','use','used','find','found','tell','told','say','said','ask','asked','try','tried','need','needed',
+    'about','above','below','between','under','against','through','during','before','after','within','without','around','among'
+  ]);
+
+  const allStopWords = new Set([...stopWords, ...enStopWords]);
+
+  // === TEXT PROCESSING ===
+  function tokenize(text) {
+    return text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(w => w.length > 0);
+  }
+
+  function splitSentences(text) {
+    // Split by sentence boundaries
+    const sentences = text.match(/[^.!?]+[.!?]*/g);
+    if (!sentences) return [text];
+    return sentences.map(s => s.trim()).filter(s => s.length > 0);
+  }
+
+  function wordFrequency(text) {
+    const tokens = tokenize(text);
+    const freq = {};
+    tokens.forEach(t => {
+      if (t.length < 2 || allStopWords.has(t)) return;
+      freq[t] = (freq[t] || 0) + 1;
+    });
+    return freq;
+  }
+
+  function getKeywordScore(word, freq) {
+    if (word.length < 3 || allStopWords.has(word)) return 0;
+    return freq[word] || 0;
+  }
+
+  function sentenceScore(sentence, freq, totalSentences) {
+    const tokens = tokenize(sentence);
+    if (tokens.length === 0) return 0;
+
+    let score = 0;
+    const wordScores = [];
+
+    tokens.forEach(token => {
+      const ws = getKeywordScore(token, freq);
+      wordScores.push(ws);
+      score += ws;
+    });
+
+    // Average word score
+    score /= tokens.length;
+
+    // Bonus for position (first sentences are important)
+    // We'll apply this later
+
+    // Bonus for sentence length (not too short, not too long)
+    if (tokens.length < 3) score *= 0.5;
+    if (tokens.length > 40) score *= 0.8;
+
+    return { score, wordScores, tokens };
+  }
+
+  // === SUMMARIZATION MODES ===
+  function extractiveSummary(text, compression) {
+    const sentences = splitSentences(text);
+    if (sentences.length <= 2) return { kept: sentences.map(s => ({ text: s, kept: true })), keywords: [], allSentences: sentences };
+
+    const freq = wordFrequency(text);
+
+    // Score each sentence
+    const scored = sentences.map((s, i) => {
+      const result = sentenceScore(s, freq, sentences.length);
+      // Position bonus: first sentence is important
+      let posBonus = 0;
+      if (i === 0) posBonus = 0.3;
+      else if (i === 1) posBonus = 0.15;
+      else if (i === sentences.length - 1) posBonus = 0.1;
+
+      return {
+        text: s,
+        score: result.score + posBonus,
+        wordScores: result.wordScores,
+        tokens: result.tokens,
+        index: i
+      };
+    });
+
+    // Remove duplicate content
+    // Check similarity between sentences
+    for (let i = 0; i < scored.length; i++) {
+      for (let j = i + 1; j < scored.length; j++) {
+        const sim = jaccardSimilarity(scored[i].tokens, scored[j].tokens);
+        if (sim > 0.6) {
+          // Penalize the later sentence
+          scored[j].score *= (1 - sim * 0.5);
+        }
+      }
+    }
+
+    // Sort by score and select top sentences
+    const keepCount = Math.max(1, Math.ceil(sentences.length * (compression / 100)));
+    const sorted = [...scored].sort((a, b) => b.score - a.score);
+    const topN = sorted.slice(0, keepCount).map(s => s.index);
+
+    const keptSentences = scored.map((s, i) => ({
+      text: s.text,
+      kept: topN.includes(i),
+      score: s.score
+    }));
+
+    // Extract keywords
+    const keywords = Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([word]) => word);
+
+    return { kept: keptSentences, keywords, allSentences: sentences };
+  }
+
+  function compressSentences(text, compression) {
+    const sentences = splitSentences(text);
+    const freq = wordFrequency(text);
+    const result = [];
+    const keywords = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([w]) => w);
+    const keywordSet = new Set(keywords);
+
+    sentences.forEach(sentence => {
+      const tokens = tokenize(sentence);
+      const nonStopWords = tokens.filter(t => !allStopWords.has(t) && t.length >= 2);
+
+      // Calculate importance ratio of this sentence
+      const importantWords = nonStopWords.filter(t => keywordSet.has(t));
+      const importanceRatio = importantWords.length / Math.max(nonStopWords.length, 1);
+
+      const compressThreshold = 1 - (compression / 100);
+
+      let compressed = sentence;
+
+      // If sentence has low importance, shorten it
+      if (importanceRatio < compressThreshold && nonStopWords.length > 3) {
+        // Keep only keyword words + surrounding context
+        const kept = tokens.filter(t => keywordSet.has(t) || allStopWords.has(t) || t.length <= 2);
+        if (kept.length >= 3) {
+          compressed = reconstructSentence(kept, sentence);
+        }
+      }
+
+      result.push({
+        text: sentence,
+        kept: true,
+        compressed: compressed !== sentence,
+        compressedText: compressed
+      });
+    });
+
+    return { kept: result, keywords };
+  }
+
+  function keySummary(text, compression) {
+    const sentences = splitSentences(text);
+    const freq = wordFrequency(text);
+
+    // Score and rank
+    const scored = sentences.map((s, i) => {
+      const result = sentenceScore(s, freq, sentences.length);
+      let posBonus = 0;
+      if (i === 0) posBonus = 0.3;
+      else if (i === 1) posBonus = 0.15;
+      return { text: s, score: result.score + posBonus, index: i };
+    });
+
+    // Only keep 1-3 most important sentences
+    const keepCount = Math.max(1, Math.min(3, Math.ceil(sentences.length * (compression / 100))));
+    const sorted = [...scored].sort((a, b) => b.score - a.score);
+    const topN = sorted.slice(0, keepCount).map(s => s.index);
+
+    const kept = scored.map((s, i) => ({
+      text: s.text,
+      kept: topN.includes(i),
+      score: s.score
+    }));
+
+    const keywords = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([w]) => w);
+
+    return { kept, keywords, allSentences: sentences };
+  }
+
+  function jaccardSimilarity(tokens1, tokens2) {
+    const set1 = new Set(tokens1);
+    const set2 = new Set(tokens2);
+    const intersection = [...set1].filter(t => set2.has(t)).length;
+    const union = new Set([...set1, ...set2]).size;
+    return union > 0 ? intersection / union : 0;
+  }
+
+  function reconstructSentence(keptTokens, originalSentence) {
+    // Reconstruct preserving punctuation
+    const punctRegex = /([^\w\s])/g;
+    const puncts = originalSentence.match(punctRegex) || [];
+    const words = originalSentence.split(punctRegex).filter(w => w.trim());
+
+    let result = [];
+    let punctIdx = 0;
+
+    words.forEach(word => {
+      const clean = word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+      if (keptTokens.includes(clean)) {
+        result.push(word);
+      }
+    });
+
+    // Add ending punctuation
+    if (puncts.length > 0) {
+      result.push(puncts[puncts.length - 1]);
+    }
+
+    return result.join(' ');
+  }
+
+  // === MAIN SUMMARIZE ===
+  function summarize() {
+    const text = inputText.value.trim();
+    if (!text) return;
+
+    const compression = parseInt(compressionSlider.value);
+    let result;
+
+    switch (currentMode) {
+      case 'extract':
+        result = extractiveSummary(text, compression);
+        break;
+      case 'compress':
+        result = compressSentences(text, compression);
+        break;
+      case 'key':
+        result = keySummary(text, compression);
+        break;
+    }
+
+    renderResult(result, text);
+  }
+
+  function renderResult(result, originalText) {
+    const outputEl = document.getElementById('output-content');
+    const statsBar = document.getElementById('stats-bar');
+    const keywordsSection = document.getElementById('keywords-section');
+    const copyBtn = document.getElementById('btn-copy');
+    const outputStats = document.getElementById('output-stats');
+
+    // Build output HTML
+    let html = '';
+    let keptText = '';
+    let keptWords = 0;
+    let removedWords = 0;
+    let keptCount = 0;
+
+    result.kept.forEach(s => {
+      if (currentMode === 'compress' && s.compressed) {
+        html += `<span class="sentence kept">${highlightKeywords(s.compressedText, result.keywords)}</span> `;
+        keptText += s.compressedText + ' ';
+        keptWords += tokenize(s.compressedText).length;
+        keptCount++;
+      } else if (s.kept) {
+        html += `<span class="sentence kept">${highlightKeywords(s.text, result.keywords)}</span> `;
+        keptText += s.text + ' ';
+        keptWords += tokenize(s.text).length;
+        keptCount++;
+      } else {
+        html += `<span class="sentence removed">${s.text}</span> `;
+        removedWords += tokenize(s.text).length;
+      }
+    });
+
+    outputEl.innerHTML = `<div class="fade-in">${html.trim()}</div>`;
+    keptText = keptText.trim();
+
+    // Stats
+    const origWords = tokenize(originalText).length;
+    const reduction = Math.round((1 - keptWords / origWords) * 100);
+
+    document.getElementById('stat-reduction').textContent = reduction + '%';
+    document.getElementById('stat-reduction').className = 'stat-val ' + (reduction > 50 ? 'green' : reduction > 20 ? 'orange' : '');
+    document.getElementById('stat-orig-words').textContent = origWords;
+    document.getElementById('stat-new-words').textContent = keptWords;
+    document.getElementById('stat-sentences').textContent = keptCount;
+    outputStats.textContent = `${keptWords} слов · ${keptText.length} символов`;
+
+    statsBar.style.display = 'flex';
+    keywordsSection.style.display = result.keywords.length > 0 ? 'block' : 'none';
+    copyBtn.style.display = 'inline-flex';
+
+    // Keywords
+    const tagsEl = document.getElementById('keyword-tags');
+    tagsEl.innerHTML = result.keywords.map(k => `<span class="keyword-tag">${k}</span>`).join('');
+
+    // Store for copy
+    outputEl._plainText = keptText;
+  }
+
+  function highlightKeywords(text, keywords) {
+    if (!keywords || keywords.length === 0) return escapeHtml(text);
+    let result = escapeHtml(text);
+    keywords.forEach(kw => {
+      const regex = new RegExp(`(${kw})`, 'gi');
+      result = result.replace(regex, '<span class="highlight-word">$1</span>');
+    });
+    return result;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Copy
+  document.getElementById('btn-copy').addEventListener('click', () => {
+    const text = document.getElementById('output-content')._plainText;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('btn-copy');
+      btn.textContent = 'Скопировано!';
+      setTimeout(() => {
+        btn.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" width="14" height="14"><rect x="5" y="5" width="9" height="9" rx="1" stroke-width="1.5"/><path d="M3 11V3h8" stroke-width="1.5" stroke-linecap="round"/></svg> Копировать`;
+      }, 1500);
+    });
+  });
+
+  // Summarize button
+  document.getElementById('btn-summarize').addEventListener('click', summarize);
+
+  // Ctrl+Enter to summarize
+  inputText.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'Enter') {
+      e.preventDefault();
+      summarize();
+    }
+  });
+
+  // Demo text
+  document.getElementById('btn-demo').addEventListener('click', () => {
+    inputText.value = `Искусственный интеллект - это область информатики, которая занимается созданием систем, способных выполнять задачи, требующие человеческого интеллекта. К таким задачам относятся распознавание речи, принятие решений, перевод между языками и визуальное восприятие.
+
+В последние годы наблюдается стремительный рост развития технологий искусственного интеллекта. Это связано с увеличением вычислительных мощностей компьютеров, доступностью больших объёмов данных и совершенствованием алгоритмов машинного обучения.
+
+Машинное обучение - это подраздел искусственного интеллекта, в котором компьютеры учатся выполнять задачи без явного программирования. Вместо того чтобы писать правила для каждой ситуации, разработчики предоставляют алгоритмам данные, из которых те извлекают закономерности.
+
+Глубокое обучение - это ещё более узкая область машинного обучения, использующая нейронные сети с множеством слоёв. Эти сети способны обрабатывать огромные объёмы информации и находить сложные паттерны, которые человеку обнаружить практически невозможно.
+
+Нейронные сети вдохновлены биологическими нейронными сетями мозга. Они состоят из искусственных нейронов, соединённых между собой, которые обрабатывают информацию, передавая сигналы друг другу. Каждый нейрон получает входные данные, обрабатывает их и передаёт результат дальше.
+
+Применение искусственного интеллекта охватывает практически все сферы жизни. В медицине ИИ помогает диагностировать заболевания, анализировать медицинские изображения и разрабатывать новые лекарства. В финансах алгоритмы ИИ используются для обнаружения мошеннических операций и автоматической торговли на бирже.
+
+Автономные транспортные средства - одна из самых амбициозных областей применения ИИ. Компании по всему миру разрабатывают автомобили, способные передвигаться без водителя, используя компьютерное зрение, сенсоры и сложные алгоритмы навигации.
+
+В сфере образования ИИ позволяет создавать адаптивные системы обучения, которые подстраиваются под индивидуальные потребности каждого ученика. Такие системы могут анализировать прогресс студента и предлагать персонализированные учебные материалы.
+
+Несмотря на все преимущества, развитие ИИ несёт в себе определённые риски. Существуют опасения по поводу потери рабочих мест из-за автоматизации, вопросов приватности данных и возможности создания автономного оружия. Многие эксперты призывают к ответственному развитию технологий ИИ и созданию соответствующих регуляторных рамок.
+
+Будущее искусственного интеллекта представляется одновременно многообещающим и неопределённым. По мере развития технологий мы можем ожидать появления ещё более интеллектуальных систем, способных решать задачи, которые сегодня кажутся невозможными.`;
+
+    inputText.dispatchEvent(new Event('input'));
+  });
+})();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Генератор мемов</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family:'Inter',sans-serif;
+  background:#0f0f1a;
+  color:#e0e0e0;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+.app-header {
+  text-align:center;
+  padding:24px 20px 16px;
+  background:linear-gradient(135deg,#1a1a2e,#16213e);
+  border-bottom:1px solid #2a2a4a;
+}
+.app-header h1 {
+  font-size:28px;
+  font-weight:800;
+  background:linear-gradient(90deg,#ff6b6b,#ffa06b,#ffd93d,#6bcb77,#4d96ff,#ff6b6b);
+  background-size:200% auto;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:gradientShift 3s linear infinite;
+}
+@keyframes gradientShift {
+  to { background-position:200% center; }
+}
+.app-header p {
+  color:#888;
+  font-size:13px;
+  margin-top:4px;
+}
+
+.main-layout {
+  display:flex;
+  gap:24px;
+  max-width:1300px;
+  margin:24px auto;
+  padding:0 24px;
+  align-items:flex-start;
+}
+
+.sidebar {
+  width:320px;
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.panel {
+  background:#1a1a2e;
+  border:1px solid #2a2a4a;
+  border-radius:12px;
+  overflow:hidden;
+}
+.panel-header {
+  padding:12px 16px;
+  background:#16213e;
+  border-bottom:1px solid #2a2a4a;
+  font-weight:600;
+  font-size:14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.panel-header .icon { font-size:18px; }
+.panel-body { padding:16px; }
+
+.canvas-area {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+  min-width:0;
+}
+
+.canvas-wrapper {
+  position:relative;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  background:#111;
+  max-width:100%;
+}
+
+#memeCanvas {
+  display:block;
+  max-width:100%;
+  height:auto;
+  cursor:default;
+}
+
+.drag-hint {
+  position:absolute;
+  bottom:10px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.7);
+  color:#fff;
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:11px;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 0.3s;
+}
+.drag-hint.visible { opacity:1; }
+
+.upload-zone {
+  border:2px dashed #3a3a5a;
+  border-radius:12px;
+  padding:24px;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.3s;
+  background:rgba(255,255,255,0.02);
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color:#4d96ff;
+  background:rgba(77,150,255,0.08);
+}
+.upload-zone .upload-icon { font-size:36px; margin-bottom:8px; }
+.upload-zone p { font-size:13px; color:#888; }
+.upload-zone .browse-link { color:#4d96ff; text-decoration:underline; cursor:pointer; }
+#fileInput { display:none; }
+
+.template-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  max-height:200px;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:#3a3a5a transparent;
+}
+.template-grid::-webkit-scrollbar { width:4px; }
+.template-grid::-webkit-scrollbar-thumb { background:#3a3a5a; border-radius:2px; }
+
+.template-item {
+  aspect-ratio:1;
+  border-radius:8px;
+  overflow:hidden;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:all 0.2s;
+  position:relative;
+}
+.template-item:hover { border-color:#4d96ff; transform:scale(1.03); }
+.template-item.active { border-color:#ffd93d; }
+.template-item img { width:100%; height:100%; object-fit:cover; }
+.template-item .tmpl-label {
+  position:absolute;
+  bottom:0; left:0; right:0;
+  background:rgba(0,0,0,0.7);
+  color:#fff;
+  font-size:9px;
+  padding:3px 4px;
+  text-align:center;
+}
+
+.form-group {
+  margin-bottom:12px;
+}
+.form-group:last-child { margin-bottom:0; }
+.form-group label {
+  display:block;
+  font-size:12px;
+  color:#999;
+  margin-bottom:6px;
+  font-weight:500;
+}
+.form-group input[type="text"],
+.form-group textarea,
+.form-group select {
+  width:100%;
+  padding:8px 12px;
+  background:#111;
+  border:1px solid #2a2a4a;
+  border-radius:8px;
+  color:#e0e0e0;
+  font-size:13px;
+  font-family:inherit;
+  transition:border-color 0.2s;
+}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline:none;
+  border-color:#4d96ff;
+}
+.form-group textarea { resize:vertical; min-height:60px; }
+
+.form-row {
+  display:flex;
+  gap:10px;
+}
+.form-row .form-group { flex:1; }
+
+input[type="range"] {
+  -webkit-appearance:none;
+  width:100%;
+  height:6px;
+  border-radius:3px;
+  background:#2a2a4a;
+  outline:none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance:none;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#4d96ff;
+  cursor:pointer;
+  border:2px solid #1a1a2e;
+}
+
+.color-input-wrap {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.color-input-wrap input[type="color"] {
+  -webkit-appearance:none;
+  width:36px;
+  height:36px;
+  border:2px solid #2a2a4a;
+  border-radius:8px;
+  cursor:pointer;
+  background:none;
+  padding:2px;
+}
+.color-input-wrap input[type="color"]::-webkit-color-swatch-wrapper { padding:0; }
+.color-input-wrap input[type="color"]::-webkit-color-swatch { border-radius:4px; border:none; }
+.color-input-wrap .color-value {
+  font-size:12px;
+  color:#888;
+  flex:1;
+}
+
+.btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 20px;
+  border:none;
+  border-radius:8px;
+  font-family:inherit;
+  font-weight:600;
+  font-size:14px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.btn-primary {
+  background:linear-gradient(135deg,#4d96ff,#3a7bfd);
+  color:#fff;
+  box-shadow:0 4px 15px rgba(77,150,255,0.3);
+}
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(77,150,255,0.4); }
+.btn-secondary {
+  background:#2a2a4a;
+  color:#e0e0e0;
+}
+.btn-secondary:hover { background:#3a3a5a; }
+.btn-danger {
+  background:linear-gradient(135deg,#ff6b6b,#ee5a24);
+  color:#fff;
+}
+.btn-danger:hover { transform:translateY(-1px); }
+.btn-full { width:100%; }
+
+.action-buttons {
+  display:flex;
+  gap:10px;
+  width:100%;
+}
+.action-buttons .btn { flex:1; }
+
+.checkbox-group {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+}
+.checkbox-group input[type="checkbox"] {
+  width:16px;
+  height:16px;
+  accent-color:#4d96ff;
+  cursor:pointer;
+}
+.checkbox-group span { font-size:12px; color:#ccc; }
+
+.text-blocks {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.text-block {
+  background:#111;
+  border:1px solid #2a2a4a;
+  border-radius:8px;
+  padding:10px;
+  position:relative;
+}
+.text-block-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+}
+.text-block-header .block-title {
+  font-size:11px;
+  font-weight:600;
+  color:#4d96ff;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.remove-block {
+  background:none;
+  border:none;
+  color:#ff6b6b;
+  cursor:pointer;
+  font-size:16px;
+  padding:2px;
+  line-height:1;
+}
+.remove-block:hover { color:#ff4444; }
+
+.add-text-btn {
+  background:none;
+  border:1px dashed #3a3a5a;
+  border-radius:8px;
+  padding:8px;
+  color:#666;
+  cursor:pointer;
+  font-size:12px;
+  font-family:inherit;
+  transition:all 0.2s;
+  width:100%;
+}
+.add-text-btn:hover { border-color:#4d96ff; color:#4d96ff; }
+
+.tabs {
+  display:flex;
+  border-bottom:1px solid #2a2a4a;
+}
+.tab {
+  flex:1;
+  padding:10px;
+  text-align:center;
+  font-size:12px;
+  font-weight:600;
+  color:#666;
+  cursor:pointer;
+  transition:all 0.2s;
+  border-bottom:2px solid transparent;
+}
+.tab:hover { color:#aaa; }
+.tab.active { color:#4d96ff; border-bottom-color:#4d96ff; }
+
+.tab-content { display:none; padding:16px; }
+.tab-content.active { display:block; }
+
+.font-select {
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+}
+.font-option {
+  padding:4px 10px;
+  border-radius:6px;
+  border:1px solid #2a2a4a;
+  background:none;
+  color:#aaa;
+  cursor:pointer;
+  font-size:11px;
+  transition:all 0.2s;
+}
+.font-option:hover { border-color:#4d96ff; color:#4d96ff; }
+.font-option.active { background:#4d96ff; color:#fff; border-color:#4d96ff; }
+
+@media(max-width:900px) {
+  .main-layout {
+    flex-direction:column;
+    padding:0 12px;
+  }
+  .sidebar { width:100%; }
+  .template-grid { grid-template-columns:repeat(4,1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>🎭 Генератор мемов</h1>
+  <p>Создавай мемы за секунды — загрузи картинку, добавь текст, скачай!</p>
+</div>
+
+<div class="main-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <!-- Source Panel -->
+    <div class="panel">
+      <div class="panel-header"><span class="icon">️</span> Источник изображения</div>
+      <div class="panel-body">
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">📁</div>
+          <p>Перетащите изображение сюда<br>или <span class="browse-link">выберите файл</span></p>
+          <input type="file" id="fileInput" accept="image/*">
+        </div>
+      </div>
+    </div>
+
+    <!-- Templates Panel -->
+    <div class="panel">
+      <div class="panel-header"><span class="icon">🎨</span> Шаблоны</div>
+      <div class="panel-body" style="padding:12px;">
+        <div class="template-grid" id="templateGrid"></div>
+      </div>
+    </div>
+
+    <!-- Text Settings Panel -->
+    <div class="panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="texts">📝 Тексты</div>
+        <div class="tab" data-tab="style">🎨 Стиль</div>
+      </div>
+      <div class="tab-content active" id="tab-texts">
+        <div class="text-blocks" id="textBlocks"></div>
+        <button class="add-text-btn" id="addTextBtn">＋ Добавить текст</button>
+      </div>
+      <div class="tab-content" id="tab-style">
+        <div class="form-group">
+          <label>Шрифт</label>
+          <div class="font-select" id="fontSelect">
+            <button class="font-option active" data-font="Impact">Impact</button>
+            <button class="font-option" data-font="Arial Black">Arial Black</button>
+            <button class="font-option" data-font="Comic Sans MS">Comic Sans</button>
+            <button class="font-option" data-font="Georgia">Georgia</button>
+            <button class="font-option" data-font="Courier New">Courier</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Размер шрифта: <span id="fontSizeVal">40</span>px</label>
+          <input type="range" id="fontSize" min="12" max="120" value="40">
+        </div>
+        <div class="form-group">
+          <label>Цвет текста</label>
+          <div class="color-input-wrap">
+            <input type="color" id="textColor" value="#ffffff">
+            <span class="color-value" id="textColorVal">#ffffff</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Цвет обводки</label>
+          <div class="color-input-wrap">
+            <input type="color" id="strokeColor" value="#000000">
+            <span class="color-value" id="strokeColorVal">#000000</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Толщина обводки: <span id="strokeWidthVal">3</span>px</label>
+          <input type="range" id="strokeWidth" min="0" max="12" value="3">
+        </div>
+        <div class="form-group">
+          <label class="checkbox-group">
+            <input type="checkbox" id="textShadow">
+            <span>Тень текста</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-group">
+            <input type="checkbox" id="toUpperCase" checked>
+            <span>Всё заглавными</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-buttons">
+      <button class="btn btn-danger" id="clearBtn">🗑️ Очистить</button>
+      <button class="btn btn-primary" id="downloadBtn">💾 Скачать</button>
+    </div>
+  </div>
+
+  <!-- Canvas Area -->
+  <div class="canvas-area">
+    <div class="canvas-wrapper" id="canvasWrapper">
+      <canvas id="memeCanvas" width="600" height="600"></canvas>
+      <div class="drag-hint" id="dragHint">↕ Перетаскивайте текст мышкой</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('memeCanvas');
+const ctx = canvas.getContext('2d');
+
+let memeImage = null;
+let textBlocks = [];
+let blockIdCounter = 0;
+let draggingBlock = null;
+let dragOffset = { x: 0, y: 0 };
+
+const styleState = {
+  font: 'Impact',
+  fontSize: 40,
+  textColor: '#ffffff',
+  strokeColor: '#000000',
+  strokeWidth: 3,
+  textShadow: false,
+  toUpperCase: true
+};
+
+// Templates
+const templates = [
+  { url: 'https://image.qwenlm.ai/public_source/cb963242-0158-43c0-8490-94bb69e97394/151be15ed-a7e0-44c2-bd9e-0c66ddb4ec94.png', label: 'Девушка оглядывается' },
+  { url: 'https://image.qwenlm.ai/public_source/cb963242-0158-43c0-8490-94bb69e97394/1bc0d6a0c-ed65-4d69-81f4-105be4715ff1.png', label: 'Шок' },
+  { url: 'https://image.qwenlm.ai/public_source/cb963242-0158-43c0-8490-94bb69e97394/1485d2049-7047-4c6b-b672-e12472f8e21e.png', label: 'Указание / Растерянность' },
+];
+
+function init() {
+  renderTemplates();
+  addTextBlock('', 'top');
+  addTextBlock('', 'bottom');
+  render();
+}
+
+function renderTemplates() {
+  const grid = document.getElementById('templateGrid');
+  grid.innerHTML = '';
+  templates.forEach((t, i) => {
+    const div = document.createElement('div');
+    div.className = 'template-item';
+    div.innerHTML = `<img src="${t.url}" alt="${t.label}" loading="lazy"><div class="tmpl-label">${t.label}</div>`;
+    div.addEventListener('click', () => loadTemplate(t.url, div));
+    grid.appendChild(div);
+  });
+}
+
+function loadTemplate(url, el) {
+  document.querySelectorAll('.template-item').forEach(e => e.classList.remove('active'));
+  if (el) el.classList.add('active');
+  loadImage(url);
+}
+
+function loadImage(src) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    memeImage = img;
+    canvas.width = Math.min(600, img.width);
+    canvas.height = Math.min(600, img.height);
+    // Maintain aspect ratio
+    const ratio = Math.min(600 / img.width, 600 / img.height);
+    canvas.width = img.width * ratio;
+    canvas.height = img.height * ratio;
+    repositionTexts();
+    render();
+    document.getElementById('dragHint').classList.add('visible');
+    setTimeout(() => document.getElementById('dragHint').classList.remove('visible'), 3000);
+  };
+  img.onerror = () => alert('Не удалось загрузить изображение');
+  img.src = src;
+}
+
+function repositionTexts() {
+  const w = canvas.width, h = canvas.height;
+  textBlocks.forEach((block, i) => {
+    if (block.pos === 'top') {
+      block.x = w / 2;
+      block.y = 30 + i * 50;
+    } else if (block.pos === 'bottom') {
+      block.x = w / 2;
+      block.y = h - 30 - (textBlocks.length - 1 - i) * 50;
+    }
+  });
+}
+
+function addTextBlock(text, pos) {
+  const id = ++blockIdCounter;
+  const block = { id, text: text || '', pos: pos || 'custom', x: canvas.width / 2, y: canvas.height / 2 };
+  textBlocks.push(block);
+  if (textBlocks.length <= 2) {
+    block.pos = textBlocks.length === 1 ? 'top' : 'bottom';
+  }
+  renderTextBlocksUI();
+  render();
+}
+
+function removeTextBlock(id) {
+  textBlocks = textBlocks.filter(b => b.id !== id);
+  renderTextBlocksUI();
+  render();
+}
+
+function renderTextBlocksUI() {
+  const container = document.getElementById('textBlocks');
+  container.innerHTML = '';
+  textBlocks.forEach((block, i) => {
+    const div = document.createElement('div');
+    div.className = 'text-block';
+    div.innerHTML = `
+      <div class="text-block-header">
+        <span class="block-title">Текст ${i + 1}</span>
+        <button class="remove-block" data-id="${block.id}">✕</button>
+      </div>
+      <textarea data-id="${block.id}" placeholder="Введите текст...">${block.text}</textarea>
+    `;
+    container.appendChild(div);
+
+    const textarea = div.querySelector('textarea');
+    textarea.addEventListener('input', (e) => {
+      block.text = e.target.value;
+      render();
+    });
+
+    div.querySelector('.remove-block').addEventListener('click', () => removeTextBlock(block.id));
+  });
+}
+
+// Style controls
+document.getElementById('fontSize').addEventListener('input', function() {
+  styleState.fontSize = parseInt(this.value);
+  document.getElementById('fontSizeVal').textContent = this.value;
+  render();
+});
+document.getElementById('textColor').addEventListener('input', function() {
+  styleState.textColor = this.value;
+  document.getElementById('textColorVal').textContent = this.value;
+  render();
+});
+document.getElementById('strokeColor').addEventListener('input', function() {
+  styleState.strokeColor = this.value;
+  document.getElementById('strokeColorVal').textContent = this.value;
+  render();
+});
+document.getElementById('strokeWidth').addEventListener('input', function() {
+  styleState.strokeWidth = parseInt(this.value);
+  document.getElementById('strokeWidthVal').textContent = this.value;
+  render();
+});
+document.getElementById('textShadow').addEventListener('change', function() {
+  styleState.textShadow = this.checked;
+  render();
+});
+document.getElementById('toUpperCase').addEventListener('change', function() {
+  styleState.toUpperCase = this.checked;
+  render();
+});
+
+// Font select
+document.querySelectorAll('.font-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.font-option').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    styleState.font = btn.dataset.font;
+    render();
+  });
+});
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// Add text
+document.getElementById('addTextBtn').addEventListener('click', () => {
+  addTextBlock('', 'custom');
+});
+
+// Upload
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', (e) => {
+  if (e.target.files.length) loadFile(e.target.files[0]);
+});
+
+function loadFile(file) {
+  if (!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = (e) => loadImage(e.target.result);
+  reader.readAsDataURL(file);
+}
+
+// Drag text on canvas
+function getCanvasCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY
+  };
+}
+
+function hitTestText(pos, block) {
+  ctx.font = `bold ${styleState.fontSize}px ${styleState.font}`;
+  const text = styleState.toUpperCase ? block.text.toUpperCase() : block.text;
+  const metrics = ctx.measureText(text);
+  const textW = metrics.width;
+  const textH = styleState.fontSize;
+  const padding = textW > 0 ? 10 : 0;
+  return pos.x >= block.x - textW / 2 - padding &&
+         pos.x <= block.x + textW / 2 + padding &&
+         pos.y >= block.y - textH / 2 - padding &&
+         pos.y <= block.y + textH / 2 + padding;
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  const pos = getCanvasCoords(e);
+  for (let i = textBlocks.length - 1; i >= 0; i--) {
+    if (hitTestText(pos, textBlocks[i])) {
+      draggingBlock = textBlocks[i];
+      dragOffset.x = pos.x - textBlocks[i].x;
+      dragOffset.y = pos.y - textBlocks[i].y;
+      canvas.style.cursor = 'grabbing';
+      return;
+    }
+  }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!draggingBlock) {
+    const pos = getCanvasCoords(e);
+    for (let i = textBlocks.length - 1; i >= 0; i--) {
+      if (hitTestText(pos, textBlocks[i])) {
+        canvas.style.cursor = 'grab';
+        return;
+      }
+    }
+    canvas.style.cursor = 'default';
+    return;
+  }
+  const pos = getCanvasCoords(e);
+  draggingBlock.x = pos.x - dragOffset.x;
+  draggingBlock.y = pos.y - dragOffset.y;
+  render();
+});
+
+canvas.addEventListener('mouseup', () => { draggingBlock = null; canvas.style.cursor = 'default'; });
+canvas.addEventListener('mouseleave', () => { draggingBlock = null; canvas.style.cursor = 'default'; });
+
+// Touch support
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const pos = getCanvasCoords(e);
+  for (let i = textBlocks.length - 1; i >= 0; i--) {
+    if (hitTestText(pos, textBlocks[i])) {
+      draggingBlock = textBlocks[i];
+      dragOffset.x = pos.x - textBlocks[i].x;
+      dragOffset.y = pos.y - textBlocks[i].y;
+      return;
+    }
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (!draggingBlock) return;
+  const pos = getCanvasCoords(e);
+  draggingBlock.x = pos.x - dragOffset.x;
+  draggingBlock.y = pos.y - dragOffset.y;
+  render();
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => { draggingBlock = null; });
+
+// Render
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Image
+  if (memeImage) {
+    ctx.drawImage(memeImage, 0, 0, canvas.width, canvas.height);
+  } else {
+    // Placeholder
+    ctx.fillStyle = '#2a2a4a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#555';
+    ctx.font = '20px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Загрузите изображение', canvas.width / 2, canvas.height / 2 - 10);
+    ctx.font = '14px Inter, sans-serif';
+    ctx.fillStyle = '#444';
+    ctx.fillText('или выберите шаблон', canvas.width / 2, canvas.height / 2 + 16);
+  }
+
+  // Text
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  textBlocks.forEach(block => {
+    if (!block.text) return;
+    const text = styleState.toUpperCase ? block.text.toUpperCase() : block.text;
+    ctx.font = `bold ${styleState.fontSize}px ${styleState.font}`;
+
+    // Shadow
+    if (styleState.textShadow) {
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetX = 3;
+      ctx.shadowOffsetY = 3;
+    } else {
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+    }
+
+    // Stroke
+    if (styleState.strokeWidth > 0) {
+      ctx.strokeStyle = styleState.strokeColor;
+      ctx.lineWidth = styleState.strokeWidth;
+      ctx.lineJoin = 'round';
+      ctx.miterLimit = 2;
+      wrapAndDrawStroke(ctx, text, block.x, block.y, canvas.width * 0.85);
+    }
+
+    // Fill
+    ctx.fillStyle = styleState.textColor;
+    wrapAndDrawFill(ctx, text, block.x, block.y, canvas.width * 0.85);
+
+    // Selection indicator
+    if (block === draggingBlock) {
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      const metrics = ctx.measureText(text);
+      const tw = metrics.width + 20;
+      const th = styleState.fontSize + 10;
+      ctx.strokeStyle = '#4d96ff';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.strokeRect(block.x - tw / 2, block.y - th / 2, tw, th);
+      ctx.setLineDash([]);
+    }
+  });
+}
+
+function getLines(context, text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = words[0] || '';
+
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    const testLine = currentLine + ' ' + word;
+    if (context.measureText(testLine).width <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines.length ? lines : [text];
+}
+
+function wrapAndDrawStroke(context, text, x, y, maxWidth) {
+  const lines = getLines(context, text, maxWidth);
+  const lineHeight = styleState.fontSize * 1.2;
+  const totalHeight = lines.length * lineHeight;
+  let startY = y - totalHeight / 2 + lineHeight / 2;
+
+  lines.forEach((line, i) => {
+    context.strokeText(line, x, startY + i * lineHeight);
+  });
+}
+
+function wrapAndDrawFill(context, text, x, y, maxWidth) {
+  const lines = getLines(context, text, maxWidth);
+  const lineHeight = styleState.fontSize * 1.2;
+  const totalHeight = lines.length * lineHeight;
+  let startY = y - totalHeight / 2 + lineHeight / 2;
+
+  lines.forEach((line, i) => {
+    context.fillText(line, x, startY + i * lineHeight);
+  });
+}
+
+// Clear
+document.getElementById('clearBtn').addEventListener('click', () => {
+  memeImage = null;
+  textBlocks = [];
+  blockIdCounter = 0;
+  addTextBlock('', 'top');
+  addTextBlock('', 'bottom');
+  canvas.width = 600;
+  canvas.height = 600;
+  document.querySelectorAll('.template-item').forEach(e => e.classList.remove('active'));
+  render();
+});
+
+// Download
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!memeImage && textBlocks.every(b => !b.text)) {
+    alert('Сначала создайте мем!');
+    return;
+  }
+  const link = document.createElement('a');
+  link.download = 'meme_' + Date.now() + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
+
+// Init
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter Editor</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-mono@5.0.8/index.min.css" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg: #FAF7F4; --bg2: #F2EDE7; --bg3: #E8E0D8; --bg4: #D4C9BE;
+  --accent: #B8A088; --accent-dk: #8C7560;
+  --txt: #2C2825; --txt2: #6B6560; --txt3: #9B9490;
+  --white: #FFFFFF;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--txt);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex; align-items: center; padding: 8px 20px;
+  background: var(--bg2); border-bottom: 1px solid var(--bg3);
+  gap: 16px; flex-shrink: 0;
+}
+.topbar-logo {
+  font-size: 14px; font-weight: 700; letter-spacing: 4px;
+  text-transform: uppercase; color: var(--txt); margin-right: 12px; white-space: nowrap;
+}
+.topbar-logo span { color: var(--accent); }
+.topbar-title {
+  font-size: 13px; color: var(--txt2); flex: 1;
+  background: var(--white); border: 1px solid var(--bg3);
+  padding: 6px 12px; border-radius: 6px; font-family: inherit; outline: none;
+}
+.topbar-title:focus { border-color: var(--accent); }
+.topbar-save {
+  padding: 8px 20px; background: var(--txt); color: var(--white);
+  border: none; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; border-radius: 6px; font-family: inherit; transition: all 0.3s; white-space: nowrap;
+}
+.topbar-save:hover { background: var(--accent-dk); }
+
+.toolbar {
+  display: flex; align-items: center; padding: 6px 16px;
+  background: var(--white); border-bottom: 1px solid var(--bg3);
+  gap: 2px; flex-shrink: 0; flex-wrap: wrap;
+}
+.toolbar-group {
+  display: flex; align-items: center; gap: 2px;
+  padding: 0 8px; border-right: 1px solid var(--bg3);
+}
+.toolbar-group:last-child { border-right: none; }
+
+.tb-btn {
+  height: 32px; padding: 0 10px; display: flex; align-items: center;
+  justify-content: center; border: none; background: none; cursor: pointer;
+  border-radius: 4px; color: var(--txt2); font-size: 11px;
+  transition: all 0.2s; font-family: inherit; font-weight: 500;
+  letter-spacing: 0.5px;
+}
+.tb-btn:hover { background: var(--bg2); color: var(--txt); }
+
+.tb-select {
+  height: 32px; padding: 0 8px; border: 1px solid var(--bg3);
+  background: var(--white); font-family: inherit; font-size: 12px;
+  color: var(--txt2); border-radius: 4px; cursor: pointer; outline: none;
+}
+.tb-select:focus { border-color: var(--accent); }
+.tb-color {
+  width: 24px; height: 24px; border: 2px solid var(--bg3);
+  border-radius: 4px; cursor: pointer; padding: 0; background: none;
+}
+
+.main { flex: 1; display: flex; overflow: hidden; }
+
+.editor-wrapper {
+  flex: 1; overflow-y: auto; padding: 40px 60px; background: var(--bg);
+}
+
+.editor {
+  max-width: 800px; margin: 0 auto; background: var(--white);
+  min-height: 800px; padding: 60px 80px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+  border-radius: 4px; outline: none; font-size: 15px;
+  line-height: 1.7; color: var(--txt);
+}
+.editor:empty::before {
+  content: 'Начните печатать...';
+  color: var(--txt3); font-style: italic;
+}
+.editor img { max-width: 100%; height: auto; margin: 16px 0; border-radius: 4px; display: block; }
+.editor figcaption { font-size: 12px; color: var(--txt3); margin-top: 6px; font-style: italic; text-align: center; }
+.editor figure { margin: 16px 0; text-align: center; }
+
+/* Table */
+.table-wrap { position: relative; margin: 16px 0; }
+.table-wrap table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.table-wrap table td,
+.table-wrap table th {
+  border: 1px solid var(--bg3);
+  padding: 10px 14px;
+  position: relative;
+  min-width: 50px;
+  overflow: hidden;
+  vertical-align: top;
+  outline: none;
+}
+.table-wrap table td:focus,
+.table-wrap table th:focus {
+  background: rgba(184,160,136,0.08);
+}
+.table-wrap table th { background: var(--bg2); font-weight: 600; user-select: none; }
+
+.table-ctrl-bar {
+  display: flex; gap: 4px; margin-bottom: 4px; flex-wrap: wrap;
+}
+.table-ctrl-btn {
+  padding: 3px 10px; font-size: 11px; border: 1px solid var(--bg3);
+  background: var(--white); border-radius: 3px; cursor: pointer;
+  font-family: inherit; color: var(--txt3);
+}
+.table-ctrl-btn:hover { border-color: var(--accent); color: var(--txt); }
+
+.col-resize-handle {
+  position: absolute; right: -3px; top: 0; bottom: 0;
+  width: 7px; cursor: col-resize; z-index: 10; background: transparent;
+}
+.col-resize-handle:hover { background: var(--accent); opacity: 0.4; }
+
+.col-split-btn {
+  position: absolute; right: 3px; bottom: 3px;
+  width: 20px; height: 16px; border: none;
+  background: var(--bg); border-radius: 3px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--txt3); opacity: 0;
+  transition: opacity 0.2s, background 0.2s; z-index: 11; padding: 0; line-height: 1;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.table-wrap table td:hover .col-split-btn,
+.table-wrap table th:hover .col-split-btn { opacity: 1; }
+.col-split-btn:hover { background: var(--accent); color: var(--white); }
+
+/* Chart */
+.chart-wrap { margin: 20px 0; padding: 20px; background: var(--bg2); border-radius: 6px; }
+.chart-wrap-title { font-size: 13px; font-weight: 500; color: var(--txt2); margin-bottom: 12px; text-align: center; }
+.chart-svg { width: 100%; height: auto; display: block; }
+
+/* Comment & annotation marks */
+.comment-mark {
+  background: rgba(184,160,136,0.35);
+  border-bottom: 2px solid var(--accent);
+  cursor: pointer;
+  position: relative;
+  display: inline;
+  transition: background 0.2s;
+}
+.comment-mark:hover { background: rgba(184,160,136,0.55); }
+
+.annotation-mark {
+  background: rgba(140,117,96,0.18);
+  border-bottom: 1px dashed var(--accent-dk);
+  cursor: help;
+  position: relative;
+  display: inline;
+}
+
+.comment-mark:hover .tooltip-popup,
+.annotation-mark:hover .tooltip-popup { opacity: 1; pointer-events: auto; }
+
+.tooltip-popup {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  background: var(--txt);
+  color: var(--white);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 280px;
+  min-width: 140px;
+  z-index: 500;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  white-space: normal;
+  word-wrap: break-word;
+}
+.tooltip-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 16px;
+  border: 6px solid transparent;
+  border-top-color: var(--txt);
+}
+
+.tooltip-quote {
+  font-style: italic;
+  color: var(--accent);
+  margin-bottom: 6px;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+}
+
+/* Comments panel */
+.comments-panel {
+  width: 320px; background: var(--bg2); border-left: 1px solid var(--bg3);
+  overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column;
+}
+.comments-header {
+  padding: 12px 16px; font-size: 12px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--txt2);
+  border-bottom: 1px solid var(--bg3);
+  display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+}
+.comments-list { padding: 8px; flex: 1; overflow-y: auto; }
+
+.comment-item {
+  padding: 14px; background: var(--white); border-radius: 6px;
+  margin-bottom: 8px; border: 1px solid var(--bg3);
+}
+.comment-item-quote {
+  font-size: 12px; color: var(--accent-dk); font-style: italic;
+  margin-bottom: 6px; display: flex; justify-content: space-between; align-items: flex-start;
+}
+.comment-item-text { font-size: 13px; color: var(--txt); line-height: 1.5; }
+.comment-item-delete {
+  background: none; border: none; color: var(--txt3);
+  cursor: pointer; font-size: 18px; padding: 0 2px; line-height: 1;
+}
+.comment-item-delete:hover { color: #c00; }
+.comment-item-actions { display: flex; gap: 4px; margin-top: 8px; }
+.comment-reply-btn {
+  padding: 4px 10px; font-size: 11px; border: 1px solid var(--bg3);
+  background: var(--bg); cursor: pointer; border-radius: 3px;
+  font-family: inherit; color: var(--txt2);
+}
+.comment-reply-btn:hover { border-color: var(--accent); }
+.comment-reply-input {
+  width: 100%; margin-top: 8px; padding: 8px 10px;
+  border: 1px solid var(--bg3); border-radius: 4px;
+  font-family: inherit; font-size: 12px; outline: none;
+}
+.comment-reply-input:focus { border-color: var(--accent); }
+
+/* Annotations */
+.annotations-panel {
+  width: 320px; background: var(--white); border-top: 2px solid var(--accent);
+  overflow-y: auto; flex-shrink: 0; max-height: 0;
+  overflow: hidden; transition: max-height 0.3s ease;
+}
+.annotations-panel.visible { max-height: 250px; }
+.annotations-header {
+  padding: 8px 16px; font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--accent);
+  border-bottom: 1px solid var(--bg3); position: sticky; top: 0;
+  background: var(--white); z-index: 1;
+}
+.annotations-list { padding: 8px 16px; }
+.annotation-item { padding: 10px 0; border-bottom: 1px solid var(--bg2); font-size: 13px; line-height: 1.6; color: var(--txt2); }
+.annotation-item strong { color: var(--accent-dk); display: block; margin-bottom: 4px; font-size: 12px; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(44,40,37,0.4);
+  backdrop-filter: blur(4px); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--white); border-radius: 10px; padding: 32px;
+  width: 500px; max-width: 90vw; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  transform: translateY(20px); transition: transform 0.3s;
+}
+.modal-overlay.show .modal { transform: translateY(0); }
+.modal h3 { font-size: 18px; font-weight: 500; margin-bottom: 20px; letter-spacing: -0.3px; }
+.modal label {
+  display: block; font-size: 12px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--txt2);
+  margin-bottom: 6px; margin-top: 16px;
+}
+.modal input[type="text"], .modal input[type="url"],
+.modal input[type="number"], .modal textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--bg3);
+  border-radius: 6px; font-family: inherit; font-size: 14px;
+  outline: none; background: var(--bg);
+}
+.modal input:focus, .modal textarea:focus { border-color: var(--accent); }
+.modal-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+.modal-btn {
+  padding: 10px 24px; border: none; border-radius: 6px;
+  font-family: inherit; font-size: 12px; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer; transition: all 0.3s;
+}
+.modal-btn-primary { background: var(--txt); color: var(--white); }
+.modal-btn-primary:hover { background: var(--accent-dk); }
+.modal-btn-secondary { background: var(--bg2); color: var(--txt2); }
+.modal-btn-secondary:hover { background: var(--bg3); }
+
+.chart-lines-container { margin-top: 12px; }
+.chart-line-entry { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.chart-line-entry input[type="text"] { flex: 1; }
+.chart-line-entry input[type="color"] {
+  width: 36px; height: 36px; border: 2px solid var(--bg3);
+  border-radius: 6px; cursor: pointer; padding: 2px;
+}
+.remove-line-btn {
+  width: 28px; height: 28px; border: 1px solid var(--bg3);
+  background: var(--bg); border-radius: 4px; cursor: pointer;
+  color: var(--txt3); display: flex; align-items: center;
+  justify-content: center; font-size: 16px;
+}
+.remove-line-btn:hover { border-color: #c00; color: #c00; }
+.add-line-btn {
+  padding: 6px 14px; border: 1px dashed var(--accent);
+  background: none; color: var(--accent-dk);
+  border-radius: 4px; cursor: pointer;
+  font-family: inherit; font-size: 12px; margin-top: 4px;
+}
+.add-line-btn:hover { background: var(--bg2); }
+
+.image-preview {
+  margin-top: 12px; max-height: 200px; overflow: hidden;
+  border-radius: 6px; border: 1px solid var(--bg3); display: none;
+}
+.image-preview img { width: 100%; height: auto; display: block; }
+
+.statusbar {
+  display: flex; align-items: center; padding: 4px 20px;
+  background: var(--bg2); border-top: 1px solid var(--bg3);
+  font-size: 11px; color: var(--txt3); gap: 20px; flex-shrink: 0;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::selection { background: rgba(184,160,136,0.35); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">ZOLT<span>ER</span> Editor</div>
+  <input class="topbar-title" id="docTitle" value="Безымянный документ" spellcheck="false">
+  <button class="topbar-save" onclick="saveHTML()">Сохранить HTML</button>
+</div>
+
+<div class="toolbar">
+  <div class="toolbar-group">
+    <select class="tb-select" id="fontFamily" onchange="execFontFamily(this.value)" style="width:140px;">
+      <option value="IBM Plex Sans">IBM Plex Sans</option>
+      <option value="IBM Plex Mono">IBM Plex Mono</option>
+      <option value="Arial">Arial</option>
+      <option value="Georgia">Georgia</option>
+      <option value="Times New Roman">Times New Roman</option>
+      <option value="Courier New">Courier New</option>
+      <option value="Verdana">Verdana</option>
+    </select>
+    <select class="tb-select" id="fontSize" onchange="execFontSize(this.value)" style="width:60px;">
+      <option value="12">12</option>
+      <option value="14">14</option>
+      <option value="15" selected>15</option>
+      <option value="16">16</option>
+      <option value="18">18</option>
+      <option value="20">20</option>
+      <option value="24">24</option>
+      <option value="28">28</option>
+      <option value="32">32</option>
+      <option value="48">48</option>
+    </select>
+  </div>
+
+  <div class="toolbar-group">
+    <button class="tb-btn" title="Жирный" onclick="execCmd('bold')"><b>Ж</b></button>
+    <button class="tb-btn" title="Курсив" onclick="execCmd('italic')"><i>К</i></button>
+    <button class="tb-btn" title="Подчёркнутый" onclick="execCmd('underline')"><u>П</u></button>
+    <button class="tb-btn" title="Зачёркнутый" onclick="execCmd('strikeThrough')"><s>З</s></button>
+  </div>
+
+  <div class="toolbar-group">
+    <input type="color" class="tb-color" id="textColor" value="#2C2825" title="Цвет текста" onchange="execColor(this.value)">
+    <input type="color" class="tb-color" id="bgColor" value="#FAF7F4" title="Цвет выделения" onchange="execBgColor(this.value)">
+  </div>
+
+  <div class="toolbar-group">
+    <button class="tb-btn" title="По левому" onclick="execCmd('justifyLeft')">Лево</button>
+    <button class="tb-btn" title="По центру" onclick="execCmd('justifyCenter')">Центр</button>
+    <button class="tb-btn" title="По правому" onclick="execCmd('justifyRight')">Право</button>
+  </div>
+
+  <div class="toolbar-group">
+    <button class="tb-btn" title="Изображение" onclick="openModal('imageModal')">Фото</button>
+    <button class="tb-btn" title="Ссылка" onclick="openModal('linkModal')">Ссылка</button>
+  </div>
+
+  <div class="toolbar-group">
+    <button class="tb-btn" title="Таблица" onclick="openModal('tableModal')">Таблица</button>
+    <button class="tb-btn" title="График" onclick="openModal('chartModal')">График</button>
+  </div>
+
+  <div class="toolbar-group">
+    <button class="tb-btn" title="Комментарий" onclick="addComment()">Коммент</button>
+    <button class="tb-btn" title="Пояснение" onclick="addAnnotation()">Пояснение</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="editor-wrapper" id="editorWrapper">
+    <div class="editor" id="editor" contenteditable="true" spellcheck="true"></div>
+  </div>
+
+  <div class="comments-panel" id="commentsPanel">
+    <div class="comments-header">
+      <span>Комментарии</span>
+      <span id="commentCount">0</span>
+    </div>
+    <div class="comments-list" id="commentsList">
+      <div style="padding:24px 16px;text-align:center;color:var(--txt3);font-size:13px;">
+        Выделите текст и нажмите "Коммент"
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="annotations-panel" id="annotationsPanel">
+  <div class="annotations-header">Пояснения</div>
+  <div class="annotations-list" id="annotationsList"></div>
+</div>
+
+<div class="statusbar">
+  <span id="wordCount">0 слов</span>
+  <span id="charCount">0 символов</span>
+  <span id="statusSaved" style="margin-left:auto;">Сохранено</span>
+</div>
+
+<!-- Image Modal -->
+<div class="modal-overlay" id="imageModal">
+  <div class="modal">
+    <h3>Вставить изображение</h3>
+    <label>URL изображения</label>
+    <input type="url" id="imageUrl" placeholder="https://... из VK или Яндекс.Картинки" oninput="previewImage(this.value)">
+    <div class="image-preview" id="imagePreview"><img id="imagePreviewImg" src="" alt=""></div>
+    <label>Подпись</label>
+    <input type="text" id="imageCaption" placeholder="Описание изображения">
+    <label>Ширина (%)</label>
+    <input type="number" id="imageWidth" value="100" min="10" max="100">
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal('imageModal')">Отмена</button>
+      <button class="modal-btn modal-btn-primary" onclick="insertImage()">Вставить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link Modal -->
+<div class="modal-overlay" id="linkModal">
+  <div class="modal">
+    <h3>Вставить ссылку</h3>
+    <label>Текст ссылки</label>
+    <input type="text" id="linkText" placeholder="Текст">
+    <label>URL</label>
+    <input type="url" id="linkUrl" placeholder="https://...">
+    <label>Открыть в</label>
+    <select class="tb-select" id="linkTarget" style="width:100%;margin-top:4px;">
+      <option value="_blank">Новая вкладка</option>
+      <option value="_self">Текущая вкладка</option>
+    </select>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal('linkModal')">Отмена</button>
+      <button class="modal-btn modal-btn-primary" onclick="insertLink()">Вставить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Table Modal -->
+<div class="modal-overlay" id="tableModal">
+  <div class="modal">
+    <h3>Вставить таблицу</h3>
+    <label>Строки</label>
+    <input type="number" id="tableRows" value="3" min="1" max="50">
+    <label>Столбцы</label>
+    <input type="number" id="tableCols" value="3" min="1" max="20">
+    <label><input type="checkbox" id="tableHeader" checked> Заголовочная строка</label>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal('tableModal')">Отмена</button>
+      <button class="modal-btn modal-btn-primary" onclick="insertTable()">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Modal -->
+<div class="modal-overlay" id="chartModal">
+  <div class="modal">
+    <h3>Вставить график</h3>
+    <label>Название</label>
+    <input type="text" id="chartTitle" value="График">
+    <label>Ось X (через запятую)</label>
+    <input type="text" id="chartXLabels" value="Янв,Фев,Мар,Апр,Май,Июн">
+    <label>Линии данных</label>
+    <div class="chart-lines-container" id="chartLinesContainer">
+      <div class="chart-line-entry">
+        <input type="text" placeholder="Название" value="Продажи" style="flex:1;">
+        <input type="text" placeholder="Значения" value="12,19,14,25,22,30" style="flex:2;">
+        <input type="color" value="#B8A088">
+        <button class="remove-line-btn" onclick="removeLine(this)">x</button>
+      </div>
+    </div>
+    <button class="add-line-btn" onclick="addChartLine()">+ Добавить линию</button>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal('chartModal')">Отмена</button>
+      <button class="modal-btn modal-btn-primary" onclick="insertChart()">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal-overlay" id="commentModal">
+  <div class="modal">
+    <h3>Добавить комментарий</h3>
+    <label>Выделенный текст</label>
+    <div id="commentQuote" style="padding:8px 12px;background:var(--bg2);border-radius:4px;font-size:13px;color:var(--accent-dk);font-style:italic;margin-bottom:8px;min-height:20px;"></div>
+    <label>Комментарий</label>
+    <textarea id="commentText" rows="3" placeholder="Ваш комментарий..."></textarea>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal('commentModal')">Отмена</button>
+      <button class="modal-btn modal-btn-primary" onclick="submitComment()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Annotation Modal -->
+<div class="modal-overlay" id="annotationModal">
+  <div class="modal">
+    <h3>Добавить пояснение</h3>
+    <label>Выделенный текст</label>
+    <div id="annotationQuote" style="padding:8px 12px;background:var(--bg2);border-radius:4px;font-size:13px;color:var(--accent-dk);font-style:italic;margin-bottom:8px;min-height:20px;"></div>
+    <label>Пояснение</label>
+    <textarea id="annotationText" rows="3" placeholder="Пояснение к тексту..."></textarea>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal('annotationModal')">Отмена</button>
+      <button class="modal-btn modal-btn-primary" onclick="submitAnnotation()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const editor = document.getElementById('editor');
+let comments = [];
+let annotations = [];
+let commentIdCounter = 0;
+let annotationIdCounter = 0;
+let savedSelection = null;
+let tableCounter = 0;
+
+function saveSelection() {
+  const sel = window.getSelection();
+  if (sel.rangeCount > 0) savedSelection = sel.getRangeAt(0).cloneRange();
+}
+
+function restoreSelection() {
+  if (savedSelection) {
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedSelection);
+    return true;
+  }
+  return false;
+}
+
+function execCmd(cmd, val) { editor.focus(); document.execCommand(cmd, false, val || null); }
+
+function execFontFamily(font) { editor.focus(); document.execCommand('fontName', false, font); }
+
+function execFontSize(size) {
+  editor.focus();
+  document.execCommand('fontSize', false, '7');
+  editor.querySelectorAll('font[size="7"]').forEach(el => {
+    el.removeAttribute('size');
+    el.style.fontSize = size + 'px';
+  });
+}
+
+function execColor(color) { editor.focus(); document.execCommand('foreColor', false, color); }
+function execBgColor(color) { editor.focus(); document.execCommand('hiliteColor', false, color); }
+
+function openModal(id) { saveSelection(); document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('show'); });
+});
+
+// ===== IMAGE =====
+function previewImage(url) {
+  const preview = document.getElementById('imagePreview');
+  const img = document.getElementById('imagePreviewImg');
+  if (url) {
+    img.src = url;
+    img.onload = () => preview.style.display = 'block';
+    img.onerror = () => preview.style.display = 'none';
+  } else preview.style.display = 'none';
+}
+
+function insertImage() {
+  const url = document.getElementById('imageUrl').value.trim();
+  if (!url) return;
+  const caption = document.getElementById('imageCaption').value.trim();
+  const width = document.getElementById('imageWidth').value;
+  restoreSelection();
+  editor.focus();
+
+  let html = `<figure><img src="${url}" style="width:${width}%;border-radius:4px;" onerror="this.style.display='none'">`;
+  if (caption) html += `<figcaption>${caption}</figcaption>`;
+  html += `</figure>`;
+
+  document.execCommand('insertHTML', false, html);
+  closeModal('imageModal');
+  document.getElementById('imageUrl').value = '';
+  document.getElementById('imageCaption').value = '';
+  document.getElementById('imagePreview').style.display = 'none';
+  updateCounts();
+}
+
+// ===== LINK =====
+function insertLink() {
+  const text = document.getElementById('linkText').value.trim();
+  const url = document.getElementById('linkUrl').value.trim();
+  const target = document.getElementById('linkTarget').value;
+  if (!url) return;
+  restoreSelection();
+  editor.focus();
+  if (text) {
+    document.execCommand('insertHTML', false,
+      `<a href="${url}" target="${target}" style="color:var(--accent-dk);text-decoration:underline;">${text}</a>`);
+  } else {
+    document.execCommand('createLink', false, url);
+  }
+  closeModal('linkModal');
+  document.getElementById('linkText').value = '';
+  document.getElementById('linkUrl').value = '';
+}
+
+// ===== TABLE =====
+function insertTable() {
+  const rows = parseInt(document.getElementById('tableRows').value);
+  const cols = parseInt(document.getElementById('tableCols').value);
+  const hasHeader = document.getElementById('tableHeader').checked;
+  if (rows < 1 || cols < 1) return;
+
+  tableCounter++;
+  const tid = 'ztbl_' + tableCounter;
+  restoreSelection();
+  editor.focus();
+
+  let html = `<div class="table-wrap" id="${tid}">`;
+  html += `<div class="table-ctrl-bar">`;
+  html += `<button class="table-ctrl-btn" onclick="addTableRow('${tid}')">+ Строка</button>`;
+  html += `<button class="table-ctrl-btn" onclick="addTableCol('${tid}')">+ Столбец</button>`;
+  html += `<button class="table-ctrl-btn" onclick="deleteTableRow('${tid}')">- Строка</button>`;
+  html += `<button class="table-ctrl-btn" onclick="deleteTableCol('${tid}')">- Столбец</button>`;
+  html += `</div>`;
+  html += `<table><colgroup>`;
+  for (let c = 0; c < cols; c++) html += `<col style="width:${Math.round(100/cols)}%">`;
+  html += `</colgroup>`;
+
+  if (hasHeader) {
+    html += '<tr>';
+    for (let c = 0; c < cols; c++) html += `<th></th>`;
+    html += '</tr>';
+  }
+  for (let r = 0; r < rows; r++) {
+    html += '<tr>';
+    for (let c = 0; c < cols; c++) html += `<td></td>`;
+    html += '</tr>';
+  }
+  html += '</table></div>';
+
+  document.execCommand('insertHTML', false, html);
+  setTimeout(() => initTableResizes(tid), 100);
+  closeModal('tableModal');
+}
+
+function initTableResizes(tableWrapId) {
+  const wrap = document.getElementById(tableWrapId);
+  if (!wrap) return;
+  const table = wrap.querySelector('table');
+  if (!table) return;
+  const colgroup = table.querySelector('colgroup');
+  if (!colgroup) return;
+  const cols = colgroup.querySelectorAll('col');
+  const firstRow = table.rows[0];
+  if (!firstRow) return;
+
+  Array.from(firstRow.cells).forEach((cell, idx) => {
+    if (cell.querySelector('.col-resize-handle')) return;
+    cell.style.position = 'relative';
+
+    const handle = document.createElement('div');
+    handle.className = 'col-resize-handle';
+    cell.appendChild(handle);
+
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const startX = e.clientX;
+      const colEl = cols[idx];
+      const startW = colEl.offsetWidth || cell.offsetWidth;
+
+      const onMove = ev => {
+        const diff = ev.clientX - startX;
+        colEl.style.width = Math.max(40, startW + diff) + 'px';
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.body.style.cursor = '';
+      };
+      document.body.style.cursor = 'col-resize';
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    if (!cell.querySelector('.col-split-btn')) {
+      const splitBtn = document.createElement('button');
+      splitBtn.className = 'col-split-btn';
+      splitBtn.innerHTML = '||';
+      splitBtn.title = 'Разделить столбец';
+      cell.appendChild(splitBtn);
+
+      splitBtn.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        splitColumn(tableWrapId, idx);
+      });
+    }
+  });
+}
+
+function splitColumn(tableWrapId, colIdx) {
+  const wrap = document.getElementById(tableWrapId);
+  if (!wrap) return;
+  const table = wrap.querySelector('table');
+  const colgroup = table.querySelector('colgroup');
+  const cols = colgroup.querySelectorAll('col');
+  const oldCol = cols[colIdx];
+  const halfW = Math.max(40, (oldCol.offsetWidth || 100) / 2);
+
+  oldCol.style.width = halfW + 'px';
+  const newCol = document.createElement('col');
+  newCol.style.width = halfW + 'px';
+  colgroup.insertBefore(newCol, oldCol.nextSibling);
+
+  Array.from(table.rows).forEach(row => {
+    const cell = row.cells[colIdx];
+    if (!cell) return;
+    const newCell = document.createElement(cell.tagName);
+    newCell.contentEditable = 'true';
+    row.insertBefore(newCell, cell.nextSibling);
+  });
+
+  setTimeout(() => initTableResizes(tableWrapId), 50);
+}
+
+function addTableRow(tid) {
+  const wrap = document.getElementById(tid);
+  if (!wrap) return;
+  const table = wrap.querySelector('table');
+  if (!table) return;
+  const numCols = table.rows[0]?.cells.length || 3;
+  const row = table.insertRow();
+  for (let c = 0; c < numCols; c++) {
+    const td = row.insertCell();
+    td.contentEditable = 'true';
+  }
+}
+
+function addTableCol(tid) {
+  const wrap = document.getElementById(tid);
+  if (!wrap) return;
+  const table = wrap.querySelector('table');
+  if (!table) return;
+  const colgroup = table.querySelector('colgroup');
+  colgroup.appendChild(document.createElement('col'));
+  Array.from(table.rows).forEach(row => {
+    const cell = row.insertCell();
+    cell.contentEditable = 'true';
+  });
+  setTimeout(() => initTableResizes(tid), 50);
+}
+
+function deleteTableRow(tid) {
+  const wrap = document.getElementById(tid);
+  if (!wrap) return;
+  const table = wrap.querySelector('table');
+  if (!table || table.rows.length <= 1) return;
+  table.deleteRow(table.rows.length - 1);
+}
+
+function deleteTableCol(tid) {
+  const wrap = document.getElementById(tid);
+  if (!wrap) return;
+  const table = wrap.querySelector('table');
+  if (!table) return;
+  const numCols = table.rows[0]?.cells.length || 0;
+  if (numCols <= 1) return;
+  const colgroup = table.querySelector('colgroup');
+  if (colgroup.lastElementChild) colgroup.removeChild(colgroup.lastElementChild);
+  Array.from(table.rows).forEach(row => {
+    if (row.cells.length > 1) row.deleteCell(row.cells.length - 1);
+  });
+}
+
+// ===== CHART (SVG) =====
+function addChartLine() {
+  const container = document.getElementById('chartLinesContainer');
+  const entry = document.createElement('div');
+  entry.className = 'chart-line-entry';
+  const rc = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0');
+  entry.innerHTML = `
+    <input type="text" placeholder="Название" value="Линия" style="flex:1;">
+    <input type="text" placeholder="Значения" value="10,20,15,25,30,20" style="flex:2;">
+    <input type="color" value="${rc}">
+    <button class="remove-line-btn" onclick="removeLine(this)">x</button>`;
+  container.appendChild(entry);
+}
+
+function removeLine(btn) {
+  const container = document.getElementById('chartLinesContainer');
+  if (container.children.length > 1) btn.parentElement.remove();
+}
+
+function insertChart() {
+  const title = document.getElementById('chartTitle').value.trim() || 'График';
+  const xLabelsRaw = document.getElementById('chartXLabels').value.trim();
+  const xLabels = xLabelsRaw.split(',').map(s => s.trim()).filter(Boolean);
+  if (xLabels.length < 2) { alert('Нужно минимум 2 метки на оси X'); return; }
+
+  const lines = [];
+  document.querySelectorAll('#chartLinesContainer .chart-line-entry').forEach(entry => {
+    const inputs = entry.querySelectorAll('input');
+    const name = inputs[0].value.trim() || 'Данные';
+    const color = inputs[2].value;
+    const values = inputs[1].value.trim().split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+    if (values.length > 0) lines.push({ name, values, color });
+  });
+  if (lines.length === 0) { alert('Добавьте хотя бы одну линию'); return; }
+
+  restoreSelection();
+  editor.focus();
+  document.execCommand('insertHTML', false, buildChartSVG(title, xLabels, lines));
+  closeModal('chartModal');
+}
+
+function buildChartSVG(title, xLabels, lines) {
+  const W = 700, H = 320;
+  const padL = 55, padR = 20, padT = 20, padB = 50;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  let maxVal = 0;
+  lines.forEach(l => l.values.forEach(v => { if (v > maxVal) maxVal = v; }));
+  if (maxVal === 0) maxVal = 10;
+  maxVal *= 1.15;
+
+  const gridLines = 5;
+  let svg = `<div class="chart-wrap"><div class="chart-wrap-title">${title}</div>`;
+  svg += `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  for (let i = 0; i <= gridLines; i++) {
+    const y = padT + (chartH / gridLines) * i;
+    svg += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#E8E0D8" stroke-width="1"/>`;
+    const val = Math.round(maxVal - (maxVal / gridLines) * i);
+    svg += `<text x="${padL-8}" y="${y+4}" text-anchor="end" fill="#9B9490" font-size="11" font-family="IBM Plex Sans">${val}</text>`;
+  }
+
+  xLabels.forEach((label, i) => {
+    const x = padL + (chartW / (xLabels.length - 1)) * i;
+    svg += `<text x="${x}" y="${H-10}" text-anchor="middle" fill="#9B9490" font-size="11" font-family="IBM Plex Sans">${label}</text>`;
+  });
+
+  lines.forEach(line => {
+    const pts = [];
+    line.values.forEach((v, i) => {
+      const x = padL + (chartW / (xLabels.length - 1)) * i;
+      const y = padT + chartH - (v / maxVal) * chartH;
+      pts.push(`${x},${y}`);
+    });
+    svg += `<polyline points="${pts.join(' ')}" fill="none" stroke="${line.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+
+    line.values.forEach((v, i) => {
+      const x = padL + (chartW / (xLabels.length - 1)) * i;
+      const y = padT + chartH - (v / maxVal) * chartH;
+      svg += `<circle cx="${x}" cy="${y}" r="4" fill="${line.color}"/>`;
+      svg += `<circle cx="${x}" cy="${y}" r="2" fill="#FFFFFF"/>`;
+    });
+  });
+
+  let lx = padL;
+  lines.forEach(line => {
+    svg += `<rect x="${lx}" y="${H-5}" width="14" height="3" fill="${line.color}" rx="1"/>`;
+    svg += `<text x="${lx+18}" y="${H-1}" fill="#6B6560" font-size="11" font-family="IBM Plex Sans">${line.name}</text>`;
+    lx += 18 + line.name.length * 6.6 + 20;
+  });
+
+  svg += `</svg></div>`;
+  return svg;
+}
+
+// ===== COMMENTS =====
+function addComment() {
+  const sel = window.getSelection();
+  const text = sel.toString().trim();
+  saveSelection();
+  document.getElementById('commentQuote').textContent = text ? `"${text}"` : '(выделите текст)';
+  document.getElementById('commentText').value = '';
+  openModal('commentModal');
+}
+
+function submitComment() {
+  const quote = document.getElementById('commentQuote').textContent;
+  const text = document.getElementById('commentText').value.trim();
+  if (!text) return;
+
+  const id = 'cmt_' + (++commentIdCounter);
+  comments.push({ id, quote: quote.replace(/"/g, ''), text, replies: [] });
+
+  // Highlight in editor
+  if (savedSelection && savedSelection.toString().trim()) {
+    try {
+      const range = savedSelection.cloneRange();
+      const span = document.createElement('span');
+      span.className = 'comment-mark';
+      span.dataset.commentId = id;
+
+      // Create tooltip
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tooltip-popup';
+      tooltip.innerHTML = `<div class="tooltip-quote">"${quote.replace(/"/g, '')}"</div><div>${text}</div>`;
+      span.appendChild(tooltip);
+
+      range.surroundContents(span);
+    } catch(e) {
+      // If surroundContents fails (cross-boundary), use insertHTML
+      const selectedText = savedSelection.toString();
+      const tooltipHtml = `<div class="tooltip-popup"><div class="tooltip-quote">"${quote.replace(/"/g, '')}"</div><div>${text}</div></div>`;
+      document.execCommand('insertHTML', false, `<span class="comment-mark" data-comment-id="${id}">${selectedText}${tooltipHtml}</span>`);
+    }
+  }
+
+  renderComments();
+  closeModal('commentModal');
+  editor.focus();
+}
+
+function renderComments() {
+  const list = document.getElementById('commentsList');
+  document.getElementById('commentCount').textContent = comments.length;
+
+  if (comments.length === 0) {
+    list.innerHTML = `<div style="padding:24px 16px;text-align:center;color:var(--txt3);font-size:13px;">Выделите текст и нажмите "Коммент"</div>`;
+    return;
+  }
+
+  list.innerHTML = comments.map(c => `
+    <div class="comment-item">
+      <div class="comment-item-quote">
+        <span>"${c.quote}"</span>
+        <button class="comment-item-delete" onclick="deleteComment('${c.id}')" title="Удалить">x</button>
+      </div>
+      <div class="comment-item-text">${c.text}</div>
+      ${c.replies.map(r => `<div class="comment-item-text" style="margin-left:12px;margin-top:6px;border-left:2px solid var(--bg3);padding-left:10px;color:var(--txt2);font-size:12px;">> ${r}</div>`).join('')}
+      <div class="comment-item-actions">
+        <button class="comment-reply-btn" onclick="toggleReply('${c.id}')">Ответить</button>
+      </div>
+      <div id="replyArea_${c.id}" style="display:none;">
+        <input class="comment-reply-input" placeholder="Ответ..." onkeydown="if(event.key==='Enter')submitReply('${c.id}',this.value)">
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteComment(id) {
+  comments = comments.filter(c => c.id !== id);
+  editor.querySelectorAll(`.comment-mark[data-comment-id="${id}"]`).forEach(m => {
+    const parent = m.parentNode;
+    const frag = document.createDocumentFragment();
+    while (m.firstChild) frag.appendChild(m.firstChild);
+    parent.replaceChild(frag, m);
+    parent.normalize();
+  });
+  renderComments();
+}
+
+function toggleReply(id) {
+  const area = document.getElementById('replyArea_' + id);
+  area.style.display = area.style.display === 'none' ? 'block' : 'none';
+  area.querySelector('input').focus();
+}
+
+function submitReply(id, text) {
+  text = text.trim();
+  if (!text) return;
+  const c = comments.find(x => x.id === id);
+  if (c) { c.replies.push(text); renderComments(); }
+}
+
+// ===== ANNOTATIONS =====
+function addAnnotation() {
+  const sel = window.getSelection();
+  const text = sel.toString().trim();
+  saveSelection();
+  document.getElementById('annotationQuote').textContent = text ? `"${text}"` : '(выделите текст)';
+  document.getElementById('annotationText').value = '';
+  openModal('annotationModal');
+}
+
+function submitAnnotation() {
+  const quote = document.getElementById('annotationQuote').textContent;
+  const text = document.getElementById('annotationText').value.trim();
+  if (!text) return;
+
+  const id = 'ann_' + (++annotationIdCounter);
+  annotations.push({ id, quote: quote.replace(/"/g, ''), text });
+
+  if (savedSelection && savedSelection.toString().trim()) {
+    try {
+      const range = savedSelection.cloneRange();
+      const span = document.createElement('span');
+      span.className = 'annotation-mark';
+      span.dataset.annotationId = id;
+
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tooltip-popup';
+      tooltip.innerHTML = `<div class="tooltip-quote">"${quote.replace(/"/g, '')}"</div><div>${text}</div>`;
+      span.appendChild(tooltip);
+
+      range.surroundContents(span);
+    } catch(e) {
+      const selectedText = savedSelection.toString();
+      const tooltipHtml = `<div class="tooltip-popup"><div class="tooltip-quote">"${quote.replace(/"/g, '')}"</div><div>${text}</div></div>`;
+      document.execCommand('insertHTML', false, `<span class="annotation-mark" data-annotation-id="${id}">${selectedText}${tooltipHtml}</span>`);
+    }
+  }
+
+  renderAnnotations();
+  closeModal('annotationModal');
+  editor.focus();
+}
+
+function renderAnnotations() {
+  const list = document.getElementById('annotationsList');
+  const panel = document.getElementById('annotationsPanel');
+
+  if (annotations.length > 0) {
+    panel.classList.add('visible');
+    list.innerHTML = annotations.map(a => `
+      <div class="annotation-item"><strong>"${a.quote}"</strong>${a.text}</div>
+    `).join('');
+  } else {
+    panel.classList.remove('visible');
+    list.innerHTML = '';
+  }
+}
+
+// ===== SAVE HTML =====
+function saveHTML() {
+  const title = document.getElementById('docTitle').value || 'Документ Zolter';
+  const clone = editor.cloneNode(true);
+
+  // Remove all control elements
+  clone.querySelectorAll('.table-ctrl-bar').forEach(el => el.remove());
+  clone.querySelectorAll('.col-resize-handle').forEach(el => el.remove());
+  clone.querySelectorAll('.col-split-btn').forEach(el => el.remove());
+
+  // Remove contenteditable attributes
+  clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+
+  // Collect comments
+  let commentsHTML = '';
+  if (comments.length > 0) {
+    commentsHTML = `<div style="margin-top:40px;padding-top:20px;border-top:2px solid #E8E0D8;"><h3 style="font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#B8A088;margin-bottom:16px;">Комментарии</h3>`;
+    comments.forEach(c => {
+      commentsHTML += `<div style="padding:12px;background:#FAF7F4;border-radius:6px;margin-bottom:8px;">`;
+      commentsHTML += `<div style="font-size:12px;color:#8C7560;font-style:italic;">"${c.quote}"</div>`;
+      commentsHTML += `<div>${c.text}`;
+      c.replies.forEach(r => { commentsHTML += `<div style="margin-left:12px;margin-top:4px;color:#9B9490;">> ${r}</div>`; });
+      commentsHTML += `</div></div>`;
+    });
+    commentsHTML += `</div>`;
+  }
+
+  let annotationsHTML = '';
+  if (annotations.length > 0) {
+    annotationsHTML = `<div style="margin-top:40px;padding-top:20px;border-top:2px solid #E8E0D8;"><h3 style="font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#B8A088;margin-bottom:16px;">Пояснения</h3>`;
+    annotations.forEach(a => {
+      annotationsHTML += `<div style="padding:8px 0;border-bottom:1px solid #F2EDE7;font-size:13px;"><strong style="color:#8C7560;display:block;margin-bottom:2px;font-size:12px;">"${a.quote}"</strong>${a.text}</div>`;
+    });
+    annotationsHTML += `</div>`;
+  }
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title}</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<style>
+body{font-family:'IBM Plex Sans',sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#2C2825;line-height:1.7}
+table{width:100%;border-collapse:collapse;margin:16px 0}td,th{border:1px solid #E8E0D8;padding:10px 14px}th{background:#F2EDE7;font-weight:600}
+img{max-width:100%;height:auto}figure{margin:16px 0;text-align:center}figcaption{font-size:12px;color:#9B9490;margin-top:6px;font-style:italic}
+.comment-mark{background:rgba(184,160,136,0.3);border-bottom:2px solid #B8A088}
+.annotation-mark{background:rgba(140,117,96,0.15);border-bottom:1px dashed #8C7560}
+.chart-wrap{margin:20px 0;padding:20px;background:#F2EDE7;border-radius:6px}
+.chart-wrap-title{font-size:13px;font-weight:500;color:#6B6560;margin-bottom:12px;text-align:center}
+.chart-svg{width:100%;height:auto}
+a{color:#8C7560}
+</style>
+</head>
+<body>
+<h1>${title}</h1>
+${clone.innerHTML}
+${commentsHTML}
+${annotationsHTML}
+</body>
+</html>`;
+
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = title.replace(/\s+/g, '_') + '.html';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  document.getElementById('statusSaved').textContent = 'Сохранено';
+  setTimeout(() => { document.getElementById('statusSaved').textContent = ''; }, 2000);
+}
+
+// ===== Word/char count =====
+function updateCounts() {
+  const text = editor.innerText || '';
+  const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+  document.getElementById('wordCount').textContent = words + ' слов';
+  document.getElementById('charCount').textContent = text.length + ' символов';
+}
+editor.addEventListener('input', updateCounts);
+
+// ===== Re-init table resizes =====
+const tableInitObserver = new MutationObserver(() => {
+  editor.querySelectorAll('.table-wrap').forEach(w => {
+    if (w.id) initTableResizes(w.id);
+  });
+});
+tableInitObserver.observe(editor, { childList: true, subtree: true });
+
+// ===== Keyboard shortcuts =====
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 's') { e.preventDefault(); saveHTML(); }
+    if (e.key === 'b') { e.preventDefault(); execCmd('bold'); }
+    if (e.key === 'i') { e.preventDefault(); execCmd('italic'); }
+    if (e.key === 'u') { e.preventDefault(); execCmd('underline'); }
+  }
+});
+
+updateCounts();
+</script>
+</body>
+</html>
+

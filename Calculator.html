@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter — Калькулятор</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-mono@5.0.8/index.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAF7F4;
+  --surface: #FFFFFF;
+  --surface-alt: #F2EDE7;
+  --surface-alt2: #E8E0D8;
+  --border: #D4C9BE;
+  --text: #2C2825;
+  --text-sec: #6B6560;
+  --text-light: #9B9490;
+  --accent: #B8A088;
+  --accent-dark: #8C7560;
+  --btn-bg: #F2EDE7;
+  --btn-active: #D4C9BE;
+  --btn-text: #2C2825;
+  --btn-op-bg: #E8E0D8;
+  --btn-eq-bg: #2C2825;
+  --btn-eq-text: #FAF7F4;
+  --btn-clear-bg: #C0392B;
+  --btn-clear-text: #FFFFFF;
+  --result-bg: #FAF7F4;
+  --shadow: rgba(0,0,0,0.06);
+  --tab-bg: #F2EDE7;
+  --tab-active: #FFFFFF;
+  --input-bg: #FAF7F4;
+}
+
+[data-theme="dark"] {
+  --bg: #1A1816;
+  --surface: #24201C;
+  --surface-alt: #2A2622;
+  --surface-alt2: #3A3530;
+  --border: #4A433D;
+  --text: #D4C9BE;
+  --text-sec: #9B9490;
+  --text-light: #6B6560;
+  --accent: #B8A088;
+  --accent-dark: #D4C9BE;
+  --btn-bg: #2A2622;
+  --btn-active: #3A3530;
+  --btn-text: #D4C9BE;
+  --btn-op-bg: #3A3530;
+  --btn-eq-bg: #B8A088;
+  --btn-eq-text: #1A1816;
+  --btn-clear-bg: #C0392B;
+  --btn-clear-text: #FFFFFF;
+  --result-bg: #1A1816;
+  --shadow: rgba(0,0,0,0.3);
+  --tab-bg: #2A2622;
+  --tab-active: #3A3530;
+  --input-bg: #2A2622;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+
+.topbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.logo { font-size: 16px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--text); text-decoration: none; }
+.logo span { color: var(--accent); }
+
+.page-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); padding: 0 16px; border-left: 1px solid var(--border); margin-left: 8px; }
+
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.theme-toggle { width: 32px; height: 32px; background: none; border: 1px solid var(--border); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: var(--text-sec); }
+.theme-toggle:hover { background: var(--surface-alt); }
+
+/* Tabs */
+.tabs {
+  background: var(--tab-bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  padding: 12px 18px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-sec);
+  cursor: pointer;
+  border: none;
+  background: none;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: inherit;
+  position: relative;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent-dark); font-weight: 600; }
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+/* Main */
+.main { flex: 1; display: flex; overflow: hidden; }
+
+/* Calculator Panel */
+.calc-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: 500px;
+  min-width: 340px;
+  border-right: 1px solid var(--border);
+}
+
+/* Display */
+.display {
+  padding: 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.expression {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px;
+  color: var(--text-light);
+  min-height: 24px;
+  text-align: right;
+  word-break: break-all;
+  margin-bottom: 8px;
+}
+
+.result {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--text);
+  text-align: right;
+  min-height: 44px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* Buttons Grid */
+.btn-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.calc-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px;
+  padding: 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.calc-btn:hover { background: var(--btn-active); transform: scale(1.02); }
+.calc-btn:active { transform: scale(0.97); }
+.calc-btn.op { background: var(--btn-op-bg); color: var(--accent-dark); }
+.calc-btn.eq { background: var(--btn-eq-bg); color: var(--btn-eq-text); font-weight: 700; }
+.calc-btn.clear { background: var(--btn-clear-bg); color: var(--btn-clear-text); }
+.calc-btn.func { background: var(--surface-alt); color: var(--text-sec); font-size: 14px; }
+.calc-btn.wide { grid-column: span 2; }
+
+/* History Panel */
+.history-panel {
+  width: 320px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.history-header {
+  padding: 16px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.history-item {
+  padding: 12px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 1px solid transparent;
+}
+.history-item:hover { background: var(--surface-alt); border-color: var(--border); }
+.history-item .hist-expr { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-sec); margin-bottom: 4px; }
+.history-item .hist-result { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 500; color: var(--text); }
+
+.history-clear {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: inherit;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.history-clear:hover { color: var(--btn-clear-bg); }
+
+/* Tool Panel */
+.tool-panel {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tool-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.tool-card h3 {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+
+.tool-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tool-input-row label {
+  font-size: 12px;
+  color: var(--text-sec);
+  min-width: 60px;
+}
+
+.tool-input {
+  flex: 1;
+  height: 36px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  padding: 0 10px;
+  border-radius: 4px;
+}
+.tool-input:focus { outline: none; border-color: var(--accent); }
+
+.tool-btn-action {
+  padding: 10px 20px;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: opacity 0.2s;
+  width: 100%;
+  margin-top: 8px;
+}
+.tool-btn-action:hover { opacity: 0.85; }
+
+.tool-result {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--surface-alt);
+  border-radius: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px;
+  color: var(--accent-dark);
+  text-align: center;
+  display: none;
+}
+.tool-result.visible { display: block; }
+
+.tool-desc {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+select.tool-input { cursor: pointer; }
+
+@media (max-width: 800px) {
+  .history-panel { display: none; }
+  .calc-panel { max-width: 100%; }
+  .page-title { display: none; }
+}
+
+@media (max-width: 400px) {
+  .calc-btn { font-size: 16px; padding: 12px; }
+  .result { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left" style="display:flex;align-items:center;gap:12px;">
+    <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+    <span class="page-title">Калькулятор</span>
+  </div>
+  <div class="topbar-right">
+    <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="main">
+  <div class="calc-panel">
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="btn-grid" id="btn-grid"></div>
+  </div>
+
+  <div class="history-panel">
+    <div class="history-header">
+      <span>История</span>
+      <button class="history-clear" id="history-clear">Очистить</button>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // === THEME ===
+  const savedTheme = localStorage.getItem('zolter-calc-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('zolter-calc-theme', newTheme);
+  });
+
+  // === STATE ===
+  let currentInput = '0';
+  let expression = '';
+  let history = JSON.parse(localStorage.getItem('zolter-calc-history') || '[]');
+
+  // === TABS ===
+  const tabCategories = [
+    { id: 'basic', label: 'Основной' },
+    { id: 'algebra', label: 'Алгебра' },
+    { id: 'geometry', label: 'Геометрия' },
+    { id: 'trig', label: 'Тригонометрия' },
+    { id: 'prob', label: 'Вероятность' },
+    { id: 'stats', label: 'Статистика' },
+    { id: 'matrix', label: 'Матрицы' },
+    { id: 'physics', label: 'Физика' },
+    { id: 'converter', label: 'Конвертер' },
+    { id: 'logarithm', label: 'Логарифмы' }
+  ];
+
+  let currentTab = 'basic';
+
+  function renderTabs() {
+    const container = document.getElementById('tabs');
+    container.innerHTML = '';
+    tabCategories.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'tab' + (t.id === currentTab ? ' active' : '');
+      btn.textContent = t.label;
+      btn.addEventListener('click', () => switchTab(t.id));
+      container.appendChild(btn);
+    });
+  }
+
+  function switchTab(id) {
+    currentTab = id;
+    renderTabs();
+    if (id === 'basic') {
+      renderBasicCalc();
+      document.getElementById('expression').parentElement.style.display = '';
+    } else {
+      renderToolPanel(id);
+      document.getElementById('expression').parentElement.style.display = 'none';
+    }
+  }
+
+  // === BASIC CALCULATOR ===
+  function renderBasicCalc() {
+    const grid = document.getElementById('btn-grid');
+    grid.innerHTML = '';
+    grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+
+    const buttons = [
+      { label: 'C', cls: 'clear', action: 'clear' },
+      { label: '±', cls: 'func', action: 'negate' },
+      { label: '%', cls: 'func', action: 'percent' },
+      { label: '÷', cls: 'op', action: 'op', value: '/' },
+
+      { label: '√', cls: 'func', action: 'func', value: 'sqrt' },
+      { label: '7', cls: '', action: 'num', value: '7' },
+      { label: '8', cls: '', action: 'num', value: '8' },
+      { label: '9', cls: '', action: 'num', value: '9' },
+
+      { label: 'x²', cls: 'func', action: 'func', value: 'square' },
+      { label: '4', cls: '', action: 'num', value: '4' },
+      { label: '5', cls: '', action: 'num', value: '5' },
+      { label: '6', cls: '', action: 'num', value: '6' },
+
+      { label: '1/x', cls: 'func', action: 'func', value: 'inv' },
+      { label: '1', cls: '', action: 'num', value: '1' },
+      { label: '2', cls: '', action: 'num', value: '2' },
+      { label: '3', cls: '', action: 'num', value: '3' },
+
+      { label: 'π', cls: 'func', action: 'const', value: Math.PI },
+      { label: 'e', cls: 'func', action: 'const', value: Math.E },
+      { label: '0', cls: '', action: 'num', value: '0' },
+      { label: '.', cls: '', action: 'dot' },
+
+      { label: 'sin', cls: 'func', action: 'func', value: 'sin' },
+      { label: 'cos', cls: 'func', action: 'func', value: 'cos' },
+      { label: '×', cls: 'op', action: 'op', value: '*' },
+      { label: '−', cls: 'op', action: 'op', value: '-' },
+
+      { label: 'tan', cls: 'func', action: 'func', value: 'tan' },
+      { label: 'ln', cls: 'func', action: 'func', value: 'ln' },
+      { label: '+', cls: 'op', action: 'op', value: '+' },
+      { label: '=', cls: 'eq', action: 'equals' }
+    ];
+
+    buttons.forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = 'calc-btn' + (b.cls ? ' ' + b.cls : '');
+      btn.textContent = b.label;
+      btn.addEventListener('click', () => handleBasicAction(b));
+      grid.appendChild(btn);
+    });
+  }
+
+  function formatNum(n) {
+    if (isNaN(n) || !isFinite(n)) return 'Ошибка';
+    const s = n.toPrecision(12);
+    return parseFloat(s).toString();
+  }
+
+  function handleBasicAction(b) {
+    const exprEl = document.getElementById('expression');
+    const resEl = document.getElementById('result');
+
+    switch (b.action) {
+      case 'clear':
+        currentInput = '0';
+        expression = '';
+        exprEl.textContent = '';
+        resEl.textContent = '0';
+        break;
+
+      case 'num':
+        if (currentInput === '0' && b.value !== '.') currentInput = b.value;
+        else currentInput += b.value;
+        resEl.textContent = currentInput;
+        break;
+
+      case 'dot':
+        if (!currentInput.includes('.')) currentInput += '.';
+        resEl.textContent = currentInput;
+        break;
+
+      case 'op':
+        expression += currentInput + ' ' + b.label + ' ';
+        currentInput = '0';
+        exprEl.textContent = expression;
+        resEl.textContent = '0';
+        break;
+
+      case 'func':
+        let val = parseFloat(currentInput);
+        let res = 0;
+        let label = '';
+        switch (b.value) {
+          case 'sqrt': res = Math.sqrt(val); label = `√(${currentInput})`; break;
+          case 'square': res = val * val; label = `(${currentInput})²`; break;
+          case 'inv': res = 1 / val; label = `1/(${currentInput})`; break;
+          case 'sin': res = Math.sin(val); label = `sin(${currentInput})`; break;
+          case 'cos': res = Math.cos(val); label = `cos(${currentInput})`; break;
+          case 'tan': res = Math.tan(val); label = `tan(${currentInput})`; break;
+          case 'ln': res = Math.log(val); label = `ln(${currentInput})`; break;
+        }
+        exprEl.textContent = label;
+        resEl.textContent = formatNum(res);
+        addHistory(label, formatNum(res));
+        currentInput = formatNum(res);
+        break;
+
+      case 'const':
+        currentInput = b.value.toString();
+        resEl.textContent = currentInput;
+        break;
+
+      case 'negate':
+        if (currentInput !== '0') {
+          currentInput = (parseFloat(currentInput) * -1).toString();
+          resEl.textContent = currentInput;
+        }
+        break;
+
+      case 'percent':
+        currentInput = (parseFloat(currentInput) / 100).toString();
+        resEl.textContent = currentInput;
+        break;
+
+      case 'equals':
+        expression += currentInput;
+        try {
+          const sanitized = expression.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+          const result = Function('"use strict"; return (' + sanitized + ')')();
+          resEl.textContent = formatNum(result);
+          addHistory(expression, formatNum(result));
+          currentInput = formatNum(result);
+          expression = '';
+          exprEl.textContent = '';
+        } catch (e) {
+          resEl.textContent = 'Ошибка';
+          expression = '';
+        }
+        break;
+    }
+  }
+
+  // === HISTORY ===
+  function addHistory(expr, res) {
+    history.unshift({ expr, res, time: new Date().toLocaleTimeString() });
+    if (history.length > 50) history.pop();
+    localStorage.setItem('zolter-calc-history', JSON.stringify(history));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('history-list');
+    list.innerHTML = '';
+    if (history.length === 0) {
+      list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:12px;">Пока пусто</div>';
+      return;
+    }
+    history.forEach(h => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.innerHTML = `<div class="hist-expr">${h.expr}</div><div class="hist-result">${h.res}</div>`;
+      list.appendChild(item);
+    });
+  }
+
+  document.getElementById('history-clear').addEventListener('click', () => {
+    history = [];
+    localStorage.setItem('zolter-calc-history', JSON.stringify(history));
+    renderHistory();
+  });
+
+  // === TOOL PANELS ===
+  function createInputRow(label, id, type) {
+    const row = document.createElement('div');
+    row.className = 'tool-input-row';
+    const lbl = document.createElement('label');
+    lbl.textContent = label;
+    const inp = document.createElement('input');
+    inp.className = 'tool-input';
+    inp.id = id;
+    inp.type = type || 'number';
+    inp.placeholder = label;
+    row.appendChild(lbl);
+    row.appendChild(inp);
+    return row;
+  }
+
+  function createCard(title, desc, inputs, actionText, calcFn) {
+    const card = document.createElement('div');
+    card.className = 'tool-card';
+    
+    const h3 = document.createElement('h3');
+    h3.textContent = title;
+    card.appendChild(h3);
+
+    if (desc) {
+      const p = document.createElement('div');
+      p.className = 'tool-desc';
+      p.textContent = desc;
+      card.appendChild(p);
+    }
+
+    inputs.forEach(inp => {
+      card.appendChild(createInputRow(inp.label, inp.id, inp.type));
+    });
+
+    const btn = document.createElement('button');
+    btn.className = 'tool-btn-action';
+    btn.textContent = actionText;
+    btn.addEventListener('click', () => {
+      try {
+        const res = calcFn(inputs.map(i => parseFloat(document.getElementById(i.id).value) || 0));
+        const resDiv = card.querySelector('.tool-result');
+        resDiv.textContent = res;
+        resDiv.classList.add('visible');
+      } catch (e) {
+        const resDiv = card.querySelector('.tool-result');
+        resDiv.textContent = 'Ошибка';
+        resDiv.classList.add('visible');
+      }
+    });
+    card.appendChild(btn);
+
+    const resDiv = document.createElement('div');
+    resDiv.className = 'tool-result';
+    card.appendChild(resDiv);
+
+    return card;
+  }
+
+  function renderToolPanel(id) {
+    const main = document.querySelector('.main');
+    // Remove old tool panel if exists
+    const old = main.querySelector('.tool-panel');
+    if (old) old.remove();
+
+    const panel = document.createElement('div');
+    panel.className = 'tool-panel';
+
+    const tools = {
+      algebra: () => {
+        panel.appendChild(createCard('Квадратное уравнение', 'ax² + bx + c = 0. Найдите корни.', [
+          { label: 'a', id: 'alg-a' }, { label: 'b', id: 'alg-b' }, { label: 'c', id: 'alg-c' }
+        ], 'Решить', (vals) => {
+          const [a, b, c] = vals;
+          const D = b * b - 4 * a * c;
+          if (D < 0) return 'Нет действительных корней (D=' + D + ')';
+          const x1 = (-b + Math.sqrt(D)) / (2 * a);
+          const x2 = (-b - Math.sqrt(D)) / (2 * a);
+          return D === 0 ? `x = ${formatNum(x1)} (D=0)` : `x₁ = ${formatNum(x1)}, x₂ = ${formatNum(x2)} (D=${formatNum(D)})`;
+        }));
+
+        panel.appendChild(createCard('Степень', 'a в степени b', [
+          { label: 'a', id: 'alg-base' }, { label: 'b', id: 'alg-exp' }
+        ], 'Вычислить', (v) => `= ${formatNum(Math.pow(v[0], v[1]))}`));
+
+        panel.appendChild(createCard('Корень n-степени', 'ⁿ√a', [
+          { label: 'a', id: 'alg-nr' }, { label: 'n', id: 'alg-ni' }
+        ], 'Вычислить', (v) => `= ${formatNum(Math.pow(v[0], 1 / v[1]))}`));
+      },
+
+      geometry: () => {
+        panel.appendChild(createCard('Площадь круга', 'S = πr²', [
+          { label: 'r', id: 'geo-cr' }
+        ], 'Площадь', (v) => `S = ${formatNum(Math.PI * v[0] * v[0])}`));
+
+        panel.appendChild(createCard('Объём шара', 'V = (4/3)πr³', [
+          { label: 'r', id: 'geo-sr' }
+        ], 'Объём', (v) => `V = ${formatNum((4/3) * Math.PI * Math.pow(v[0], 3))}`));
+
+        panel.appendChild(createCard('Теорема Пифагора', 'c = √(a² + b²)', [
+          { label: 'a', id: 'geo-pa' }, { label: 'b', id: 'geo-pb' }
+        ], 'Гипотенуза', (v) => `c = ${formatNum(Math.sqrt(v[0]*v[0] + v[1]*v[1]))}`));
+
+        panel.appendChild(createCard('Площадь треугольника', 'S = (a × h) / 2', [
+          { label: 'a', id: 'geo-ta' }, { label: 'h', id: 'geo-th' }
+        ], 'Площадь', (v) => `S = ${formatNum((v[0] * v[1]) / 2)}`));
+
+        panel.appendChild(createCard('Объём цилиндра', 'V = πr²h', [
+          { label: 'r', id: 'geo-yr' }, { label: 'h', id: 'geo-yh' }
+        ], 'Объём', (v) => `V = ${formatNum(Math.PI * v[0] * v[0] * v[1])}`));
+      },
+
+      trig: () => {
+        panel.appendChild(createCard('Sin / Cos / Tan', 'Значения тригонометрических функций', [
+          { label: 'угол (°)', id: 'trig-angle' }
+        ], 'Вычислить', (v) => {
+          const rad = v[0] * Math.PI / 180;
+          return `sin = ${formatNum(Math.sin(rad))}\ncos = ${formatNum(Math.cos(rad))}\ntan = ${formatNum(Math.tan(rad))}`;
+        }));
+
+        panel.appendChild(createCard('Arcsin', 'arcsin(x) в градусах', [
+          { label: 'x (-1..1)', id: 'trig-asx' }
+        ], 'arcsin', (v) => `= ${formatNum(Math.asin(v[0]) * 180 / Math.PI)}°`));
+
+        panel.appendChild(createCard('Arccos', 'arccos(x) в градусах', [
+          { label: 'x (-1..1)', id: 'trig-acx' }
+        ], 'arccos', (v) => `= ${formatNum(Math.acos(v[0]) * 180 / Math.PI)}°`));
+
+        panel.appendChild(createCard('Arctan', 'arctan(x) в градусах', [
+          { label: 'x', id: 'trig-atx' }
+        ], 'arctan', (v) => `= ${formatNum(Math.atan(v[0]) * 180 / Math.PI)}°`));
+      },
+
+      prob: () => {
+        panel.appendChild(createCard('Факториал', 'n!', [
+          { label: 'n', id: 'prob-n' }
+        ], 'Факториал', (v) => {
+          let res = 1;
+          const n = Math.round(v[0]);
+          for (let i = 2; i <= n; i++) res *= i;
+          return `${n}! = ${formatNum(res)}`;
+        }));
+
+        panel.appendChild(createCard('Комбинации', 'C(n,k) = n! / (k!(n-k)!)', [
+          { label: 'n', id: 'prob-cn' }, { label: 'k', id: 'prob-ck' }
+        ], 'Комбинации', (v) => {
+          function fact(n) { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
+          return `C(${Math.round(v[0])},${Math.round(v[1])}) = ${fact(Math.round(v[0])) / (fact(Math.round(v[1])) * fact(Math.round(v[0]) - Math.round(v[1])))}`;
+        }));
+
+        panel.appendChild(createCard('Размещения', 'A(n,k) = n! / (n-k)!', [
+          { label: 'n', id: 'prob-an' }, { label: 'k', id: 'prob-ak' }
+        ], 'Размещения', (v) => {
+          function fact(n) { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
+          return `A(${Math.round(v[0])},${Math.round(v[1])}) = ${fact(Math.round(v[0])) / fact(Math.round(v[0]) - Math.round(v[1]))}`;
+        }));
+      },
+
+      stats: () => {
+        const card = document.createElement('div');
+        card.className = 'tool-card';
+        card.innerHTML = `<h3>Статистика</h3><div class="tool-desc">Введите числа через запятую</div>`;
+        const row = document.createElement('div');
+        row.className = 'tool-input-row';
+        row.innerHTML = `<label style="min-width:auto">Числа</label><input class="tool-input" id="stats-nums" type="text" placeholder="1, 2, 3, 4, 5">`;
+        card.appendChild(row);
+        const btn = document.createElement('button');
+        btn.className = 'tool-btn-action';
+        btn.textContent = 'Вычислить';
+        btn.addEventListener('click', () => {
+          const nums = document.getElementById('stats-nums').value.split(',').map(Number).filter(n => !isNaN(n));
+          if (nums.length === 0) { card.querySelector('.tool-result').textContent = 'Введите числа'; card.querySelector('.tool-result').classList.add('visible'); return; }
+          const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+          const sorted = [...nums].sort((a, b) => a - b);
+          const median = sorted.length % 2 === 0 ? (sorted[sorted.length/2 - 1] + sorted[sorted.length/2]) / 2 : sorted[Math.floor(sorted.length/2)];
+          const variance = nums.reduce((s, n) => s + Math.pow(n - mean, 2), 0) / nums.length;
+          const std = Math.sqrt(variance);
+          const min = sorted[0];
+          const max = sorted[sorted.length - 1];
+          card.querySelector('.tool-result').textContent = `Среднее: ${formatNum(mean)}\nМедиана: ${formatNum(median)}\nДисперсия: ${formatNum(variance)}\nСтд. отклонение: ${formatNum(std)}\nМин: ${min}, Макс: ${max}\nКол-во: ${nums.length}`;
+          card.querySelector('.tool-result').classList.add('visible');
+        });
+        card.appendChild(btn);
+        const resDiv = document.createElement('div');
+        resDiv.className = 'tool-result';
+        card.appendChild(resDiv);
+        panel.appendChild(card);
+      },
+
+      matrix: () => {
+        const card = document.createElement('div');
+        card.className = 'tool-card';
+        card.innerHTML = `<h3>Матрица 2×2</h3><div class="tool-desc">Введите элементы матрицы</div>`;
+        const labels = ['a₁₁', 'a₁₂', 'a₂₁', 'a₂₂'];
+        const ids = ['mat-a', 'mat-b', 'mat-c', 'mat-d'];
+        for (let i = 0; i < 4; i++) {
+          const row = document.createElement('div');
+          row.className = 'tool-input-row';
+          row.innerHTML = `<label>${labels[i]}</label><input class="tool-input" id="${ids[i]}" type="number" placeholder="${labels[i]}">`;
+          card.appendChild(row);
+        }
+        const btn = document.createElement('button');
+        btn.className = 'tool-btn-action';
+        btn.textContent = 'Детерминант';
+        btn.addEventListener('click', () => {
+          const vals = ids.map(id => parseFloat(document.getElementById(id).value) || 0);
+          const det = vals[0] * vals[3] - vals[1] * vals[2];
+          card.querySelector('.tool-result').textContent = `det = ${formatNum(det)}`;
+          card.querySelector('.tool-result').classList.add('visible');
+        });
+        card.appendChild(btn);
+        const resDiv = document.createElement('div');
+        resDiv.className = 'tool-result';
+        card.appendChild(resDiv);
+        panel.appendChild(card);
+      },
+
+      physics: () => {
+        panel.appendChild(createCard('Скорость', 'v = S / t', [
+          { label: 'S (м)', id: 'phys-d' }, { label: 't (с)', id: 'phys-t' }
+        ], 'Скорость', (v) => `v = ${formatNum(v[0] / v[1])} м/с`));
+
+        panel.appendChild(createCard('Кинетическая энергия', 'E = ½mv²', [
+          { label: 'm (кг)', id: 'phys-m' }, { label: 'v (м/с)', id: 'phys-v' }
+        ], 'Энергия', (v) => `E = ${formatNum(0.5 * v[0] * v[1] * v[1])} Дж`));
+
+        panel.appendChild(createCard('Сила', 'F = m × a', [
+          { label: 'm (кг)', id: 'phys-fm' }, { label: 'a (м/с²)', id: 'phys-a' }
+        ], 'Сила', (v) => `F = ${formatNum(v[0] * v[1])} Н`));
+      },
+
+      converter: () => {
+        const card = document.createElement('div');
+        card.className = 'tool-card';
+        card.innerHTML = `<h3>Градусы ↔ Радианы</h3>`;
+        card.innerHTML += `<div class="tool-input-row"><label>°</label><input class="tool-input" id="conv-deg" type="number" placeholder="Градусы"></div>`;
+        card.innerHTML += `<div class="tool-input-row"><label>rad</label><input class="tool-input" id="conv-rad" type="number" placeholder="Радианы"></div>`;
+        const btnDeg = document.createElement('button');
+        btnDeg.className = 'tool-btn-action';
+        btnDeg.textContent = '° → rad';
+        btnDeg.addEventListener('click', () => {
+          const deg = parseFloat(document.getElementById('conv-deg').value) || 0;
+          document.getElementById('conv-rad').value = (deg * Math.PI / 180).toFixed(6);
+        });
+        card.appendChild(btnDeg);
+        const btnRad = document.createElement('button');
+        btnRad.className = 'tool-btn-action';
+        btnRad.textContent = 'rad → °';
+        btnRad.addEventListener('click', () => {
+          const rad = parseFloat(document.getElementById('conv-rad').value) || 0;
+          document.getElementById('conv-deg').value = (rad * 180 / Math.PI).toFixed(4);
+        });
+        card.appendChild(btnRad);
+        panel.appendChild(card);
+
+        panel.appendChild(createCard('Цельсий ↔ Фаренгейт', 'F = C × 9/5 + 32', [
+          { label: '°C', id: 'conv-c' }
+        ], '→ °F', (v) => `= ${formatNum(v[0] * 9/5 + 32)} °F`));
+
+        panel.appendChild(createCard('Метры ↔ Футы', '1 м = 3.28084 фт', [
+          { label: 'м', id: 'conv-m' }
+        ], '→ футы', (v) => `= ${formatNum(v[0] * 3.28084)} ft`));
+      },
+
+      logarithm: () => {
+        panel.appendChild(createCard('Логарифм', 'log_b(a)', [
+          { label: 'a', id: 'log-a' }, { label: 'b', id: 'log-b' }
+        ], 'Логарифм', (v) => `log_${v[1]}(${v[0]}) = ${formatNum(Math.log(v[0]) / Math.log(v[1]))}`));
+
+        panel.appendChild(createCard('Натуральный логарифм', 'ln(x)', [
+          { label: 'x', id: 'log-x' }
+        ], 'ln', (v) => `ln(${v[0]}) = ${formatNum(Math.log(v[0]))}`));
+
+        panel.appendChild(createCard('Десятичный логарифм', 'log₁₀(x)', [
+          { label: 'x', id: 'log10-x' }
+        ], 'log₁₀', (v) => `log₁₀(${v[0]}) = ${formatNum(Math.log10(v[0]))}`));
+      }
+    };
+
+    if (tools[id]) tools[id]();
+
+    main.appendChild(panel);
+  }
+
+  // === KEYBOARD ===
+  document.addEventListener('keydown', (e) => {
+    if (currentTab !== 'basic') return;
+    if (e.key >= '0' && e.key <= '9') handleBasicAction({ action: 'num', value: e.key });
+    else if (e.key === '.') handleBasicAction({ action: 'dot' });
+    else if (e.key === '+') handleBasicAction({ action: 'op', value: '+', label: '+' });
+    else if (e.key === '-') handleBasicAction({ action: 'op', value: '-', label: '−' });
+    else if (e.key === '*') handleBasicAction({ action: 'op', value: '*', label: '×' });
+    else if (e.key === '/') { e.preventDefault(); handleBasicAction({ action: 'op', value: '/', label: '÷' }); }
+    else if (e.key === 'Enter' || e.key === '=') handleBasicAction({ action: 'equals' });
+    else if (e.key === 'Escape') handleBasicAction({ action: 'clear' });
+    else if (e.key === 'Backspace') {
+      currentInput = currentInput.slice(0, -1) || '0';
+      document.getElementById('result').textContent = currentInput;
+    }
+  });
+
+  // === INIT ===
+  renderTabs();
+  renderBasicCalc();
+  renderHistory();
+})();
+</script>
+</body>
+</html>
+

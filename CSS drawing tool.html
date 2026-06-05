@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAF7F4;
+  --surface: #FFFFFF;
+  --surface-alt: #F2EDE7;
+  --surface-alt2: #E8E0D8;
+  --border: #D4C9BE;
+  --border-light: #E8E0D8;
+  --text: #2C2825;
+  --text-sec: #6B6560;
+  --text-light: #9B9490;
+  --accent: #B8A088;
+  --accent-dark: #8C7560;
+  --canvas-bg: #FFFFFF;
+  --shadow: rgba(0,0,0,0.06);
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+[data-theme="dark"] {
+  --bg: #1A1816;
+  --surface: #24201C;
+  --surface-alt: #2A2622;
+  --surface-alt2: #3A3530;
+  --border: #4A433D;
+  --border-light: #3A3530;
+  --text: #D4C9BE;
+  --text-sec: #9B9490;
+  --text-light: #6B6560;
+  --accent: #B8A088;
+  --accent-dark: #D4C9BE;
+  --canvas-bg: #1A1816;
+  --shadow: rgba(0,0,0,0.3);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Top Bar */
+.topbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.topbar-left, .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.logo {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--text);
+  text-decoration: none;
+}
+.logo span { color: var(--accent); }
+
+.page-title {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  padding: 0 16px;
+  border-left: 1px solid var(--border);
+  margin-left: 8px;
+}
+
+.btn {
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-sec);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--surface-alt); color: var(--text); border-color: var(--border-light); }
+.btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn.primary:hover { opacity: 0.85; }
+.btn svg { width: 14px; height: 14px; }
+
+.btn-group { display: flex; gap: 0; }
+.btn-group .btn { border-radius: 0; }
+.btn-group .btn:first-child { border-radius: 4px 0 0 4px; }
+.btn-group .btn:last-child { border-radius: 0 4px 4px 0; }
+.btn-group .btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.theme-toggle {
+  width: 32px; height: 32px;
+  background: none; border: 1px solid var(--border);
+  border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; color: var(--text-sec);
+}
+.theme-toggle:hover { background: var(--surface-alt); }
+
+/* Main Layout */
+.workspace {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Left Panel - Tools */
+.tools-panel {
+  width: 220px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.panel-section {
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-section-title {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 14px;
+}
+
+/* Shape Buttons */
+.shapes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.shape-btn {
+  padding: 12px 8px;
+  background: var(--surface-alt);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  color: var(--text-sec);
+  border-radius: 6px;
+}
+.shape-btn span { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+.shape-btn:hover { background: var(--surface-alt2); color: var(--text); }
+.shape-btn.active { border-color: var(--accent); background: var(--surface-alt2); color: var(--accent-dark); }
+
+.shape-btn svg { width: 28px; height: 28px; }
+
+/* Color Palette */
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.color-swatch {
+  width: 100%; aspect-ratio: 1;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.active { border-color: var(--text); box-shadow: 0 0 0 2px var(--bg); }
+
+.custom-color-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.custom-color-input {
+  width: 40px; height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px;
+  background: var(--surface);
+}
+
+.color-hex-input {
+  flex: 1;
+  height: 32px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 0 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.color-hex-input:focus { outline: none; border-color: var(--accent); }
+
+/* Properties */
+.prop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.prop-label {
+  font-size: 11px;
+  color: var(--text-sec);
+}
+
+.prop-input {
+  width: 80px;
+  height: 28px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 0 6px;
+  border-radius: 3px;
+  text-align: center;
+}
+.prop-input:focus { outline: none; border-color: var(--accent); }
+
+.prop-slider {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  margin-top: 4px;
+}
+.prop-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Canvas Area */
+.canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.canvas-toolbar {
+  height: 40px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.canvas-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.canvas-container {
+  position: relative;
+  box-shadow: 0 4px 24px var(--shadow);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#drawing-canvas {
+  display: block;
+  cursor: crosshair;
+  background: var(--canvas-bg);
+}
+
+/* Right Panel - Layers & Export */
+.right-panel {
+  width: 200px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.layers-list {
+  flex: 1;
+  padding: 12px;
+}
+
+.layer-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 4px;
+  background: var(--surface-alt);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+  color: var(--text-sec);
+}
+.layer-item:hover { background: var(--surface-alt2); }
+.layer-item.active { border-color: var(--accent); background: var(--surface-alt2); }
+.layer-item .layer-icon { font-size: 14px; }
+.layer-item .layer-name { flex: 1; }
+.layer-item .layer-color { width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--border); }
+
+.layer-delete {
+  background: none; border: none; color: var(--text-light);
+  cursor: pointer; font-size: 14px; padding: 2px;
+  transition: color 0.2s;
+}
+.layer-delete:hover { color: #c0392b; }
+
+.export-section {
+  padding: 16px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.export-btn {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 6px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text-sec);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.export-btn:hover { background: var(--surface-alt2); color: var(--text); border-color: var(--border-light); }
+.export-btn.primary-export { background: var(--accent-dark); color: #fff; border-color: var(--accent-dark); }
+
+/* Status */
+.statusbar {
+  height: 28px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  font-size: 11px;
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+/* Scrollbar */
+.tools-panel::-webkit-scrollbar, .right-panel::-webkit-scrollbar { width: 4px; }
+.tools-panel::-webkit-scrollbar-thumb, .right-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+@media (max-width: 900px) {
+  .tools-panel { width: 180px; }
+  .right-panel { width: 170px; }
+  .page-title { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+    <span class="page-title">Инспектор палитры</span>
+  </div>
+  <div class="topbar-right">
+    <div class="btn-group" id="action-btns">
+      <button class="btn" id="btn-undo" title="Отменить">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor"><path d="M3 6h8a3 3 0 010 6H8" stroke-width="1.5" stroke-linecap="round"/><path d="M6 3L3 6l3 3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="btn" id="btn-clear">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor"><path d="M4 4l8 8M12 4l-8 8" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Очистить
+      </button>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="workspace">
+  <!-- Left Panel: Tools -->
+  <div class="tools-panel">
+    <div class="panel-section">
+      <div class="panel-section-title">Фигуры</div>
+      <div class="shapes-grid" id="shapes-grid">
+        <button class="shape-btn active" data-shape="rect">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="7" width="20" height="14" rx="1"/></svg>
+          <span>Прям.</span>
+        </button>
+        <button class="shape-btn" data-shape="round-rect">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="7" width="20" height="14" rx="4"/></svg>
+          <span>Скругл.</span>
+        </button>
+        <button class="shape-btn" data-shape="circle">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="14" cy="14" r="8"/></svg>
+          <span>Круг</span>
+        </button>
+        <button class="shape-btn" data-shape="ellipse">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="14" cy="14" rx="10" ry="6"/></svg>
+          <span>Эллипс</span>
+        </button>
+        <button class="shape-btn" data-shape="triangle">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 5L4 22h20L14 5z"/></svg>
+          <span>Треуг.</span>
+        </button>
+        <button class="shape-btn" data-shape="diamond">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 4L24 14L14 24L4 14Z"/></svg>
+          <span>Ромб</span>
+        </button>
+        <button class="shape-btn" data-shape="star">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3l3 8h8l-6.5 5 2.5 8L14 19l-7 5 2.5-8L3 11h8z"/></svg>
+          <span>Звезда</span>
+        </button>
+        <button class="shape-btn" data-shape="line">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="22" x2="23" y2="6"/></svg>
+          <span>Линия</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Палитра</div>
+      <div class="palette-grid" id="palette-grid"></div>
+      <div class="custom-color-row">
+        <input type="color" class="custom-color-input" id="custom-color" value="#B8A088">
+        <input type="text" class="color-hex-input" id="hex-input" value="#B8A088" maxlength="7">
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Заполнение</div>
+      <div class="btn-group" style="margin-bottom: 12px;">
+        <button class="btn" id="btn-fill-solid" style="flex:1">Сплошное</button>
+        <button class="btn" id="btn-fill-outline" style="flex:1">Контур</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Параметры</div>
+      <div class="prop-row">
+        <span class="prop-label">Толщина</span>
+        <input type="number" class="prop-input" id="stroke-width" value="2" min="1" max="20">
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Прозрачность</span>
+        <input type="number" class="prop-input" id="opacity-input" value="100" min="0" max="100">
+      </div>
+      <input type="range" class="prop-slider" id="opacity-slider" min="0" max="100" value="100">
+      <div class="prop-row" style="margin-top: 12px;">
+        <span class="prop-label">Скругление</span>
+        <input type="number" class="prop-input" id="border-radius" value="0" min="0" max="100">
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas Area -->
+  <div class="canvas-area">
+    <div class="canvas-toolbar">
+      <span>Размер: <strong id="canvas-size-display">800 × 600</strong></span>
+      <span style="margin-left: auto;">Элементов: <strong id="element-count">0</strong></span>
+    </div>
+    <div class="canvas-wrapper">
+      <div class="canvas-container">
+        <canvas id="drawing-canvas" width="800" height="600"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel: Layers & Export -->
+  <div class="right-panel">
+    <div class="panel-section" style="padding-bottom: 8px;">
+      <div class="panel-section-title">Слои</div>
+    </div>
+    <div class="layers-list" id="layers-list">
+      <div style="padding: 20px; text-align: center; color: var(--text-light); font-size: 12px;">
+        Нарисуйте первую фигуру
+      </div>
+    </div>
+    <div class="export-section">
+      <div class="panel-section-title">Экспорт</div>
+      <button class="export-btn primary-export" id="export-html">
+        ↓ Скачать HTML
+      </button>
+      <button class="export-btn" id="export-css">
+        ↓ Скачать CSS
+      </button>
+      <button class="export-btn" id="export-png">
+        ↓ Скачать PNG
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="statusbar">
+  <span id="status-shape">Фигура: Прямоугольник</span>
+  <span id="status-pos">X: 0, Y: 0</span>
+</div>
+
+<script>
+(function() {
+  // === THEME ===
+  var currentTheme = localStorage.getItem('zolter-palette-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+
+  document.getElementById('theme-toggle').addEventListener('click', function() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var newTheme = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('zolter-palette-theme', newTheme);
+    redrawCanvas();
+  });
+
+  // === PALETTE COLORS ===
+  var paletteColors = [
+    '#2C2825', '#6B6560', '#9B9490', '#B8A088', '#8C7560', '#D4C9BE',
+    '#E8E0D8', '#FAF7F4', '#FFFFFF', '#000000',
+    '#C0392B', '#E67E22', '#F1C40F', '#27AE60', '#2980B9', '#8E44AD',
+    '#E91E63', '#00BCD4', '#795548', '#607D8B', '#FF5722', '#3F51B5'
+  ];
+
+  var state = {
+    shapes: [],
+    undoStack: [],
+    currentShape: 'rect',
+    currentColor: '#B8A088',
+    fillColor: true,
+    strokeOnly: false,
+    strokeWidth: 2,
+    opacity: 1,
+    borderRadius: 0,
+    isDrawing: false,
+    startX: 0,
+    startY: 0,
+    canvasWidth: 800,
+    canvasHeight: 600
+  };
+
+  var canvas = document.getElementById('drawing-canvas');
+  var ctx = canvas.getContext('2d');
+
+  // === INIT PALETTE ===
+  var paletteGrid = document.getElementById('palette-grid');
+  paletteColors.forEach(function(color, i) {
+    var swatch = document.createElement('div');
+    swatch.className = 'color-swatch' + (i === 3 ? ' active' : '');
+    swatch.style.background = color;
+    if (color === '#FFFFFF' || color === '#FAF7F4') {
+      swatch.style.border = '2px solid var(--border)';
+    }
+    swatch.addEventListener('click', function() {
+      document.querySelectorAll('.color-swatch').forEach(function(s) { s.classList.remove('active'); });
+      swatch.classList.add('active');
+      state.currentColor = color;
+      document.getElementById('custom-color').value = color;
+      document.getElementById('hex-input').value = color.toUpperCase();
+    });
+    paletteGrid.appendChild(swatch);
+  });
+
+  document.getElementById('custom-color').addEventListener('input', function(e) {
+    state.currentColor = e.target.value;
+    document.getElementById('hex-input').value = e.target.value.toUpperCase();
+    document.querySelectorAll('.color-swatch').forEach(function(s) { s.classList.remove('active'); });
+  });
+
+  document.getElementById('hex-input').addEventListener('change', function(e) {
+    var val = e.target.value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+      state.currentColor = val;
+      document.getElementById('custom-color').value = val;
+    }
+  });
+
+  // === SHAPE SELECTION ===
+  var shapeNames = {
+    'rect': 'Прямоугольник',
+    'round-rect': 'Скруглённый прямоугольник',
+    'circle': 'Круг',
+    'ellipse': 'Эллипс',
+    'triangle': 'Треугольник',
+    'diamond': 'Ромб',
+    'star': 'Звезда',
+    'line': 'Линия'
+  };
+
+  document.querySelectorAll('.shape-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.shape-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      state.currentShape = btn.dataset.shape;
+      document.getElementById('status-shape').textContent = 'Фигура: ' + shapeNames[state.currentShape];
+    });
+  });
+
+  // === FILL MODE ===
+  document.getElementById('btn-fill-solid').addEventListener('click', function() {
+    state.strokeOnly = false;
+    this.classList.add('active');
+    document.getElementById('btn-fill-outline').classList.remove('active');
+  });
+  document.getElementById('btn-fill-outline').addEventListener('click', function() {
+    state.strokeOnly = true;
+    this.classList.add('active');
+    document.getElementById('btn-fill-solid').classList.remove('active');
+  });
+  document.getElementById('btn-fill-outline').classList.add('active');
+  document.getElementById('btn-fill-solid').classList.remove('active');
+
+  // === PROPERTIES ===
+  document.getElementById('stroke-width').addEventListener('change', function(e) {
+    state.strokeWidth = parseInt(e.target.value) || 2;
+  });
+
+  document.getElementById('opacity-input').addEventListener('input', function(e) {
+    state.opacity = parseInt(e.target.value) / 100;
+    document.getElementById('opacity-slider').value = e.target.value;
+  });
+
+  document.getElementById('opacity-slider').addEventListener('input', function(e) {
+    state.opacity = parseInt(e.target.value) / 100;
+    document.getElementById('opacity-input').value = e.target.value;
+  });
+
+  document.getElementById('border-radius').addEventListener('change', function(e) {
+    state.borderRadius = parseInt(e.target.value) || 0;
+  });
+
+  // === DRAWING ===
+  function getCanvasPos(e) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (canvas.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    };
+  }
+
+  function hexToRgba(hex, alpha) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+
+  function drawShape(context, shape, preview) {
+    var color = state.strokeOnly ? hexToRgba(shape.color, state.opacity) : hexToRgba(shape.color, state.opacity);
+    var strokeColor = state.strokeOnly ? hexToRgba(shape.color, state.opacity) : hexToRgba(shape.color, Math.min(state.opacity + 0.3, 1));
+
+    context.save();
+    context.lineWidth = shape.strokeWidth;
+    context.lineJoin = 'round';
+    context.lineCap = 'round';
+
+    var x = shape.x, y = shape.y, w = shape.w, h = shape.h;
+
+    switch (shape.type) {
+      case 'rect':
+      case 'round-rect':
+        var radius = shape.type === 'round-rect' ? (shape.borderRadius || 8) : (shape.borderRadius || 0);
+        context.beginPath();
+        context.moveTo(x + radius, y);
+        context.lineTo(x + w - radius, y);
+        context.quadraticCurveTo(x + w, y, x + w, y + radius);
+        context.lineTo(x + w, y + h - radius);
+        context.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+        context.lineTo(x + radius, y + h);
+        context.quadraticCurveTo(x, y + h, x, y + h - radius);
+        context.lineTo(x, y + radius);
+        context.quadraticCurveTo(x, y, x + radius, y);
+        context.closePath();
+        if (!state.strokeOnly) {
+          context.fillStyle = color;
+          context.fill();
+        }
+        context.strokeStyle = strokeColor;
+        context.stroke();
+        break;
+
+      case 'circle':
+        var radius = Math.min(Math.abs(w), Math.abs(h)) / 2;
+        var cx = x + w / 2;
+        var cy = y + h / 2;
+        context.beginPath();
+        context.arc(cx, cy, radius, 0, Math.PI * 2);
+        if (!state.strokeOnly) {
+          context.fillStyle = color;
+          context.fill();
+        }
+        context.strokeStyle = strokeColor;
+        context.stroke();
+        break;
+
+      case 'ellipse':
+        var rx = Math.abs(w) / 2;
+        var ry = Math.abs(h) / 2;
+        var ecx = x + w / 2;
+        var ecy = y + h / 2;
+        context.beginPath();
+        context.ellipse(ecx, ecy, rx, ry, 0, 0, Math.PI * 2);
+        if (!state.strokeOnly) {
+          context.fillStyle = color;
+          context.fill();
+        }
+        context.strokeStyle = strokeColor;
+        context.stroke();
+        break;
+
+      case 'triangle':
+        context.beginPath();
+        context.moveTo(x + w / 2, y);
+        context.lineTo(x, y + h);
+        context.lineTo(x + w, y + h);
+        context.closePath();
+        if (!state.strokeOnly) {
+          context.fillStyle = color;
+          context.fill();
+        }
+        context.strokeStyle = strokeColor;
+        context.stroke();
+        break;
+
+      case 'diamond':
+        context.beginPath();
+        context.moveTo(x + w / 2, y);
+        context.lineTo(x + w, y + h / 2);
+        context.lineTo(x + w / 2, y + h);
+        context.lineTo(x, y + h / 2);
+        context.closePath();
+        if (!state.strokeOnly) {
+          context.fillStyle = color;
+          context.fill();
+        }
+        context.strokeStyle = strokeColor;
+        context.stroke();
+        break;
+
+      case 'star':
+        var scx = x + w / 2;
+        var scy = y + h / 2;
+        var outerR = Math.min(Math.abs(w), Math.abs(h)) / 2;
+        var innerR = outerR * 0.4;
+        var spikes = 5;
+        var rot = Math.PI / 2 * 3;
+        var step = Math.PI / spikes;
+        context.beginPath();
+        context.moveTo(scx, scy - outerR);
+        for (var i = 0; i < spikes; i++) {
+          context.lineTo(scx + Math.cos(rot) * outerR, scy + Math.sin(rot) * outerR);
+          rot += step;
+          context.lineTo(scx + Math.cos(rot) * innerR, scy + Math.sin(rot) * innerR);
+          rot += step;
+        }
+        context.lineTo(scx, scy - outerR);
+        context.closePath();
+        if (!state.strokeOnly) {
+          context.fillStyle = color;
+          context.fill();
+        }
+        context.strokeStyle = strokeColor;
+        context.stroke();
+        break;
+
+      case 'line':
+        context.beginPath();
+        context.moveTo(x, y);
+        context.lineTo(x + w, y + h);
+        context.strokeStyle = strokeColor;
+        context.stroke();
+        break;
+    }
+
+    context.restore();
+  }
+
+  function redrawCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Canvas background based on theme
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    ctx.fillStyle = isDark ? '#1A1816' : '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Grid
+    ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)';
+    ctx.lineWidth = 1;
+    for (var gx = 0; gx < canvas.width; gx += 40) {
+      ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, canvas.height); ctx.stroke();
+    }
+    for (var gy = 0; gy < canvas.height; gy += 40) {
+      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(canvas.width, gy); ctx.stroke();
+    }
+
+    // Draw all shapes
+    state.shapes.forEach(function(shape) {
+      drawShape(ctx, shape);
+    });
+
+    document.getElementById('element-count').textContent = state.shapes.length;
+  }
+
+  // === CANVAS EVENTS ===
+  canvas.addEventListener('mousedown', function(e) {
+    var pos = getCanvasPos(e);
+    state.isDrawing = true;
+    state.startX = pos.x;
+    state.startY = pos.y;
+  });
+
+  canvas.addEventListener('mousemove', function(e) {
+    var pos = getCanvasPos(e);
+    document.getElementById('status-pos').textContent = 'X: ' + Math.round(pos.x) + ', Y: ' + Math.round(pos.y);
+
+    if (!state.isDrawing) return;
+
+    redrawCanvas();
+
+    var w = pos.x - state.startX;
+    var h = pos.y - state.startY;
+
+    var previewShape = {
+      type: state.currentShape,
+      x: w < 0 ? pos.x : state.startX,
+      y: h < 0 ? pos.y : state.startY,
+      w: Math.abs(w),
+      h: Math.abs(h),
+      color: state.currentColor,
+      strokeWidth: state.strokeWidth,
+      borderRadius: state.borderRadius
+    };
+
+    drawShape(ctx, previewShape, true);
+  });
+
+  canvas.addEventListener('mouseup', function(e) {
+    if (!state.isDrawing) return;
+    state.isDrawing = false;
+
+    var pos = getCanvasPos(e);
+    var w = pos.x - state.startX;
+    var h = pos.y - state.startY;
+
+    if (Math.abs(w) < 3 && Math.abs(h) < 3) return;
+
+    var shape = {
+      type: state.currentShape,
+      x: w < 0 ? pos.x : state.startX,
+      y: h < 0 ? pos.y : state.startY,
+      w: Math.abs(w),
+      h: Math.abs(h),
+      color: state.currentColor,
+      strokeWidth: state.strokeWidth,
+      borderRadius: state.borderRadius,
+      opacity: state.opacity,
+      strokeOnly: state.strokeOnly
+    };
+
+    state.undoStack.push({ action: 'add', shape: shape, index: state.shapes.length });
+    state.shapes.push(shape);
+    
+    redrawCanvas();
+    updateLayers();
+  });
+
+  canvas.addEventListener('mouseleave', function() {
+    if (state.isDrawing) {
+      state.isDrawing = false;
+    }
+  });
+
+  // === UNDO ===
+  document.getElementById('btn-undo').addEventListener('click', function() {
+    if (state.shapes.length === 0) return;
+    state.shapes.pop();
+    redrawCanvas();
+    updateLayers();
+  });
+
+  document.getElementById('btn-clear').addEventListener('click', function() {
+    if (state.shapes.length === 0) return;
+    if (confirm('Очистить холст?')) {
+      state.shapes = [];
+      redrawCanvas();
+      updateLayers();
+    }
+  });
+
+  // === LAYERS ===
+  function updateLayers() {
+    var list = document.getElementById('layers-list');
+    if (state.shapes.length === 0) {
+      list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-light); font-size: 12px;">Нарисуйте первую фигуру</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    var icons = {
+      'rect': '▭', 'round-rect': '▭', 'circle': '●', 'ellipse': '⬮',
+      'triangle': '△', 'diamond': '◇', 'star': '★', 'line': '╱'
+    };
+    var names = {
+      'rect': 'Прям.', 'round-rect': 'Скругл.', 'circle': 'Круг', 'ellipse': 'Эллипс',
+      'triangle': 'Треуг.', 'diamond': 'Ромб', 'star': 'Звезда', 'line': 'Линия'
+    };
+
+    for (var i = state.shapes.length - 1; i >= 0; i--) {
+      var s = state.shapes[i];
+      var item = document.createElement('div');
+      item.className = 'layer-item';
+      item.innerHTML = '<span class="layer-icon">' + icons[s.type] + '</span>' +
+        '<span class="layer-name">' + names[s.type] + ' #' + (i + 1) + '</span>' +
+        '<span class="layer-color" style="background:' + s.color + '"></span>' +
+        '<button class="layer-delete" data-index="' + i + '">×</button>';
+
+      item.querySelector('.layer-delete').addEventListener('click', function(e) {
+        e.stopPropagation();
+        var idx = parseInt(this.dataset.index);
+        state.shapes.splice(idx, 1);
+        redrawCanvas();
+        updateLayers();
+      });
+
+      list.appendChild(item);
+    }
+  }
+
+  // === EXPORT HTML ===
+  document.getElementById('export-html').addEventListener('click', function() {
+    if (state.shapes.length === 0) { alert('Нарисуйте хотя бы одну фигуру!'); return; }
+
+    var html = '<!DOCTYPE html>\n<html lang="ru">\n<head>\n  <meta charset="UTF-8">\n  <title>Zolter — Мой рисунок</title>\n  <style>\n    body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: ' + (document.documentElement.getAttribute('data-theme') === 'dark' ? '#1A1816' : '#FAF7F4') + '; }\n    .canvas {\n      width: ' + canvas.width + 'px;\n      height: ' + canvas.height + 'px;\n      position: relative;\n      background: ' + (document.documentElement.getAttribute('data-theme') === 'dark' ? '#1A1816' : '#fff') + ';\n      box-shadow: 0 4px 24px rgba(0,0,0,0.08);\n      border-radius: 8px;\n      overflow: hidden;\n    }\n';
+
+    state.shapes.forEach(function(s, i) {
+      var css = '    .shape-' + i + ' {\n';
+      css += '      position: absolute;\n';
+      css += '      left: ' + Math.round(s.x) + 'px;\n';
+      css += '      top: ' + Math.round(s.y) + 'px;\n';
+      css += '      width: ' + Math.round(s.w) + 'px;\n';
+      css += '      height: ' + Math.round(s.h) + 'px;\n';
+
+      if (s.strokeOnly) {
+        css += '      background: transparent;\n';
+      } else {
+        css += '      background: ' + s.color + ';\n';
+      }
+
+      css += '      border: ' + s.strokeWidth + 'px solid ' + s.color + ';\n';
+
+      if (s.type === 'round-rect' || s.borderRadius > 0) {
+        css += '      border-radius: ' + Math.round(s.borderRadius) + 'px;\n';
+      } else if (s.type === 'circle') {
+        css += '      border-radius: 50%;\n';
+      } else if (s.type === 'ellipse') {
+        css += '      border-radius: 50%;\n';
+      } else if (s.type === 'triangle') {
+        css += '      background: transparent;\n';
+        css += '      border: none;\n';
+        css += '      border-left: ' + Math.round(s.w / 2) + 'px solid transparent;\n';
+        css += '      border-right: ' + Math.round(s.w / 2) + 'px solid transparent;\n';
+        css += '      border-bottom: ' + Math.round(s.h) + 'px solid ' + s.color + ';\n';
+        css += '      width: 0; height: 0;\n';
+      } else if (s.type === 'line') {
+        css += '      height: ' + s.strokeWidth + 'px;\n';
+        css += '      background: ' + s.color + ';\n';
+        var angle = Math.atan2(s.h, s.w) * (180 / Math.PI);
+        css += '      transform: rotate(' + angle.toFixed(1) + 'deg);\n';
+        css += '      transform-origin: left center;\n';
+      }
+
+      if (s.opacity && s.opacity < 1) {
+        css += '      opacity: ' + s.opacity + ';\n';
+      }
+
+      css += '    }\n\n';
+      html += css;
+    });
+
+    html += '  </style>\n</head>\n<body>\n  <div class="canvas">\n';
+
+    state.shapes.forEach(function(s, i) {
+      if (s.type === 'triangle') {
+        html += '    <div class="shape-' + i + '"></div>\n';
+      } else {
+        html += '    <div class="shape-' + i + '"></div>\n';
+      }
+    });
+
+    html += '  </div>\n</body>\n</html>';
+
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    downloadBlob(blob, 'zolter-drawing-' + new Date().toISOString().slice(0,10) + '.html');
+  });
+
+  // === EXPORT CSS ===
+  document.getElementById('export-css').addEventListener('click', function() {
+    if (state.shapes.length === 0) { alert('Нарисуйте хотя бы одну фигуру!'); return; }
+
+    var css = '/* ========================================\n';
+    css += '   Zolter Palette Inspector — Экспорт CSS\n';
+    css += '   ' + new Date().toLocaleString('ru-RU') + '\n';
+    css += '   Элементов: ' + state.shapes.length + '\n';
+    css += '   ======================================== */\n\n';
+
+    css += ':root {\n';
+    css += '  --canvas-width: ' + canvas.width + 'px;\n';
+    css += '  --canvas-height: ' + canvas.height + 'px;\n';
+    css += '}\n\n';
+
+    css += '.zolter-canvas {\n';
+    css += '  position: relative;\n';
+    css += '  width: var(--canvas-width);\n';
+    css += '  height: var(--canvas-height);\n';
+    css += '  background: #FFFFFF;\n';
+    css += '  overflow: hidden;\n';
+    css += '}\n\n';
+
+    state.shapes.forEach(function(s, i) {
+      css += '/* ' + shapeNames[s.type] + ' #' + (i + 1) + ' */\n';
+      css += '.zolter-shape-' + i + ' {\n';
+      css += '  position: absolute;\n';
+      css += '  left: ' + Math.round(s.x) + 'px;\n';
+      css += '  top: ' + Math.round(s.y) + 'px;\n';
+      css += '  width: ' + Math.round(s.w) + 'px;\n';
+      css += '  height: ' + Math.round(s.h) + 'px;\n';
+
+      if (!s.strokeOnly) css += '  background: ' + s.color + ';\n';
+      else css += '  background: transparent;\n';
+
+      css += '  border: ' + s.strokeWidth + 'px solid ' + s.color + ';\n';
+
+      if (s.borderRadius > 0) css += '  border-radius: ' + Math.round(s.borderRadius) + 'px;\n';
+      if (s.type === 'circle') css += '  border-radius: 50%;\n';
+      if (s.type === 'ellipse') css += '  border-radius: 50%;\n';
+      if (s.opacity && s.opacity < 1) css += '  opacity: ' + s.opacity + ';\n';
+
+      css += '}\n\n';
+    });
+
+    var blob = new Blob([css], { type: 'text/css;charset=utf-8' });
+    downloadBlob(blob, 'zolter-styles-' + new Date().toISOString().slice(0,10) + '.css');
+  });
+
+  // === EXPORT PNG ===
+  document.getElementById('export-png').addEventListener('click', function() {
+    if (state.shapes.length === 0) { alert('Нарисуйте хотя бы одну фигуру!'); return; }
+    
+    var link = document.createElement('a');
+    link.download = 'zolter-drawing-' + new Date().toISOString().slice(0,10) + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+
+  function downloadBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  // === INIT ===
+  document.getElementById('btn-fill-solid').classList.add('active');
+  document.getElementById('btn-fill-outline').classList.remove('active');
+  redrawCanvas();
+})();
+</script>
+</body>
+</html>
+

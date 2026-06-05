@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuestEdu — Образовательное приключение</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--blue:#4A90E2;--blue-hover:#3578D5;--blue-light:rgba(74,144,226,0.15);
+--green:#A7ED7A;--green-dark:#7BC950;--green-light:rgba(167,237,122,0.2);
+--orange:#FFA07A;--orange-light:rgba(255,160,122,0.2);
+--purple:#9B59B6;--purple-dark:#7D3C98;--purple-light:rgba(155,89,182,0.15);
+--bg:#F5F5F5;--surface:#FFFFFF;--surface-2:#FAFAFA;
+--text:#2D3436;--text-secondary:#636E72;--text-muted:#B2BEC3;
+--shadow:0 8px 30px rgba(0,0,0,0.08);--shadow-lg:0 15px 50px rgba(0,0,0,0.12);--shadow-sm:0 4px 15px rgba(0,0,0,0.06);
+--radius:18px;--radius-sm:12px;--radius-xs:8px;
+--nav-height:70px;--header-height:60px;
+--transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="dark"]{
+--bg:#1A1A2E;--surface:#16213E;--surface-2:#0F3460;
+--text:#EAEAEA;--text-secondary:#B0B0B0;--text-muted:#555577;
+--shadow:0 8px 30px rgba(0,0,0,0.3);--shadow-lg:0 15px 50px rgba(0,0,0,0.4);--shadow-sm:0 4px 15px rgba(0,0,0,0.2);
+--blue-light:rgba(74,144,226,0.2);--green-light:rgba(167,237,122,0.15);--orange-light:rgba(255,160,122,0.15);--purple-light:rgba(155,89,182,0.2);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh;transition:var(--transition)}
+h1,h2,h3,h4{font-family:'Fredoka One',cursive;font-weight:700}
+.page-transition{animation:pageIn 0.4s ease}
+@keyframes pageIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes bounceIn{0%{transform:scale(0.3);opacity:0}50%{transform:scale(1.05)}70%{transform:scale(0.9)}100%{transform:scale(1);opacity:1}}
+@keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(-200px) rotate(720deg);opacity:0}}
+@keyframes glow{0%,100%{box-shadow:0 0 5px var(--blue),0 0 10px var(--blue)}50%{box-shadow:0 0 20px var(--blue),0 0 40px var(--blue)}}
+
+.app{display:flex;flex-direction:column;min-height:100vh;padding-bottom:calc(var(--nav-height) + 20px)}
+
+/* Header */
+.header{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid rgba(0,0,0,0.06);padding:0 20px;height:var(--header-height);display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(10px);transition:var(--transition)}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{font-family:'Fredoka One',cursive;font-size:24px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.xp-display{display:flex;align-items:center;gap:6px;background:var(--blue-light);padding:6px 14px;border-radius:20px;font-weight:700;color:var(--blue);font-size:14px}
+.xp-icon{width:20px;height:20px}
+.header-right{display:flex;align-items:center;gap:12px}
+.theme-toggle{width:44px;height:28px;border-radius:14px;background:var(--text-muted);position:relative;cursor:pointer;transition:var(--transition);border:none;padding:0}
+.theme-toggle::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:3px;left:3px;transition:var(--transition);box-shadow:0 2px 5px rgba(0,0,0,0.2)}
+[data-theme="dark"] .theme-toggle{background:var(--purple)}
+[data-theme="dark"] .theme-toggle::after{left:19px}
+.streak-badge{display:flex;align-items:center;gap:4px;background:var(--orange-light);padding:6px 12px;border-radius:20px;font-weight:700;font-size:13px;color:var(--orange)}
+
+/* Main Content */
+.main{flex:1;padding:20px;max-width:1200px;margin:0 auto;width:100%}
+.section{display:none}
+.section.active{display:block}
+
+/* Home Section */
+.hero{display:flex;align-items:center;gap:40px;margin-bottom:30px;flex-wrap:wrap}
+.hero-text{flex:1;min-width:280px}
+.hero-greeting{font-family:'Comic Neue',cursive;font-size:18px;color:var(--text-secondary);margin-bottom:8px}
+.hero-title{font-size:32px;line-height:1.2;margin-bottom:16px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-subtitle{font-size:16px;color:var(--text-secondary);line-height:1.6;margin-bottom:24px}
+.hero-mascot{flex:0 0 180px;height:180px;animation:float 3s ease-in-out infinite}
+.mascot-container{width:180px;height:180px;position:relative}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 28px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;border:none;cursor:pointer;transition:var(--transition);text-decoration:none}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(0)}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#6C5CE7);color:#fff;box-shadow:0 4px 15px rgba(74,144,226,0.4)}
+.btn-primary:hover{box-shadow:0 8px 25px rgba(74,144,226,0.5)}
+.btn-secondary{background:var(--surface);color:var(--text);border:2px solid rgba(0,0,0,0.08)}
+.btn-secondary:hover{border-color:var(--blue);color:var(--blue)}
+.btn-green{background:linear-gradient(135deg,var(--green),var(--green-dark));color:#1a1a1a;box-shadow:0 4px 15px rgba(167,237,122,0.4)}
+.btn-purple{background:linear-gradient(135deg,var(--purple),var(--purple-dark));color:#fff;box-shadow:0 4px 15px rgba(155,89,182,0.4)}
+.btn-orange{background:linear-gradient(135deg,var(--orange),#E88B5A);color:#fff}
+
+/* Quick Access */
+.quick-access{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-bottom:30px}
+.quick-card{background:var(--surface);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:var(--transition);box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.quick-card:hover{transform:translateY(-5px);box-shadow:var(--shadow)}
+.quick-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius) var(--radius) 0 0}
+.quick-card.blue::before{background:var(--blue)}
+.quick-card.green::before{background:var(--green)}
+.quick-card.orange::before{background:var(--orange)}
+.quick-card.purple::before{background:var(--purple)}
+.quick-icon{font-size:36px;margin-bottom:10px;display:block}
+.quick-title{font-weight:700;font-size:14px;margin-bottom:4px}
+.quick-sub{font-size:12px;color:var(--text-secondary)}
+
+/* Achievements Widget */
+.widget{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:24px}
+.widget-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.widget-title{font-size:18px;display:flex;align-items:center;gap:8px}
+.badges-grid{display:flex;gap:12px;flex-wrap:wrap}
+.badge{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;transition:var(--transition);position:relative}
+.badge.locked{background:var(--surface-2);filter:grayscale(1);opacity:0.4}
+.badge.unlocked{background:var(--green-light);animation:bounceIn 0.5s ease}
+.badge.unlocked:hover{transform:scale(1.1)}
+.badge-tooltip{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;white-space:nowrap;opacity:0;pointer-events:none;transition:var(--transition)}
+.badge:hover .badge-tooltip{opacity:1}
+
+/* Progress Card */
+.progress-card{background:linear-gradient(135deg,var(--blue),#6C5CE7);color:#fff;border-radius:var(--radius);padding:24px;margin-bottom:24px;position:relative;overflow:hidden}
+.progress-card::after{content:'';position:absolute;top:-50%;right:-50%;width:100%;height:100%;background:radial-gradient(circle,rgba(255,255,255,0.1) 0%,transparent 70%)}
+.progress-title{font-size:16px;margin-bottom:8px;opacity:0.9}
+.progress-bar{height:12px;background:rgba(255,255,255,0.2);border-radius:6px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;border-radius:6px;transition:width 1s cubic-bezier(0.4,0,0.2,1);background:linear-gradient(90deg,var(--green),#7BED9F)}
+.progress-text{font-size:13px;opacity:0.8}
+
+/* Adventures - World Map */
+.world-map{position:relative;padding:20px 0}
+.map-grid{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+.level-node{width:120px;text-align:center;cursor:pointer;transition:var(--transition);position:relative}
+.level-node:hover{transform:scale(1.05)}
+.level-circle{width:80px;height:80px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;transition:var(--transition)}
+.level-circle.completed{background:var(--green);box-shadow:0 0 20px rgba(167,237,122,0.4)}
+.level-circle.current{background:var(--blue);animation:pulse 2s infinite;box-shadow:0 0 20px rgba(74,144,226,0.4)}
+.level-circle.locked{background:var(--surface-2);opacity:0.5}
+.level-label{font-weight:700;font-size:13px}
+.level-sub{font-size:11px;color:var(--text-secondary)}
+.lock-icon{font-size:20px}
+.path-connector{width:40px;height:4px;background:var(--green);margin:0 auto;border-radius:2px;align-self:center}
+.path-connector.locked{background:var(--text-muted)}
+
+/* Laboratory */
+.lab-container{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.lab-card{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);cursor:pointer;transition:var(--transition)}
+.lab-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.lab-icon{font-size:40px;margin-bottom:12px}
+.lab-title{font-size:18px;margin-bottom:8px}
+.lab-desc{font-size:14px;color:var(--text-secondary);line-height:1.5}
+
+/* Mini Game - Drag & Drop */
+.game-area{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-top:20px}
+.game-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.game-score{font-weight:800;color:var(--blue);font-size:18px}
+.match-container{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.match-column h4{margin-bottom:12px;font-size:14px;color:var(--text-secondary)}
+.match-items{display:flex;flex-direction:column;gap:10px}
+.match-item{padding:12px 16px;border-radius:var(--radius-xs);font-weight:600;cursor:pointer;transition:var(--transition);border:2px solid transparent;user-select:none;font-size:14px}
+.match-item.source{background:var(--blue-light);color:var(--blue);border-color:rgba(74,144,226,0.3)}
+.match-item.source.selected{border-color:var(--blue);background:var(--blue);color:#fff}
+.match-item.source.matched{background:var(--green);color:#1a1a1a;border-color:var(--green);opacity:0.7}
+.match-item.target{background:var(--purple-light);color:var(--purple);border-color:rgba(155,89,182,0.3);text-align:center}
+.match-item.target.correct{background:var(--green);color:#1a1a1a;border-color:var(--green)}
+.match-item.target.wrong{animation:shake 0.5s ease;background:var(--orange-light);color:var(--orange)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* Arena */
+.arena-hero{text-align:center;padding:30px 0}
+.arena-title{font-size:28px;margin-bottom:8px}
+.arena-subtitle{color:var(--text-secondary);margin-bottom:24px}
+.quiz-card{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
+.quiz-progress{display:flex;gap:6px;margin-bottom:20px}
+.quiz-dot{height:6px;flex:1;border-radius:3px;background:var(--surface-2);transition:var(--transition)}
+.quiz-dot.active{background:var(--blue)}
+.quiz-dot.correct{background:var(--green)}
+.quiz-dot.wrong{background:var(--orange)}
+.quiz-question{font-size:18px;font-weight:700;margin-bottom:20px;line-height:1.5}
+.quiz-options{display:flex;flex-direction:column;gap:10px}
+.quiz-option{padding:14px 18px;border-radius:var(--radius-sm);border:2px solid rgba(0,0,0,0.08);cursor:pointer;transition:var(--transition);font-weight:600;font-size:15px;display:flex;align-items:center;gap:12px}
+.quiz-option:hover{border-color:var(--blue);background:var(--blue-light)}
+.quiz-option.selected{border-color:var(--blue);background:var(--blue);color:#fff}
+.quiz-option.correct{border-color:var(--green);background:var(--green);color:#1a1a1a}
+.quiz-option.wrong{border-color:var(--orange);background:var(--orange-light);color:var(--orange)}
+.quiz-option .opt-letter{width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.05);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.quiz-option.selected .opt-letter{background:rgba(255,255,255,0.3)}
+.quiz-option.correct .opt-letter,.quiz-option.wrong .opt-letter{background:rgba(0,0,0,0.1)}
+.quiz-footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid rgba(0,0,0,0.06)}
+
+/* Leaderboard */
+.leaderboard{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.lb-header{font-size:16px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.lb-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
+.lb-row:last-child{border:none}
+.lb-rank{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.lb-rank.gold{background:linear-gradient(135deg,#FFD700,#FFA500);color:#fff}
+.lb-rank.silver{background:linear-gradient(135deg,#C0C0C0,#A0A0A0);color:#fff}
+.lb-rank.bronze{background:linear-gradient(135deg,#CD7F32,#A0522D);color:#fff}
+.lb-rank.normal{background:var(--surface-2);color:var(--text-secondary)}
+.lb-avatar{width:36px;height:36px;border-radius:50%;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:16px}
+.lb-name{flex:1;font-weight:700;font-size:14px}
+.lb-xp{font-weight:800;color:var(--blue);font-size:14px}
+.lb-row.me{background:var(--blue-light);border-radius:var(--radius-xs);padding:10px 12px;margin:0 -8px}
+
+/* Workshop */
+.workshop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
+.project-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:var(--transition)}
+.project-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}
+.project-preview{height:120px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative}
+.project-preview.blue{background:linear-gradient(135deg,var(--blue-light),rgba(108,92,231,0.1))}
+.project-preview.green{background:linear-gradient(135deg,var(--green-light),rgba(123,201,80,0.1))}
+.project-preview.purple{background:linear-gradient(135deg,var(--purple-light),rgba(155,89,182,0.15))}
+.project-preview.orange{background:linear-gradient(135deg,var(--orange-light),rgba(255,160,122,0.1))}
+.project-info{padding:16px}
+.project-title{font-weight:700;font-size:15px;margin-bottom:4px}
+.project-meta{font-size:12px;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center}
+.project-status{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
+.project-status.done{background:var(--green-light);color:var(--green-dark)}
+.project-status.progress{background:var(--blue-light);color:var(--blue)}
+.project-status.locked{background:var(--orange-light);color:var(--orange)}
+
+/* Creative Canvas */
+.canvas-area{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-top:20px}
+.canvas-toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tool-btn{width:40px;height:40px;border-radius:var(--radius-xs);border:2px solid rgba(0,0,0,0.08);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:var(--transition)}
+.tool-btn:hover{border-color:var(--blue)}
+.tool-btn.active{border-color:var(--blue);background:var(--blue-light)}
+.color-palette{display:flex;gap:6px;margin-left:auto}
+.color-dot{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:var(--transition)}
+.color-dot:hover,.color-dot.active{border-color:var(--text);transform:scale(1.1)}
+#drawingCanvas{border:2px solid rgba(0,0,0,0.08);border-radius:var(--radius-sm);width:100%;cursor:crosshair;touch-action:none}
+
+/* Profile */
+.profile-header{display:flex;align-items:center;gap:24px;background:var(--surface);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow);margin-bottom:24px;flex-wrap:wrap}
+.profile-avatar{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;flex-shrink:0}
+.profile-avatar-ring{position:absolute;inset:-4px;border-radius:50%;border:3px solid var(--green);border-style:dashed;animation:spin 10s linear infinite}
+.profile-info{flex:1;min-width:200px}
+.profile-name{font-size:22px;margin-bottom:4px}
+.profile-level{font-size:14px;color:var(--text-secondary);margin-bottom:8px}
+.profile-stats{display:flex;gap:20px;flex-wrap:wrap}
+.stat{text-align:center}
+.stat-value{font-weight:800;font-size:18px;color:var(--blue)}
+.stat-label{font-size:11px;color:var(--text-secondary)}
+
+/* Avatar Customizer */
+.avatar-customizer{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:24px}
+.customizer-grid{display:grid;grid-template-columns:150px 1fr;gap:24px;margin-top:16px}
+.avatar-preview{width:150px;height:150px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.avatar-customizer-options{display:flex;flex-direction:column;gap:16px}
+.option-group h4{font-size:14px;margin-bottom:8px;color:var(--text-secondary)}
+.option-items{display:flex;gap:10px;flex-wrap:wrap}
+.option-item{width:50px;height:50px;border-radius:var(--radius-xs);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;border:2px solid transparent;transition:var(--transition)}
+.option-item:hover{border-color:var(--blue)}
+.option-item.active{border-color:var(--blue);background:var(--blue-light)}
+.option-item.locked{opacity:0.4;cursor:not-allowed;filter:grayscale(1)}
+.option-item.locked::after{content:'🔒';position:absolute;font-size:10px}
+.option-item{position:relative}
+
+/* Achievements Page */
+.achievements-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
+.ach-card{background:var(--surface);border-radius:var(--radius);padding:20px;text-align:center;box-shadow:var(--shadow-sm);transition:var(--transition)}
+.ach-card:hover{transform:translateY(-3px)}
+.ach-card.unlocked{border:2px solid var(--green)}
+.ach-card.locked{opacity:0.5}
+.ach-icon{font-size:40px;margin-bottom:8px;display:block}
+.ach-name{font-weight:700;font-size:14px;margin-bottom:4px}
+.ach-desc{font-size:11px;color:var(--text-secondary)}
+.ach-progress{height:4px;background:var(--surface-2);border-radius:2px;margin-top:10px;overflow:hidden}
+.ach-progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.5s ease}
+
+/* Bottom Navigation */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid rgba(0,0,0,0.06);height:var(--nav-height);display:flex;align-items:center;justify-content:space-around;padding:0 10px;z-index:100;backdrop-filter:blur(10px);transition:var(--transition)}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px 12px;border-radius:var(--radius-sm);transition:var(--transition);position:relative;border:none;background:none;font-family:inherit}
+.nav-item.active{color:var(--blue)}
+.nav-item.active .nav-icon{transform:translateY(-2px)}
+.nav-icon{font-size:22px;transition:var(--transition)}
+.nav-label{font-size:10px;font-weight:700;opacity:0.6;transition:var(--transition)}
+.nav-item.active .nav-label{opacity:1}
+.nav-badge{position:absolute;top:2px;right:6px;background:var(--orange);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px)}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius);padding:30px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;animation:bounceIn 0.3s ease}
+.modal-close{float:right;background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-secondary);padding:4px}
+.modal h2{margin-bottom:16px;font-size:22px}
+
+/* Toast */
+.toast{position:fixed;top:80px;right:20px;background:var(--surface);border-radius:var(--radius-sm);padding:16px 24px;box-shadow:var(--shadow-lg);z-index:300;display:flex;align-items:center;gap:12px;transform:translateX(120%);transition:var(--transition);max-width:350px}
+.toast.show{transform:translateX(0)}
+.toast-icon{font-size:24px}
+.toast-message{font-weight:700;font-size:14px}
+.toast-sub{font-size:12px;color:var(--text-secondary)}
+
+/* Confetti */
+.confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;z-index:250;pointer-events:none;animation:confetti 1.5s ease forwards}
+
+/* Responsive */
+@media(max-width:768px){
+.hero{flex-direction:column;text-align:center;gap:20px}
+.hero-mascot{flex:0 0 120px}
+.mascot-container{width:120px;height:120px;margin:0 auto}
+.hero-title{font-size:26px}
+.customizer-grid{grid-template-columns:1fr}
+.avatar-preview{margin:0 auto}
+.match-container{grid-template-columns:1fr}
+.lab-container{grid-template-columns:1fr}
+.profile-header{flex-direction:column;text-align:center}
+.profile-stats{justify-content:center}
+}
+@media(max-width:480px){
+.main{padding:12px}
+.quick-access{grid-template-columns:repeat(2,1fr)}
+.achievements-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-secondary)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<header class="header">
+<div class="header-left">
+<div class="logo">🎓 QuestEdu</div>
+<div class="xp-display">
+<svg class="xp-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+<span id="xpDisplay">0</span> XP
+</div>
+</div>
+<div class="header-right">
+<div class="streak-badge">🔥 <span id="streakCount">3</span> дн.</div>
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()"></button>
+</div>
+</header>
+
+<main class="main">
+<!-- HOME -->
+<div class="section active" id="secHome">
+<div class="hero">
+<div class="hero-text">
+<div class="hero-greeting" id="greeting">Привет, искатель знаний!</div>
+<h1 class="hero-title">Готов к новому<br>приключению?</h1>
+<p class="hero-subtitle">Выбери направление и начни путь к мастерству. Зарабатывай очки, открывай достижения и кастомизируй своего аватара!</p>
+<button class="btn btn-primary" onclick="navigate('adventures')">🚀 Начать приключение</button>
+</div>
+<div class="hero-mascot">
+<div class="mascot-container" id="mascotContainer"></div>
+</div>
+</div>
+
+<div class="progress-card">
+<div class="progress-title">📈 Твой прогресс курса</div>
+<div class="progress-bar"><div class="progress-fill" id="mainProgress" style="width:35%"></div></div>
+<div class="progress-text">Уровень 5 • 35% пройдено • 12 из 34 уроков</div>
+</div>
+
+<div class="quick-access">
+<div class="quick-card blue" onclick="navigate('adventures')">
+<span class="quick-icon">🗺️</span>
+<div class="quick-title">Мои приключения</div>
+<div class="quick-sub">Курсы и уроки</div>
+</div>
+<div class="quick-card green" onclick="navigate('lab')">
+<span class="quick-icon">🔬</span>
+<div class="quick-title">Лаборатория</div>
+<div class="quick-sub">Интерактивные уроки</div>
+</div>
+<div class="quick-card orange" onclick="navigate('arena')">
+<span class="quick-icon">⚔️</span>
+<div class="quick-title">Арена</div>
+<div class="quick-sub">Викторины и турниры</div>
+</div>
+<div class="quick-card purple" onclick="navigate('workshop')">
+<span class="quick-icon">🎨</span>
+<div class="quick-title">Мастерская</div>
+<div class="quick-sub">Творческие проекты</div>
+</div>
+</div>
+
+<div class="widget">
+<div class="widget-header">
+<div class="widget-title">🏆 Последние достижения</div>
+<span style="cursor:pointer;color:var(--blue);font-weight:700;font-size:13px" onclick="navigate('profile')">Все →</span>
+</div>
+<div class="badges-grid" id="badgesGrid"></div>
+</div>
+</div>
+
+<!-- ADVENTURES -->
+<div class="section" id="secAdventures">
+<h2 style="margin-bottom:20px">🗺️ Карта приключений</h2>
+<div class="world-map">
+<div class="map-grid" id="mapGrid"></div>
+</div>
+</div>
+
+<!-- LABORATORY -->
+<div class="section" id="secLab">
+<h2 style="margin-bottom:20px">🔬 Лаборатория</h2>
+<div class="lab-container">
+<div class="lab-card" onclick="startGame('matching')">
+<div class="lab-icon">🧩</div>
+<div class="lab-title">Подбери пару</div>
+<div class="lab-desc">Соедини понятия с их определениями. Перетаскивай и сопоставляй!</div>
+</div>
+<div class="lab-card" onclick="startGame('sorting')">
+<div class="lab-icon">📊</div>
+<div class="lab-title">Сортировка знаний</div>
+<div class="lab-desc">Расставь элементы в правильном порядке.</div>
+</div>
+<div class="lab-card" onclick="startGame('memory')">
+<div class="lab-icon">🧠</div>
+<div class="lab-title">Мемори</div>
+<div class="lab-desc">Найди пары одинаковых карточек.</div>
+</div>
+<div class="lab-card" onclick="navigate('arena')">
+<div class="lab-icon">⚡</div>
+<div class="lab-title">Быстрый тест</div>
+<div class="lab-desc">Проверь свои знания на скорость.</div>
+</div>
+</div>
+<div id="gameArea"></div>
+</div>
+
+<!-- ARENA -->
+<div class="section" id="secArena">
+<div class="arena-hero">
+<h1 class="arena-title">⚔️ Арена знаний</h1>
+<p class="arena-subtitle">Соревнуйся с другими и поднимайся в рейтинге!</p>
+<button class="btn btn-orange" onclick="startQuiz()">🎯 Начать викторину</button>
+</div>
+<div id="quizArea"></div>
+<div class="leaderboard" style="margin-top:24px">
+<div class="lb-header">🏅 Таблица лидеров</div>
+<div id="leaderboard"></div>
+</div>
+</div>
+
+<!-- WORKSHOP -->
+<div class="section" id="secWorkshop">
+<h2 style="margin-bottom:20px">🎨 Мастерская</h2>
+<div class="workshop-grid" id="workshopGrid"></div>
+<div class="canvas-area" id="canvasArea" style="display:none">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+<h3>🖌️ Холст творчества</h3>
+<button class="btn btn-secondary" onclick="clearCanvas()">🗑️ Очистить</button>
+</div>
+<div class="canvas-toolbar">
+<button class="tool-btn active" data-tool="pen" onclick="setTool('pen')">✏️</button>
+<button class="tool-btn" data-tool="eraser" onclick="setTool('eraser')">🧹</button>
+<div class="color-palette">
+<div class="color-dot active" style="background:#4A90E2" onclick="setColor('#4A90E2')"></div>
+<div class="color-dot" style="background:#9B59B6" onclick="setColor('#9B59B6')"></div>
+<div class="color-dot" style="background:#A7ED7A" onclick="setColor('#A7ED7A')"></div>
+<div class="color-dot" style="background:#FFA07A" onclick="setColor('#FFA07A')"></div>
+<div class="color-dot" style="background:#E74C3C" onclick="setColor('#E74C3C')"></div>
+<div class="color-dot" style="background:#2D3436" onclick="setColor('#2D3436')"></div>
+</div>
+</div>
+<canvas id="drawingCanvas" width="800" height="400"></canvas>
+</div>
+</div>
+
+<!-- PROFILE -->
+<div class="section" id="secProfile">
+<div class="profile-header">
+<div class="profile-avatar">
+<div class="profile-avatar-ring"></div>
+<span id="profileAvatarIcon">🦊</span>
+</div>
+<div class="profile-info">
+<div class="profile-name" id="profileName">Искатель Знаний</div>
+<div class="profile-level">Уровень <span id="profileLevel">5</span> • <span id="profileXp">0</span> XP</div>
+<div class="profile-stats">
+<div class="stat"><div class="stat-value" id="statLessons">12</div><div class="stat-label">Уроков</div></div>
+<div class="stat"><div class="stat-value" id="statAchievements">8</div><div class="stat-label">Достижений</div></div>
+<div class="stat"><div class="stat-value" id="statStreak">3</div><div class="stat-label">🔥 дней</div></div>
+<div class="stat"><div class="stat-value" id="statQuizzes">5</div><div class="stat-label">Викторин</div></div>
+</div>
+</div>
+</div>
+
+<div class="avatar-customizer">
+<h3 style="margin-bottom:4px">🎭 Кастомизация аватара</h3>
+<p style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">Открывай предметы за достижения!</p>
+<div class="customizer-grid">
+<div class="avatar-preview" id="avatarPreview" style="font-size:60px">🦊</div>
+<div class="avatar-customizer-options">
+<div class="option-group">
+<h4>🐾 Персонаж</h4>
+<div class="option-items" id="characterOptions"></div>
+</div>
+<div class="option-group">
+<h4>👑 Аксессуар</h4>
+<div class="option-items" id="accessoryOptions"></div>
+</div>
+<div class="option-group">
+<h4>🎨 Цвет фона</h4>
+<div class="option-items" id="bgOptions"></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="widget">
+<div class="widget-header">
+<div class="widget-title">🏅 Все достижения</div>
+</div>
+<div class="achievements-grid" id="achievementsGrid"></div>
+</div>
+</div>
+</main>
+
+<nav class="bottom-nav">
+<button class="nav-item active" onclick="navigate('home')" data-nav="home">
+<span class="nav-icon">🏠</span>
+<span class="nav-label">Главная</span>
+</button>
+<button class="nav-item" onclick="navigate('adventures')" data-nav="adventures">
+<span class="nav-icon">🗺️</span>
+<span class="nav-label">Приключения</span>
+</button>
+<button class="nav-item" onclick="navigate('lab')" data-nav="lab">
+<span class="nav-icon">🔬</span>
+<span class="nav-label">Лаборатория</span>
+</button>
+<button class="nav-item" onclick="navigate('arena')" data-nav="arena">
+<span class="nav-icon">⚔️</span>
+<span class="nav-label">Арена</span>
+<div class="nav-badge">!</div>
+</button>
+<button class="nav-item" onclick="navigate('workshop')" data-nav="workshop">
+<span class="nav-icon">🎨</span>
+<span class="nav-label">Мастерская</span>
+</button>
+<button class="nav-item" onclick="navigate('profile')" data-nav="profile">
+<span class="nav-icon">👤</span>
+<span class="nav-label">Профиль</span>
+</button>
+</nav>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+<div class="modal" id="modal"></div>
+</div>
+
+<div class="toast" id="toast">
+<span class="toast-icon" id="toastIcon">🎉</span>
+<div><div class="toast-message" id="toastMessage"></div><div class="toast-sub" id="toastSub"></div></div>
+</div>
+
+<script>
+// ===== STATE =====
+let state = {
+xp: 350,
+level: 5,
+streak: 3,
+lessonsCompleted: 12,
+quizzesCompleted: 5,
+currentSection: 'home',
+selectedCharacter: '🦊',
+selectedAccessory: '👑',
+selectedBg: 'linear-gradient(135deg,#4A90E2,#6C5CE7)',
+unlockedAccessories: ['👑','🎩','🎓','🌟'],
+unlockedCharacters: ['🦊','🐱','🐼','🦁'],
+gameScore: 0,
+quizScore: 0,
+quizCurrent: 0
+};
+
+const achievements = [
+{ id:'first_lesson', name:'Первый шаг', icon:'🚀', desc:'Пройди первый урок', unlocked:true },
+{ id:'five_lessons', name:'Пять уроков', icon:'📚', desc:'Пройди 5 уроков', unlocked:true },
+{ id:'ten_lessons', name:'Десять уроков', icon:'📖', desc:'Пройди 10 уроков', unlocked:true },
+{ id:'first_quiz', name:'Первая викторина', icon:'🎯', desc:'Пройди викторину', unlocked:true },
+{ id:'quiz_master', name:'Мастер викторин', icon:'🏆', desc:'Набери 100% в викторине', unlocked:false },
+{ id:'streak_7', name:'Неделя подряд', icon:'🔥', desc:'7 дней подряд', unlocked:false },
+{ id:'artist', name:'Художник', icon:'🎨', desc:'Создай рисунок', unlocked:false },
+{ id:'explorer', name:'Исследователь', icon:'🗺️', desc:'Открой 10 уровней', unlocked:false },
+{ id:'match_pro', name:'Мастер пар', icon:'🧩', desc:'Собери все пары', unlocked:true },
+{ id:'social', name:'Социальный', icon:'👥', desc:'Поделись достижением', unlocked:false },
+{ id:'collector', name:'Коллекционер', icon:'💎', desc:'Собери 5 аватаров', unlocked:false },
+{ id:'marathon', name:'Марафонец', icon:'🏃', desc:'50 уроков пройдено', unlocked:false }
+];
+
+const levels = [
+{ id:1, name:'Введение', icon:'🌱', status:'completed', xp:20 },
+{ id:2, name:'Основы', icon:'📗', status:'completed', xp:25 },
+{ id:3, name:'Практика', icon:'💡', status:'completed', xp:30 },
+{ id:4, name:'Углубление', icon:'📊', status:'completed', xp:35 },
+{ id:5, name:'Анализ', icon:'🔍', status:'completed', xp:40 },
+{ id:6, name:'Синтез', icon:'🧪', status:'current', xp:45 },
+{ id:7, name:'Проект', icon:'🚀', status:'locked', xp:50 },
+{ id:8, name:'Мастерство', icon:'🏆', status:'locked', xp:55 },
+{ id:9, name:'Эксперт', icon:'💎', status:'locked', xp:60 },
+{ id:10, name:'Легенда', icon:'⭐', status:'locked', xp:100 }
+];
+
+const quizQuestions = [
+{ q:'Какой элемент необходим для фотосинтеза?', opts:['Вода','Углекислый газ','Солнечный свет','Всё перечисленное'], correct:3 },
+{ q:'Сколько планет в Солнечной системе?', opts:['7','8','9','10'], correct:1 },
+{ q:'Какая формула воды?', opts:['CO2','H2O','NaCl','O2'], correct:1 },
+{ q:'Какой газ составляет большую часть атмосферы?', opts:['Кислород','Азот','Углекислый газ','Водород'], correct:1 },
+{ q:'Что изучает ботаника?', opts:['Животных','Растения','Минералы','Звёзды'], correct:1 }
+];
+
+const matchingPairs = [
+{ left:'Фотосинтез', right:'Процесс получения энергии растениями' },
+{ left:'Гравитация', right:'Сила притяжения между объектами' },
+{ left:'ДНК', right:'Молекула наследственной информации' },
+{ left:'Атом', right:'Мельчайшая частица вещества' },
+{ left:'Экосистема', right:'Сообщество живых организмов и среды' }
+];
+
+const workshopProjects = [
+{ title:'Цифровой рисунок', icon:'🖼️', preview:'blue', status:'done', xp:30 },
+{ title:'Инфографика', icon:'📊', preview:'green', status:'done', xp:25 },
+{ title:'Анимация', icon:'🎬', preview:'purple', status:'progress', xp:40 },
+{ title:'Веб-страница', icon:'💻', preview:'orange', status:'locked', xp:50 },
+{ title:'Презентация', icon:'📑', preview:'blue', status:'done', xp:20 },
+{ title:'Видеомонтаж', icon:'🎥', preview:'purple', status:'progress', xp:45 }
+];
+
+// ===== INIT =====
+function init() {
+updateGreeting();
+renderMascot();
+renderBadges();
+renderMap();
+renderLeaderboard();
+renderAchievements();
+renderAvatarCustomizer();
+renderWorkshop();
+updateUI();
+}
+
+function updateUI() {
+document.getElementById('xpDisplay').textContent = state.xp;
+document.getElementById('streakCount').textContent = state.streak;
+document.getElementById('profileLevel').textContent = state.level;
+document.getElementById('profileXp').textContent = state.xp;
+document.getElementById('statLessons').textContent = state.lessonsCompleted;
+document.getElementById('statStreak').textContent = state.streak;
+document.getElementById('statQuizzes').textContent = state.quizzesCompleted;
+document.getElementById('statAchievements').textContent = achievements.filter(a=>a.unlocked).length;
+}
+
+function updateGreeting() {
+const h = new Date().getHours();
+let greet = 'Добрый вечер';
+if(h < 12) greet = 'Доброе утро';
+else if(h < 18) greet = 'Добрый день';
+document.getElementById('greeting').textContent = greet + ', искатель знаний!';
+}
+
+// ===== NAVIGATION =====
+function navigate(section) {
+document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+document.getElementById('sec' + section.charAt(0).toUpperCase() + section.slice(1)).classList.add('active');
+document.getElementById('sec' + section.charAt(0).toUpperCase() + section.slice(1)).classList.add('page-transition');
+document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+document.querySelector(`.nav-item[data-nav="${section}"]`).classList.add('active');
+state.currentSection = section;
+window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== THEME =====
+function toggleTheme() {
+const html = document.documentElement;
+html.dataset.theme = html.dataset.theme === 'light' ? 'dark' : 'light';
+}
+
+// ===== MASCOT =====
+function renderMascot() {
+const c = document.getElementById('mascotContainer');
+c.innerHTML = `<svg viewBox="0 0 180 180" width="180" height="180">
+<defs><linearGradient id="mg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4A90E2"/><stop offset="100%" stop-color="#6C5CE7"/></linearGradient></defs>
+<circle cx="90" cy="90" r="70" fill="url(#mg)"/>
+<circle cx="70" cy="80" r="10" fill="#fff"/>
+<circle cx="110" cy="80" r="10" fill="#fff"/>
+<circle cx="72" cy="78" r="5" fill="#2D3436"/>
+<circle cx="112" cy="78" r="5" fill="#2D3436"/>
+<path d="M 75 105 Q 90 120 105 105" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+<ellipse cx="60" cy="55" rx="15" ry="8" fill="#9B59B6" opacity="0.5"/>
+<ellipse cx="120" cy="55" rx="15" ry="8" fill="#9B59B6" opacity="0.5"/>
+<text x="90" y="155" text-anchor="middle" font-size="14" fill="var(--text-secondary)" font-family="Nunito">QuestEdu Guide</text>
+</svg>`;
+}
+
+// ===== BADGES =====
+function renderBadges() {
+const g = document.getElementById('badgesGrid');
+const unlocked = achievements.filter(a => a.unlocked).slice(0, 6);
+g.innerHTML = unlocked.map(a => `
+<div class="badge unlocked">${a.icon}<div class="badge-tooltip">${a.name}</div></div>
+`).join('');
+}
+
+// ===== MAP =====
+function renderMap() {
+const g = document.getElementById('mapGrid');
+g.innerHTML = levels.map((l, i) => {
+const cls = l.status;
+const content = l.status === 'locked' ? '<span class="lock-icon">🔒</span>' : l.icon;
+return `
+<div class="level-node" onclick="${l.status !== 'locked' ? `openLevel(${l.id})` : ''}">
+<div class="level-circle ${cls}">${content}</div>
+<div class="level-label">${l.name}</div>
+<div class="level-sub">${l.status === 'completed' ? '✅ Пройдено' : l.status === 'current' ? '▶️ Сейчас' : '🔒 Заблокировано'}</div>
+</div>`;
+}).join('');
+}
+
+function openLevel(id) {
+const level = levels.find(l => l.id === id);
+addXP(level.xp, `Уровень "${level.name}" пройден!`);
+level.status = 'completed';
+const next = levels.find(l => l.id === id + 1);
+if(next) next.status = 'current';
+renderMap();
+showToast('🎉', `+${level.xp} XP`, `Вы завершили уровень "${level.name}"`);
+spawnConfetti();
+}
+
+// ===== QUIZ =====
+function startQuiz() {
+state.quizScore = 0;
+state.quizCurrent = 0;
+renderQuiz();
+}
+
+function renderQuiz() {
+if(state.quizCurrent >= quizQuestions.length) {
+const area = document.getElementById('quizArea');
+const pct = Math.round(state.quizScore / quizQuestions.length * 100);
+area.innerHTML = `
+<div class="quiz-card" style="text-align:center">
+<div style="font-size:60px;margin-bottom:16px">${pct >= 80 ? '🏆' : pct >= 60 ? '👏' : '💪'}</div>
+<h2 style="margin-bottom:8px">Викторина завершена!</h2>
+<p style="color:var(--text-secondary);margin-bottom:20px">Правильных ответов: ${state.quizScore} из ${quizQuestions.length} (${pct}%)</p>
+<button class="btn btn-primary" onclick="startQuiz()">🔄 Пройти ещё раз</button>
+</div>`;
+addXP(state.quizScore * 20, `Викторина пройдена: ${state.quizScore}/${quizQuestions.length}`);
+state.quizzesCompleted++;
+updateUI();
+if(pct === 100) unlockAchievement('quiz_master');
+return;
+}
+const q = quizQuestions[state.quizCurrent];
+const area = document.getElementById('quizArea');
+area.innerHTML = `
+<div class="quiz-card">
+<div class="quiz-progress">
+${quizQuestions.map((_,i) => `<div class="quiz-dot ${i < state.quizCurrent ? (i < state.quizScore ? 'correct' : 'wrong') : i === state.quizCurrent ? 'active' : ''}"></div>`).join('')}
+</div>
+<div class="quiz-question">${state.quizCurrent + 1}. ${q.q}</div>
+<div class="quiz-options">
+${q.opts.map((o,i) => `<div class="quiz-option" onclick="selectQuizOption(this,${i},${q.correct})"><span class="opt-letter">${String.fromCharCode(65+i)}</span>${o}</div>`).join('')}
+</div>
+<div class="quiz-footer">
+<span style="color:var(--text-secondary);font-size:13px">Вопрос ${state.quizCurrent + 1} из ${quizQuestions.length}</span>
+<span style="font-weight:700;color:var(--blue)">Счёт: ${state.quizScore}</span>
+</div>
+</div>`;
+}
+
+function selectQuizOption(el, selected, correct) {
+const opts = document.querySelectorAll('.quiz-option');
+opts.forEach(o => o.style.pointerEvents = 'none');
+if(selected === correct) {
+el.classList.add('correct');
+state.quizScore++;
+} else {
+el.classList.add('wrong');
+opts[correct].classList.add('correct');
+}
+setTimeout(() => { state.quizCurrent++; renderQuiz(); }, 1200);
+}
+
+// ===== LEADERBOARD =====
+function renderLeaderboard() {
+const lb = document.getElementById('leaderboard');
+const players = [
+{ name:'Алексей', xp:2450, avatar:'🦁' },
+{ name:'Мария', xp:1890, avatar:'🦋' },
+{ name:'Дмитрий', xp:1650, avatar:'🐺' },
+{ name:'Вы', xp:state.xp, avatar:'🦊', me:true },
+{ name:'Елена', xp:820, avatar:'🐱' },
+{ name:'Иван', xp:540, avatar:'🐼' }
+].sort((a,b) => b.xp - a.xp);
+lb.innerHTML = players.map((p, i) => {
+const rankCls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'normal';
+return `
+<div class="lb-row ${p.me ? 'me' : ''}">
+<div class="lb-rank ${rankCls}">${i + 1}</div>
+<div class="lb-avatar">${p.avatar}</div>
+<div class="lb-name">${p.name}</div>
+<div class="lb-xp">${p.xp} XP</div>
+</div>`;
+}).join('');
+}
+
+// ===== MATCHING GAME =====
+function startGame(type) {
+const area = document.getElementById('gameArea');
+if(type === 'matching') {
+const shuffledLeft = [...matchingPairs].sort(() => Math.random() - 0.5);
+const shuffledRight = [...matchingPairs].sort(() => Math.random() - 0.5);
+state.gameScore = 0;
+state.selectedMatch = null;
+state.matchedCount = 0;
+area.innerHTML = `
+<div class="game-area">
+<div class="game-header">
+<h3>🧩 Подбери пару</h3>
+<span class="game-score">Счёт: <span id="matchScore">0</span></span>
+</div>
+<div class="match-container">
+<div class="match-column">
+<h4>Понятие</h4>
+<div class="match-items" id="matchLeft">
+${shuffledLeft.map((p,i) => `<div class="match-item source" data-index="${matchingPairs.indexOf(p)}" onclick="selectSource(this)">${p.left}</div>`).join('')}
+</div>
+</div>
+<div class="match-column">
+<h4>Определение</h4>
+<div class="match-items" id="matchRight">
+${shuffledRight.map((p,i) => `<div class="match-item target" data-index="${matchingPairs.indexOf(p)}" onclick="selectTarget(this)">${p.right}</div>`).join('')}
+</div>
+</div>
+</div>
+</div>`;
+} else if(type === 'sorting') {
+const items = ['Клетка','Ткань','Орган','Система','Организм'];
+state.sortedItems = [];
+area.innerHTML = `
+<div class="game-area">
+<div class="game-header">
+<h3>📊 Расставь по порядку</h3>
+<span class="game-score">От меньшего к большему</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px" id="sortContainer">
+${items.sort(() => Math.random() - 0.5).map((it, i) => `
+<div class="match-item source" style="display:flex;justify-content:space-between;align-items:center" data-value="${it}">
+${it}
+<div style="display:flex;gap:4px">
+<button onclick="moveSort(this,-1)" style="border:none;background:var(--blue-light);border-radius:4px;width:28px;height:28px;cursor:pointer;font-size:16px">↑</button>
+<button onclick="moveSort(this,1)" style="border:none;background:var(--blue-light);border-radius:4px;width:28px;height:28px;cursor:pointer;font-size:16px">↓</button>
+</div>
+</div>`).join('')}
+</div>
+<button class="btn btn-green" style="margin-top:20px" onclick="checkSort()">✅ Проверить</button>
+</div>`;
+} else if(type === 'memory') {
+const emojis = ['🌍','🔬','📐','🧬','🎨','🚀','🌟','💡'];
+const cards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+state.flippedCards = [];
+state.matchedPairs = [];
+state.memoryMoves = 0;
+area.innerHTML = `
+<div class="game-area">
+<div class="game-header">
+<h3>🧠 Мемори</h3>
+<span class="game-score">Ходы: <span id="memoryMoves">0</span></span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:400px;margin:0 auto" id="memoryGrid">
+${cards.map((c,i) => `<div class="match-item target" style="min-height:70px;font-size:28px;cursor:pointer" data-emoji="${c}" data-index="${i}" onclick="flipCard(this)">❓</div>`).join('')}
+</div>
+</div>`;
+}
+}
+
+let selectedMatch = null;
+let matchScore = 0;
+let matchedCount = 0;
+
+function selectSource(el) {
+if(el.classList.contains('matched')) return;
+document.querySelectorAll('.match-item.source').forEach(s => s.classList.remove('selected'));
+el.classList.add('selected');
+selectedMatch = el;
+}
+
+function selectTarget(el) {
+if(!selectedMatch) return;
+const srcIdx = selectedMatch.dataset.index;
+const tgtIdx = el.dataset.index;
+if(srcIdx === tgtIdx) {
+selectedMatch.classList.add('matched');
+el.classList.add('correct');
+matchScore++;
+matchedCount++;
+document.getElementById('matchScore').textContent = matchScore;
+addXP(15, 'Пара найдена!');
+} else {
+el.classList.add('wrong');
+setTimeout(() => el.classList.remove('wrong'), 500);
+}
+selectedMatch.classList.remove('selected');
+selectedMatch = null;
+if(matchedCount === matchingPairs.length) {
+addXP(30, 'Все пары собраны!');
+unlockAchievement('match_pro');
+showToast('🎉', 'Отлично!', 'Все пары собраны! +30 XP');
+spawnConfetti();
+}
+}
+
+function moveSort(btn, dir) {
+const container = document.getElementById('sortContainer');
+const items = Array.from(container.children);
+const item = btn.closest('.match-item');
+const idx = items.indexOf(item);
+if(dir === -1 && idx > 0) container.insertBefore(item, items[idx - 1]);
+else if(dir === 1 && idx < items.length - 1) container.insertBefore(item, items[idx + 2] || null);
+}
+
+function checkSort() {
+const correct = ['Клетка','Ткань','Орган','Система','Организм'];
+const items = Array.from(document.querySelectorAll('#sortContainer .match-item')).map(el => el.dataset.value);
+if(JSON.stringify(items) === JSON.stringify(correct)) {
+addXP(25, 'Порядок верный!');
+showToast('✅', 'Правильно!', 'Все элементы расставлены верно! +25 XP');
+spawnConfetti();
+} else {
+showToast('❌', 'Не совсем...', 'Попробуй ещё раз');
+}
+}
+
+function flipCard(el) {
+if(el.classList.contains('correct') || state.flippedCards.length >= 2) return;
+if(state.flippedCards.includes(el)) return;
+el.textContent = el.dataset.emoji;
+el.style.background = 'var(--purple-light)';
+state.flippedCards.push(el);
+if(state.flippedCards.length === 2) {
+state.memoryMoves++;
+document.getElementById('memoryMoves').textContent = state.memoryMoves;
+const [a, b] = state.flippedCards;
+if(a.dataset.emoji === b.dataset.emoji) {
+a.classList.add('correct');
+b.classList.add('correct');
+state.flippedCards = [];
+addXP(10, 'Пара найдена!');
+} else {
+setTimeout(() => {
+a.textContent = '❓'; a.style.background = '';
+b.textContent = '❓'; b.style.background = '';
+state.flippedCards = [];
+}, 800);
+}
+}
+}
+
+// ===== WORKSHOP =====
+function renderWorkshop() {
+const g = document.getElementById('workshopGrid');
+g.innerHTML = workshopProjects.map(p => `
+<div class="project-card" onclick="${p.status !== 'locked' ? 'openProject(\''+p.title+'\')' : ''}">
+<div class="project-preview ${p.preview}">${p.icon}</div>
+<div class="project-info">
+<div class="project-title">${p.title}</div>
+<div class="project-meta">
+<span>+${p.xp} XP</span>
+<span class="project-status ${p.status}">${p.status === 'done' ? '✅ Готово' : p.status === 'progress' ? '🔄 В работе' : '🔒 Закрыто'}</span>
+</div>
+</div>
+</div>`).join('');
+}
+
+function openProject(title) {
+if(title === 'Цифровой рисунок' || title === 'Инфографика' || title === 'Анимация') {
+document.getElementById('canvasArea').style.display = 'block';
+initCanvas();
+document.getElementById('canvasArea').scrollIntoView({ behavior: 'smooth' });
+}
+}
+
+// ===== CANVAS =====
+let canvas, ctx, isDrawing = false, currentTool = 'pen', currentColor = '#4A90E2', lineWidth = 3;
+
+function initCanvas() {
+canvas = document.getElementById('drawingCanvas');
+ctx = canvas.getContext('2d');
+const rect = canvas.parentElement.getBoundingClientRect();
+canvas.width = rect.width - 40 || 800;
+canvas.height = 400;
+ctx.fillStyle = '#fff';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+canvas.addEventListener('pointerdown', startDraw);
+canvas.addEventListener('pointermove', draw);
+canvas.addEventListener('pointerup', stopDraw);
+canvas.addEventListener('pointerleave', stopDraw);
+}
+
+function startDraw(e) {
+isDrawing = true;
+ctx.beginPath();
+ctx.moveTo(e.offsetX, e.offsetY);
+}
+
+function draw(e) {
+if(!isDrawing) return;
+ctx.strokeStyle = currentTool === 'eraser' ? '#fff' : currentColor;
+ctx.lineWidth = currentTool === 'eraser' ? 20 : lineWidth;
+ctx.lineTo(e.offsetX, e.offsetY);
+ctx.stroke();
+}
+
+function stopDraw() { isDrawing = false; }
+
+function setTool(tool) {
+currentTool = tool;
+document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+document.querySelector(`.tool-btn[data-tool="${tool}"]`).classList.add('active');
+}
+
+function setColor(color) {
+currentColor = color;
+document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+event.target.classList.add('active');
+currentTool = 'pen';
+document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+document.querySelector('.tool-btn[data-tool="pen"]').classList.add('active');
+}
+
+function clearCanvas() {
+if(ctx) {
+ctx.fillStyle = '#fff';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+}
+
+// ===== AVATAR CUSTOMIZER =====
+function renderAvatarCustomizer() {
+const chars = ['🦊','🐱','🐼','🦁','🐸','🐙','🦄','🐲'];
+const accessories = ['👑','🎩','🎓','🌟','🎭','🧢','💫','🎀'];
+const bgs = [
+{ label:'🔵', color:'linear-gradient(135deg,#4A90E2,#6C5CE7)' },
+{ label:'🟢', color:'linear-gradient(135deg,#A7ED7A,#7BC950)' },
+{ label:'🟣', color:'linear-gradient(135deg,#9B59B6,#7D3C98)' },
+{ label:'🟠', color:'linear-gradient(135deg,#FFA07A,#E88B5A)' },
+{ label:'🔴', color:'linear-gradient(135deg,#E74C3C,#C0392B)' },
+{ label:'🌈', color:'linear-gradient(135deg,#F093FB,#F5576C)' }
+];
+
+document.getElementById('characterOptions').innerHTML = chars.map(c => {
+const unlocked = state.unlockedCharacters.includes(c);
+return `<div class="option-item ${state.selectedCharacter === c ? 'active' : ''} ${!unlocked ? 'locked' : ''}" onclick="${unlocked ? `setCharacter('${c}')` : ''}">${c}</div>`;
+}).join('');
+
+document.getElementById('accessoryOptions').innerHTML = accessories.map(a => {
+const unlocked = state.unlockedAccessories.includes(a);
+return `<div class="option-item ${state.selectedAccessory === a ? 'active' : ''} ${!unlocked ? 'locked' : ''}" onclick="${unlocked ? `setAccessory('${a}')` : ''}">${a}</div>`;
+}).join('');
+
+document.getElementById('bgOptions').innerHTML = bgs.map(b => {
+return `<div class="option-item ${state.selectedBg === b.color ? 'active' : ''}" style="background:${b.color};width:40px;height:40px;border-radius:50%" onclick="setBg('${b.color}')">${b.label}</div>`;
+}).join('');
+
+updateAvatarPreview();
+}
+
+function setCharacter(c) { state.selectedCharacter = c; renderAvatarCustomizer(); }
+function setAccessory(a) { state.selectedAccessory = a; renderAvatarCustomizer(); }
+function setBg(bg) { state.selectedBg = bg; renderAvatarCustomizer(); }
+
+function updateAvatarPreview() {
+const preview = document.getElementById('avatarPreview');
+const profileIcon = document.getElementById('profileAvatarIcon');
+preview.style.background = state.selectedBg;
+preview.innerHTML = `<span style="font-size:40px;position:relative;z-index:1">${state.selectedCharacter}</span><span style="position:absolute;top:10px;right:15px;font-size:20px">${state.selectedAccessory}</span>`;
+profileIcon.textContent = state.selectedCharacter;
+}
+
+// ===== ACHIEVEMENTS =====
+function renderAchievements() {
+const g = document.getElementById('achievementsGrid');
+g.innerHTML = achievements.map(a => `
+<div class="ach-card ${a.unlocked ? 'unlocked' : 'locked'}">
+<span class="ach-icon">${a.unlocked ? a.icon : '🔒'}</span>
+<div class="ach-name">${a.name}</div>
+<div class="ach-desc">${a.desc}</div>
+${a.unlocked ? '' : '<div class="ach-progress"><div class="ach-progress-fill" style="width:30%"></div></div>'}
+</div>`).join('');
+}
+
+function unlockAchievement(id) {
+const ach = achievements.find(a => a.id === id);
+if(ach && !ach.unlocked) {
+ach.unlocked = true;
+addXP(50, 'Новое достижение!');
+showToast(ach.icon, ach.name, '+50 XP за достижение!');
+spawnConfetti();
+renderAchievements();
+renderBadges();
+updateUI();
+}
+}
+
+// ===== XP SYSTEM =====
+function addXP(amount, reason) {
+state.xp += amount;
+const newLevel = Math.floor(state.xp / 100) + 1;
+if(newLevel > state.level) {
+state.level = newLevel;
+showToast('🎊', 'Новый уровень!', `Ты достиг уровня ${newLevel}!`);
+spawnConfetti();
+}
+updateUI();
+}
+
+// ===== TOAST =====
+function showToast(icon, message, sub) {
+const toast = document.getElementById('toast');
+document.getElementById('toastIcon').textContent = icon;
+document.getElementById('toastMessage').textContent = message;
+document.getElementById('toastSub').textContent = sub || '';
+toast.classList.add('show');
+setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ===== CONFETTI =====
+function spawnConfetti() {
+const colors = ['#4A90E2','#A7ED7A','#FFA07A','#9B59B6','#F093FB','#FFD700'];
+for(let i = 0; i < 30; i++) {
+const piece = document.createElement('div');
+piece.className = 'confetti-piece';
+piece.style.left = Math.random() * 100 + 'vw';
+piece.style.top = '80vh';
+piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+piece.style.animationDuration = (1 + Math.random()) + 's';
+piece.style.animationDelay = Math.random() * 0.5 + 's';
+piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+piece.style.width = (6 + Math.random() * 8) + 'px';
+piece.style.height = (6 + Math.random() * 8) + 'px';
+document.body.appendChild(piece);
+setTimeout(() => piece.remove(), 2000);
+}
+}
+
+// ===== MODAL =====
+function closeModal(e) {
+if(e.target.id === 'modalOverlay') document.getElementById('modalOverlay').classList.remove('active');
+}
+
+// ===== INIT =====
+init();
+</script>
+</body>
+</html>
+

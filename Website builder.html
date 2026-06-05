@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter Конструктор сайтов</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-mono@5.0.8/index.min.css" rel="stylesheet">
+<style>
+:root{--bg:#FAF7F4;--surface:#FFF;--surface-alt:#F2EDE7;--surface-alt2:#E8E0D8;--border:#D4C9BE;--text:#2C2825;--text-sec:#6B6560;--text-light:#9B9490;--accent:#B8A088;--accent-dark:#8C7560;--shadow:rgba(0,0,0,.06)}
+[data-theme="dark"]{--bg:#1A1816;--surface:#24201C;--surface-alt:#2A2622;--surface-alt2:#3A3530;--border:#4A433D;--text:#D4C9BE;--text-sec:#9B9490;--text-light:#6B6560;--accent:#B8A088;--accent-dark:#D4C9BE;--shadow:rgba(0,0,0,.3)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background .3s,color .3s}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;z-index:200}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo{font-size:16px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--text);text-decoration:none}
+.logo span{color:var(--accent)}
+.page-title{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text-light);padding:0 16px;border-left:1px solid var(--border);margin-left:8px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn{padding:7px 14px;background:none;border:1px solid var(--border);color:var(--text-sec);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:6px;border-radius:4px;white-space:nowrap}
+.btn:hover{background:var(--surface-alt);color:var(--text)}.btn.primary{background:var(--text);color:var(--bg);border-color:var(--text)}.btn.primary:hover{opacity:.85}
+.theme-toggle{width:32px;height:32px;background:none;border:1px solid var(--border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--text-sec)}
+.theme-toggle:hover{background:var(--surface-alt)}
+.workspace{flex:1;display:flex;overflow:hidden}
+.panel{background:var(--surface);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.panel::-webkit-scrollbar{width:4px}.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.left-panel{width:240px;border-right:1px solid var(--border)}
+.right-panel{width:260px;border-left:1px solid var(--border)}
+.panel-section{padding:14px;border-bottom:1px solid var(--border)}
+.section-title{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-light);margin-bottom:10px;font-weight:500}
+.tool-btn{width:100%;padding:10px 12px;background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;color:var(--text-sec);transition:all .2s;display:flex;align-items:center;gap:8px;margin-bottom:6px;text-align:left}
+.tool-btn:hover{background:var(--surface-alt2);color:var(--text)}
+.tool-btn svg{width:16px;height:16px;flex-shrink:0}
+.canvas-area{flex:1;position:relative;overflow:auto;background:repeating-conic-gradient(var(--surface-alt) 0% 25%, transparent 0% 50%) 50% / 20px 20px}
+.canvas-frame{position:absolute;top:40px;left:40px;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.12);border-radius:2px;overflow:hidden}
+.canvas-bg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat}
+.canvas-content{position:absolute;inset:0}
+.drag-el{position:absolute;cursor:move;user-select:none}
+.drag-el.selected{outline:2px solid var(--accent);outline-offset:2px}
+.drag-el:hover:not(.selected){outline:1px dashed var(--accent)}
+.el-text{padding:4px 8px;min-width:30px;min-height:20px;white-space:pre-wrap;word-break:break-word;line-height:1.5;outline:none}
+.el-text[contenteditable="true"]{cursor:text}
+.el-text .neon-text{text-shadow:0 0 5px currentColor,0 0 15px currentColor,0 0 30px currentColor}
+.el-img{width:100%;height:100%;object-fit:cover;pointer-events:none;display:block}
+.el-img.shape-circle{border-radius:50%}
+.el-img.shape-avatar{border-radius:50%;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.el-img.shape-window{border-radius:8px;border:2px solid #ddd;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.el-img.shape-collage{border:4px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.12);transform:rotate(-2deg)}
+.el-img.shape-pie{border-radius:50%;clip-path:polygon(50% 50%,50% 0%,100% 0%,100% 100%,0% 100%,0% 0%,50% 0%)}
+.resize-handle{position:absolute;width:12px;height:12px;background:var(--accent);border:2px solid #fff;border-radius:50%;z-index:10;transition:transform .15s}
+.resize-handle:hover{transform:scale(1.3)}
+.resize-handle.br{bottom:-6px;right:-6px;cursor:nwse-resize}
+.resize-handle.bl{bottom:-6px;left:-6px;cursor:nesw-resize}
+.resize-handle.tr{top:-6px;right:-6px;cursor:nesw-resize}
+.resize-handle.tl{top:-6px;left:-6px;cursor:nwse-resize}
+.delete-btn{position:absolute;top:-14px;right:-14px;width:26px;height:26px;background:#C0392B;color:#fff;border:2px solid #fff;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;transition:opacity .2s;line-height:1}
+.drag-el.selected .delete-btn{opacity:1}
+/* Floating text toolbar */
+.text-toolbar{position:fixed;display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px;z-index:300;box-shadow:0 8px 24px var(--shadow);gap:4px;align-items:center;flex-wrap:wrap;max-width:360px}
+.text-toolbar.visible{display:flex}
+.tb-btn{padding:6px 10px;background:none;border:1px solid transparent;border-radius:4px;cursor:pointer;font-size:13px;color:var(--text-sec);transition:all .15s;display:flex;align-items:center;justify-content:center;min-width:32px;height:32px}
+.tb-btn:hover{background:var(--surface-alt)}.tb-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tb-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.tb-color{width:28px;height:28px;border:1px solid var(--border);border-radius:4px;cursor:pointer;padding:2px;background:var(--surface-alt)}
+.tb-select{height:30px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text);font-family:inherit;font-size:11px;padding:0 6px;border-radius:4px;cursor:pointer}
+.tb-input{height:30px;width:50px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text);font-family:inherit;font-size:11px;padding:0 6px;border-radius:4px;text-align:center}
+.prop-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.prop-label{font-size:11px;color:var(--text-sec);min-width:70px;flex-shrink:0}
+.prop-input{flex:1;height:32px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text);font-family:inherit;font-size:12px;padding:0 8px;border-radius:4px}
+.prop-input:focus{outline:none;border-color:var(--accent)}
+.prop-color{width:32px;height:32px;border:1px solid var(--border);border-radius:4px;cursor:pointer;padding:2px;background:var(--surface-alt)}
+.prop-select{flex:1;height:32px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text);font-family:inherit;font-size:12px;padding:0 8px;border-radius:4px;cursor:pointer}
+.prop-textarea{width:100%;min-height:60px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text);font-family:inherit;font-size:12px;padding:8px;border-radius:4px;resize:vertical}
+.shape-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.shape-btn{padding:10px 6px;background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-sec);transition:all .2s;text-align:center}
+.shape-btn:hover{background:var(--surface-alt2)}.shape-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.bg-preset{height:32px;border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:transform .15s}
+.bg-preset:hover{transform:scale(1.08)}
+.no-selection{padding:40px 16px;text-align:center;color:var(--text-light);font-size:13px}
+.no-selection svg{width:48px;height:48px;opacity:.2;margin-bottom:12px}
+#elements-list{max-height:200px;overflow-y:auto}
+.el-item{padding:6px 8px;margin-bottom:4px;background:var(--surface-alt);border-radius:4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:11px}
+.el-item:hover{background:var(--surface-alt2)}
+.el-item.active{background:var(--accent);color:#fff}
+@media(max-width:1024px){.left-panel{width:200px}.right-panel{width:240px}.page-title{display:none}}
+@media(max-width:768px){.left-panel{display:none}.right-panel{display:none}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+    <span class="page-title">Конструктор сайтов</span>
+  </div>
+  <div class="topbar-right">
+    <select class="prop-select" id="canvas-size" style="width:130px;height:34px">
+      <option value="1200x700">1200 × 700</option>
+      <option value="1440x900">1440 × 900</option>
+      <option value="1920x1080">1920 × 1080</option>
+      <option value="1024x768">1024 × 768</option>
+      <option value="800x600">800 × 600</option>
+      <option value="375x667">Мобильный</option>
+    </select>
+    <button class="btn" id="btn-preview">Превью</button>
+    <button class="btn primary" id="btn-export">Экспорт HTML</button>
+    <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Floating text toolbar -->
+<div class="text-toolbar" id="text-toolbar">
+  <button class="tb-btn" id="tb-bold" title="Жирный"><b>Ж</b></button>
+  <button class="tb-btn" id="tb-italic" title="Курсив"><i>К</i></button>
+  <button class="tb-btn" id="tb-underline" title="Подчеркнутый"><u>П</u></button>
+  <button class="tb-btn" id="tb-strike" title="Зачеркнутый"><s>З</s></button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="tb-neon" title="Неон">✦</button>
+  <input type="color" class="tb-color" id="tb-color" title="Цвет текста">
+  <div class="tb-sep"></div>
+  <select class="tb-select" id="tb-font" title="Шрифт">
+    <option value="IBM Plex Sans">IBM Plex</option>
+    <option value="Arial">Arial</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Courier New">Courier</option>
+    <option value="Verdana">Verdana</option>
+    <option value="Times New Roman">Times</option>
+    <option value="Impact">Impact</option>
+    <option value="Trebuchet MS">Trebuchet</option>
+    <option value="Palatino">Palatino</option>
+  </select>
+  <input class="tb-input" id="tb-size" title="Размер" placeholder="16px">
+  <div class="tb-sep"></div>
+  <input type="color" class="tb-color" id="tb-bgcolor" title="Фон текста">
+  <input type="color" class="tb-color" id="tb-bordercolor" title="Цвет обводки">
+  <input class="tb-input" id="tb-borderwidth" title="Толщина обводки" placeholder="0px" style="width:55px">
+  <div class="tb-sep"></div>
+  <input class="tb-input" id="tb-abbr" title="Аббревиатура" placeholder="abbr" style="width:50px">
+  <input class="tb-input" id="tb-abbrtitle" title="Пояснение" placeholder="пояснение" style="width:80px">
+</div>
+
+<div class="workspace">
+  <div class="panel left-panel">
+    <div class="panel-section">
+      <div class="section-title">Добавить элемент</div>
+      <button class="tool-btn" id="add-text">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5h16M12 5v14M8 19h8" stroke-width="2" stroke-linecap="round"/></svg>
+        Текст
+      </button>
+      <button class="tool-btn" id="add-heading">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 4v16M18 4v16M6 12h12" stroke-width="2" stroke-linecap="round"/></svg>
+        Заголовок
+      </button>
+      <button class="tool-btn" id="add-paragraph">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h10" stroke-width="2" stroke-linecap="round"/></svg>
+        Абзац
+      </button>
+      <button class="tool-btn" id="add-image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.5" stroke-width="2"/><path d="M21 15l-5-5L5 21" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Изображение (URL)
+      </button>
+    </div>
+    <div class="panel-section">
+      <div class="section-title">Фон страницы</div>
+      <div class="prop-row">
+        <span class="prop-label">Цвет</span>
+        <input type="color" class="prop-color" id="bg-color" value="#ffffff">
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">URL фона</span>
+        <input type="text" class="prop-input" id="bg-url" placeholder="https://...">
+      </div>
+      <button class="btn" id="btn-apply-bg" style="width:100%">Применить фон</button>
+      <div style="margin-top:8px">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-light);margin-bottom:8px;font-weight:500">Быстрые цвета</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <div class="bg-preset" style="background:#FAF7F4" data-bg="#FAF7F4"></div>
+          <div class="bg-preset" style="background:#FFFFFF" data-bg="#FFFFFF"></div>
+          <div class="bg-preset" style="background:#F2EDE7" data-bg="#F2EDE7"></div>
+          <div class="bg-preset" style="background:#1A1816" data-bg="#1A1816"></div>
+          <div class="bg-preset" style="background:#2C2825" data-bg="#2C2825"></div>
+          <div class="bg-preset" style="background:#E8E0D8" data-bg="#E8E0D8"></div>
+          <div class="bg-preset" style="background:#D4C9BE" data-bg="#D4C9BE"></div>
+          <div class="bg-preset" style="background:#B8A088" data-bg="#B8A088"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="section-title">Элементы</div>
+      <div id="elements-list" style="font-size:12px;color:var(--text-sec)"></div>
+    </div>
+  </div>
+
+  <div class="canvas-area" id="canvas-area">
+    <div class="canvas-frame" id="canvas-frame">
+      <div class="canvas-bg" id="canvas-bg"></div>
+      <div class="canvas-content" id="canvas-content"></div>
+    </div>
+  </div>
+
+  <div class="panel right-panel">
+    <div class="panel-section">
+      <div class="section-title">Свойства элемента</div>
+      <div id="properties-panel">
+        <div class="no-selection">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor"><rect x="8" y="8" width="32" height="32" rx="4" stroke-width="2"/><path d="M16 16h16M16 24h12M16 32h8" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <p>Выберите элемент на холсте для редактирования</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const savedTheme=localStorage.getItem('zolter-site-theme')||'light';
+document.documentElement.setAttribute('data-theme',savedTheme);
+document.getElementById('theme-toggle').addEventListener('click',()=>{
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  const n=d?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);
+  localStorage.setItem('zolter-site-theme',n);
+});
+
+let elements=[];
+let selectedId=null;
+let elIdCounter=0;
+let bgStyle={color:'#ffffff',url:''};
+let isEditingText=false;
+
+function genId(){return 'el-'+(++elIdCounter)}
+function getEl(id){return elements.find(e=>e.id===id)}
+function getFrame(){return document.getElementById('canvas-frame')}
+function getBg(){return document.getElementById('canvas-bg')}
+function getContent(){return document.getElementById('canvas-content')}
+
+// Canvas size
+document.getElementById('canvas-size').addEventListener('change',e=>{
+  const[w,h]=e.target.value.split('x').map(Number);
+  const frame=getFrame();
+  const area=document.getElementById('canvas-area');
+  const areaW=area.clientWidth-80;
+  const areaH=area.clientHeight-80;
+  const scale=Math.min(areaW/w,areaH/h,1);
+  frame.style.width=Math.round(w*scale)+'px';
+  frame.style.height=Math.round(h*scale)+'px';
+  frame.dataset.scale=scale;
+  frame.dataset.ow=w;
+  frame.dataset.oh=h;
+});
+setTimeout(()=>document.getElementById('canvas-size').dispatchEvent(new Event('change')),50);
+
+// Background
+function applyBg(){
+  getBg().style.backgroundColor=bgStyle.color;
+  getBg().style.backgroundImage=bgStyle.url?`url('${bgStyle.url}')`:'none';
+}
+document.getElementById('bg-color').addEventListener('input',e=>{bgStyle.color=e.target.value;applyBg()});
+document.getElementById('bg-url').addEventListener('input',e=>{bgStyle.url=e.target.value;applyBg()});
+document.getElementById('btn-apply-bg').addEventListener('click',applyBg);
+document.querySelectorAll('.bg-preset').forEach(p=>{p.addEventListener('click',()=>{bgStyle.color=p.dataset.bg;document.getElementById('bg-color').value=p.dataset.bg;applyBg()})});
+
+// Add elements
+document.getElementById('add-text').addEventListener('click',()=>addTextElement('Текст','16px'));
+document.getElementById('add-heading').addEventListener('click',()=>addTextElement('Заголовок','28px'));
+document.getElementById('add-paragraph').addEventListener('click',()=>addTextElement('Абзац с текстом для редактирования. Нажмите дважды для редактирования содержимого.','14px'));
+document.getElementById('add-image').addEventListener('click',addImageElement);
+
+function addTextElement(text,fontSize){
+  const el={id:genId(),type:'text',x:60,y:60,width:250,height:'auto',content:text,
+    style:{fontWeight:'normal',fontStyle:'normal',textDecoration:'none',color:'#2C2825',fontSize,fontFamily:'IBM Plex Sans',backgroundColor:'transparent',borderColor:'transparent',borderWidth:'0px',borderStyle:'none',neon:false,abbr:'',abbrTitle:''}};
+  elements.push(el);renderElement(el);updateList();selectEl(el.id);
+}
+
+function addImageElement(){
+  const url=prompt('Введите URL изображения:','https://picsum.photos/300/200');
+  if(!url)return;
+  const el={id:genId(),type:'image',x:80,y:80,width:250,height:200,content:url,
+    style:{shape:'none',borderRadius:'0px',borderWidth:'0px',borderColor:'#000000',borderStyle:'none',filter:'none',opacity:1}};
+  elements.push(el);renderElement(el);updateList();selectEl(el.id);
+}
+
+function renderElement(el){
+  const frame=getFrame();
+  const div=document.createElement('div');
+  div.className='drag-el';
+  div.id=el.id;
+  div.style.left=el.x+'px';div.style.top=el.y+'px';
+  div.style.width=el.width+'px';
+  if(el.height!=='auto')div.style.height=el.height+'px';
+
+  if(el.type==='text'){
+    const contentDiv=document.createElement('div');
+    contentDiv.className='el-text';
+    contentDiv.style.fontSize=el.style.fontSize;
+    applyTextStyle(contentDiv,el.style);
+    setContentHtml(contentDiv,el);
+    // Make editable on double click
+    contentDiv.addEventListener('dblclick',e=>{
+      e.stopPropagation();
+      contentDiv.contentEditable='true';
+      contentDiv.focus();
+      isEditingText=true;
+      document.execCommand('selectAll',false,null);
+    });
+    contentDiv.addEventListener('blur',()=>{
+      contentDiv.contentEditable='false';
+      isEditingText=false;
+      // Update content from innerHTML
+      const tempDiv=document.createElement('div');
+      tempDiv.innerHTML=contentDiv.innerHTML;
+      el.content=tempDiv.innerHTML;
+      updateList();
+    });
+    contentDiv.addEventListener('input',()=>{
+      el.content=contentDiv.innerHTML;
+    });
+    // Prevent drag when editing
+    contentDiv.addEventListener('mousedown',e=>{
+      if(contentDiv.contentEditable==='true')e.stopPropagation();
+    });
+    div.appendChild(contentDiv);
+  }else if(el.type==='image'){
+    const img=document.createElement('img');
+    img.className='el-img';
+    img.src=el.content;
+    img.draggable=false;
+    applyImgStyle(img,el.style);
+    div.appendChild(img);
+  }
+
+  // Resize handles
+  ['br','bl','tr','tl'].forEach(pos=>{
+    const handle=document.createElement('div');
+    handle.className='resize-handle '+pos;
+    handle.addEventListener('mousedown',e=>{e.stopPropagation();startResize(e,el,pos,div)});
+    div.appendChild(handle);
+  });
+
+  // Delete button
+  const delBtn=document.createElement('div');
+  delBtn.className='delete-btn';delBtn.textContent='×';
+  delBtn.addEventListener('click',e=>{e.stopPropagation();deleteEl(el.id)});
+  div.appendChild(delBtn);
+
+  // Drag on mousedown (not on editable text or handles)
+  div.addEventListener('mousedown',e=>{
+    if(e.target.contentEditable==='true'||e.target.classList.contains('resize-handle')||e.target.classList.contains('delete-btn'))return;
+    if(e.target.closest&&e.target.closest('.el-text')&&e.target.closest('.el-text').contentEditable==='true')return;
+    selectEl(el.id);
+    startDrag(e,div,el);
+  });
+
+  frame.appendChild(div);
+}
+
+function setContentHtml(contentDiv,el){
+  let html=el.content;
+  if(el.style.abbr&&el.style.abbrTitle){
+    html=html.replace(new RegExp(escapeRegex(el.style.abbr),'gi'),`<abbr title="${el.style.abbrTitle}" style="border-bottom:1px dotted currentColor;cursor:help">${el.style.abbr}</abbr>`);
+  }
+  contentDiv.innerHTML=html;
+}
+
+function escapeRegex(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+
+function applyTextStyle(elDiv,style){
+  elDiv.style.fontWeight=style.fontWeight;
+  elDiv.style.fontStyle=style.fontStyle;
+  elDiv.style.textDecoration=style.textDecoration;
+  elDiv.style.color=style.color;
+  elDiv.style.fontSize=style.fontSize;
+  elDiv.style.fontFamily=style.fontFamily;
+  elDiv.style.backgroundColor=style.backgroundColor;
+  elDiv.style.borderColor=style.borderColor;
+  elDiv.style.borderWidth=style.borderWidth;
+  elDiv.style.borderStyle=style.borderWidth!=='0px'?'solid':'none';
+  elDiv.style.textShadow=style.neon?`0 0 5px ${style.color},0 0 15px ${style.color},0 0 30px ${style.color}`:'none';
+}
+
+function applyImgStyle(img,style){
+  img.className='el-img';
+  if(style.shape==='circle')img.classList.add('shape-circle');
+  else if(style.shape==='avatar')img.classList.add('shape-avatar');
+  else if(style.shape==='window')img.classList.add('shape-window');
+  else if(style.shape==='collage')img.classList.add('shape-collage');
+  else if(style.shape==='pie')img.classList.add('shape-pie');
+  img.style.borderRadius=style.borderRadius||'0';
+  if(style.borderWidth&&style.borderWidth!=='0px')img.style.border=`${style.borderWidth} solid ${style.borderColor}`;
+  img.style.filter=style.filter||'none';
+  img.style.opacity=style.opacity!==undefined?style.opacity:1;
+}
+
+// Dragging - FREE MOVEMENT ON CANVAS
+function startDrag(e,div,el){
+  e.preventDefault();
+  const frame=getFrame();
+  const frameRect=frame.getBoundingClientRect();
+  const startX=e.clientX;
+  const startY=e.clientY;
+  const origX=el.x;
+  const origY=el.y;
+
+  function onMove(ev){
+    const dx=ev.clientX-startX;
+    const dy=ev.clientY-startY;
+    let newX=origX+dx;
+    let newY=origY+dy;
+    // Free movement within canvas bounds
+    newX=Math.max(-el.width+20,Math.min(parseInt(frame.dataset.ow||1200)-20,newX));
+    newY=Math.max(0,Math.min(parseInt(frame.dataset.oh||700)-20,newY));
+    el.x=newX;
+    el.y=newY;
+    div.style.left=newX+'px';
+    div.style.top=newY+'px';
+    updateToolbarPosition();
+  }
+  function onUp(){
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+    updateProps();
+  }
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+}
+
+// Resizing
+function startResize(e,el,pos,div){
+  e.preventDefault();
+  const startX=e.clientX;
+  const startY=e.clientY;
+  const origW=el.width;
+  const origH=el.height!=='auto'?parseInt(el.height):100;
+  const origX=el.x;
+  const origY=el.y;
+
+  function onMove(ev){
+    const dx=ev.clientX-startX;
+    const dy=ev.clientY-startY;
+    if(pos==='br'){el.width=Math.max(40,origW+dx);if(el.height!=='auto')el.height=Math.max(20,origH+dy)}
+    else if(pos==='bl'){el.width=Math.max(40,origW-dx);el.x=origX+dx;if(el.height!=='auto')el.height=Math.max(20,origH+dy)}
+    else if(pos==='tr'){el.width=Math.max(40,origW+dx);el.height=Math.max(20,origH-dy);el.y=origY+dy}
+    else if(pos==='tl'){el.width=Math.max(40,origW-dx);el.x=origX+dx;el.height=Math.max(20,origH-dy);el.y=origY+dy}
+    div.style.width=el.width+'px';
+    if(el.height!=='auto')div.style.height=el.height+'px';
+    if(el.type==='text'){div.style.left=el.x+'px';div.style.top=el.y+'px'}
+  }
+  function onUp(){
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+    updateProps();
+  }
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+}
+
+// Select element
+function selectEl(id){
+  selectedId=id;
+  document.querySelectorAll('.drag-el').forEach(d=>d.classList.remove('selected'));
+  const div=document.getElementById(id);
+  if(div)div.classList.add('selected');
+  const el=getEl(id);
+  if(el&&(el.type==='text')){
+    showTextToolbar(el,div);
+  }else{
+    hideTextToolbar();
+  }
+  updateProps();
+}
+
+function hideTextToolbar(){
+  document.getElementById('text-toolbar').classList.remove('visible');
+}
+
+function showTextToolbar(el,div){
+  const toolbar=document.getElementById('text-toolbar');
+  const frame=getFrame();
+  const frameRect=frame.getBoundingClientRect();
+  const canvasRect=document.getElementById('canvas-area').getBoundingClientRect();
+  
+  const elRect=div.getBoundingClientRect();
+  let tx=elRect.left;
+  let ty=elRect.top-toolbar.offsetHeight-10;
+  
+  // Adjust if off screen
+  if(ty<canvasRect.top+50)ty=elRect.bottom+10;
+  if(tx+360>canvasRect.right)tx=canvasRect.right-370;
+  
+  toolbar.style.left=tx+'px';
+  toolbar.style.top=ty+'px';
+  toolbar.classList.add('visible');
+  
+  // Sync toolbar state with element
+  document.getElementById('tb-bold').classList.toggle('active',el.style.fontWeight==='bold');
+  document.getElementById('tb-italic').classList.toggle('active',el.style.fontStyle==='italic');
+  document.getElementById('tb-underline').classList.toggle('active',el.style.textDecoration==='underline');
+  document.getElementById('tb-strike').classList.toggle('active',el.style.textDecoration==='line-through');
+  document.getElementById('tb-neon').classList.toggle('active',!!el.style.neon);
+  document.getElementById('tb-color').value=el.style.color==='#2C2825'?'#2C2825':el.style.color;
+  document.getElementById('tb-font').value=el.style.fontFamily;
+  document.getElementById('tb-size').value=el.style.fontSize;
+  document.getElementById('tb-bgcolor').value=el.style.backgroundColor==='transparent'?'#ffffff':el.style.backgroundColor;
+  document.getElementById('tb-bordercolor').value=el.style.borderColor;
+  document.getElementById('tb-borderwidth').value=el.style.borderWidth;
+  document.getElementById('tb-abbr').value=el.style.abbr||'';
+  document.getElementById('tb-abbrtitle').value=el.style.abbrTitle||'';
+}
+
+function updateToolbarPosition(){
+  if(!selectedId)return;
+  const el=getEl(selectedId);
+  if(!el||el.type!=='text')return;
+  const div=document.getElementById(selectedId);
+  if(div)showTextToolbar(el,div);
+}
+
+// Toolbar events
+document.getElementById('tb-bold').addEventListener('click',()=>{
+  const el=getEl(selectedId);if(!el)return;
+  // If text is being edited, use execCommand
+  if(isEditingText){document.execCommand('bold',false);return}
+  el.style.fontWeight=el.style.fontWeight==='bold'?'normal':'bold';
+  applyElStyle();
+  showTextToolbar(el,document.getElementById(selectedId));
+  updateProps();
+});
+document.getElementById('tb-italic').addEventListener('click',()=>{
+  const el=getEl(selectedId);if(!el)return;
+  if(isEditingText){document.execCommand('italic',false);return}
+  el.style.fontStyle=el.style.fontStyle==='italic'?'normal':'italic';
+  applyElStyle();showTextToolbar(el,document.getElementById(selectedId));updateProps();
+});
+document.getElementById('tb-underline').addEventListener('click',()=>{
+  const el=getEl(selectedId);if(!el)return;
+  if(isEditingText){document.execCommand('underline',false);return}
+  el.style.textDecoration=el.style.textDecoration==='underline'?'none':'underline';
+  applyElStyle();showTextToolbar(el,document.getElementById(selectedId));updateProps();
+});
+document.getElementById('tb-strike').addEventListener('click',()=>{
+  const el=getEl(selectedId);if(!el)return;
+  if(isEditingText){document.execCommand('strikeThrough',false);return}
+  el.style.textDecoration=el.style.textDecoration==='line-through'?'none':'line-through';
+  applyElStyle();showTextToolbar(el,document.getElementById(selectedId));updateProps();
+});
+document.getElementById('tb-neon').addEventListener('click',()=>{
+  const el=getEl(selectedId);if(!el)return;
+  el.style.neon=!el.style.neon;
+  applyElStyle();showTextToolbar(el,document.getElementById(selectedId));updateProps();
+});
+document.getElementById('tb-color').addEventListener('input',e=>{
+  const el=getEl(selectedId);if(!el)return;
+  if(isEditingText){document.execCommand('foreColor',false,e.target.value);return}
+  el.style.color=e.target.value;applyElStyle();updateProps();
+});
+document.getElementById('tb-font').addEventListener('change',e=>{
+  const el=getEl(selectedId);if(!el)return;
+  el.style.fontFamily=e.target.value;applyElStyle();updateProps();
+});
+document.getElementById('tb-size').addEventListener('change',e=>{
+  const el=getEl(selectedId);if(!el)return;
+  el.style.fontSize=e.target.value;applyElStyle();updateProps();
+});
+document.getElementById('tb-bgcolor').addEventListener('input',e=>{
+  const el=getEl(selectedId);if(!el)return;
+  el.style.backgroundColor=e.target.value;applyElStyle();updateProps();
+});
+document.getElementById('tb-bordercolor').addEventListener('input',e=>{
+  const el=getEl(selectedId);if(!el)return;
+  el.style.borderColor=e.target.value;applyElStyle();updateProps();
+});
+document.getElementById('tb-borderwidth').addEventListener('change',e=>{
+  const el=getEl(selectedId);if(!el)return;
+  el.style.borderWidth=e.target.value;applyElStyle();updateProps();
+});
+document.getElementById('tb-abbr').addEventListener('change',e=>{
+  const el=getEl(selectedId);if(!el)return;
+  el.style.abbr=e.target.value;applyElStyle();updateProps();
+});
+document.getElementById('tb-abbrtitle').addEventListener('change',e=>{
+  const el=getEl(selectedId);if(!el)return;
+  el.style.abbrTitle=e.target.value;applyElStyle();updateProps();
+});
+
+function applyElStyle(){
+  const el=getEl(selectedId);if(!el)return;
+  const div=document.getElementById(el.id);if(!div)return;
+  if(el.type==='text'){
+    const contentDiv=div.querySelector('.el-text');
+    if(contentDiv){
+      setContentHtml(contentDiv,el);
+      applyTextStyle(contentDiv,el.style);
+    }
+  }else if(el.type==='image'){
+    const img=div.querySelector('.el-img');
+    if(img)applyImgStyle(img,el.style);
+  }
+}
+
+// Deselect
+document.getElementById('canvas-area').addEventListener('mousedown',e=>{
+  if(e.target===document.getElementById('canvas-area')||e.target===getFrame()||e.target===getBg()){
+    selectedId=null;
+    document.querySelectorAll('.drag-el').forEach(d=>d.classList.remove('selected'));
+    hideTextToolbar();
+    updateProps();
+  }
+});
+
+// Delete
+function deleteEl(id){
+  elements=elements.filter(e=>e.id!==id);
+  const div=document.getElementById(id);if(div)div.remove();
+  if(selectedId===id){selectedId=null;hideTextToolbar();updateProps()}
+  updateList();
+}
+
+// Update list
+function updateList(){
+  const list=document.getElementById('elements-list');
+  if(elements.length===0){list.innerHTML='<div style="color:var(--text-light)">Нет элементов</div>';return}
+  list.innerHTML=elements.map(el=>{
+    const tn={text:'Текст',heading:'Заголовок',paragraph:'Абзац',image:'Изображение'};
+    return `<div class="el-item ${el.id===selectedId?'active':''}" onclick="window.selectById('${el.id}')">
+      <span>${tn[el.type]||el.type}: ${stripHtml(el.content).substring(0,18)}</span>
+      <button onclick="event.stopPropagation();window.deleteById('${el.id}')" style="background:none;border:none;cursor:pointer;color:inherit;font-size:12px;opacity:.5">×</button>
+    </div>`;
+  }).join('');
+}
+function stripHtml(h){const d=document.createElement('div');d.innerHTML=h;return d.textContent||d.innerText||''}
+window.selectById=selectEl;
+window.deleteById=deleteEl;
+
+// Properties panel
+function updateProps(){
+  const panel=document.getElementById('properties-panel');
+  if(!selectedId){
+    panel.innerHTML='<div class="no-selection"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor"><rect x="8" y="8" width="32" height="32" rx="4" stroke-width="2"/><path d="M16 16h16M16 24h12M16 32h8" stroke-width="1.5" stroke-linecap="round"/></svg><p>Выберите элемент на холсте для редактирования</p></div>';
+    return;
+  }
+  const el=getEl(selectedId);if(!el)return;
+
+  let html=`<div style="margin-bottom:10px;font-size:12px;font-weight:600;color:var(--accent-dark)">${el.type.toUpperCase()}</div>`;
+  html+=`<div class="prop-row"><span class="prop-label">X</span><input class="prop-input" type="number" id="prop-x" value="${el.x}"></div>`;
+  html+=`<div class="prop-row"><span class="prop-label">Y</span><input class="prop-input" type="number" id="prop-y" value="${el.y}"></div>`;
+  html+=`<div class="prop-row"><span class="prop-label">Ширина</span><input class="prop-input" type="number" id="prop-w" value="${el.width}"></div>`;
+  if(el.type==='image')html+=`<div class="prop-row"><span class="prop-label">Высота</span><input class="prop-input" type="number" id="prop-h" value="${el.height}"></div>`;
+
+  if(el.type==='text'){
+    html+=`<div class="prop-row" style="flex-direction:column;align-items:stretch"><span class="prop-label">Текст</span><textarea class="prop-textarea" id="prop-content">${stripHtml(el.content)}</textarea></div>`;
+    html+=`<div class="section-title" style="margin-top:10px">Форматирование</div>`;
+    html+=`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="fmt-btn" id="fmt-bold" style="padding:6px 10px;background:var(--surface-alt);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:11px;color:var(--text-sec)"><b>Ж</b></button>
+      <button class="fmt-btn" id="fmt-italic" style="padding:6px 10px;background:var(--surface-alt);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:11px;color:var(--text-sec)"><i>К</i></button>
+      <button class="fmt-btn" id="fmt-neon" style="padding:6px 10px;background:var(--surface-alt);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:11px;color:var(--text-sec)">✦ Неон</button>
+      <button class="fmt-btn" id="fmt-strike" style="padding:6px 10px;background:var(--surface-alt);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:11px;color:var(--text-sec)"><s>З</s></button>
+      <button class="fmt-btn" id="fmt-underline" style="padding:6px 10px;background:var(--surface-alt);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:11px;color:var(--text-sec)"><u>П</u></button>
+    </div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Размер</span><input class="prop-input" type="text" id="prop-fontsize" value="${el.style.fontSize}"></div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Шрифт</span><select class="prop-select" id="prop-font">${['IBM Plex Sans','Arial','Georgia','Courier New','Verdana','Times New Roman','Impact','Trebuchet MS','Palatino'].map(f=>`<option value="${f}" ${el.style.fontFamily===f?'selected':''}>${f}</option>`).join('')}</select></div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Цвет</span><input type="color" class="prop-color" id="prop-color" value="${el.style.color}"></div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Фон</span><input type="color" class="prop-color" id="prop-bgcolor" value="${el.style.backgroundColor==='transparent'?'#ffffff':el.style.backgroundColor}"><label style="font-size:10px;color:var(--text-light);display:flex;align-items:center;gap:3px;margin-left:8px"><input type="checkbox" id="prop-bgnone" ${el.style.backgroundColor==='transparent'?'checked':''}>Прозр.</label></div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Обводка</span><input type="color" class="prop-color" id="prop-bc" value="${el.style.borderColor}"><input class="prop-input" type="text" id="prop-bw" value="${el.style.borderWidth}" style="width:60px"></div>`;
+    html+=`<div class="section-title" style="margin-top:10px">Аббревиатура</div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Текст</span><input class="prop-input" id="prop-abbr" value="${el.style.abbr||''}" placeholder="HTML"></div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Пояснение</span><input class="prop-input" id="prop-abbrtitle" value="${el.style.abbrTitle||''}" placeholder="HyperText..."></div>`;
+  }
+
+  if(el.type==='image'){
+    html+=`<div class="prop-row" style="flex-direction:column;align-items:stretch"><span class="prop-label">URL</span><input class="prop-input" id="prop-imgurl" value="${el.content}"></div>`;
+    html+=`<div class="section-title" style="margin-top:10px">Форма</div>`;
+    html+=`<div class="shape-btns">${[{id:'none',n:'Обычная'},{id:'circle',n:'Круг'},{id:'avatar',n:'Аватар'},{id:'pie',n:'Пирог'},{id:'window',n:'Окно'},{id:'collage',n:'Коллаж'}].map(s=>`<button class="shape-btn ${el.style.shape===s.id?'active':''}" data-shape="${s.id}">${s.n}</button>`).join('')}</div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Скругл.</span><input class="prop-input" type="text" id="prop-radius" value="${el.style.borderRadius}"></div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Рамка</span><input type="color" class="prop-color" id="prop-ibc" value="${el.style.borderColor}"><input class="prop-input" type="text" id="prop-ibw" value="${el.style.borderWidth}" style="width:55px"></div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Фильтр</span><select class="prop-select" id="prop-filter">${['none','grayscale(100%)','sepia(100%)','blur(2px)','brightness(1.3)','contrast(1.5)'].map(f=>`<option value="${f}" ${el.style.filter===f?'selected':''}>${f==='none'?'Нет':f}</option>`).join('')}</select></div>`;
+    html+=`<div class="prop-row"><span class="prop-label">Прозрачн.</span><input type="range" class="prop-input" id="prop-opacity" min="0" max="1" step="0.1" value="${el.style.opacity}"></div>`;
+  }
+
+  html+=`<button class="btn danger" style="width:100%;margin-top:14px" onclick="window.deleteById('${el.id}')">Удалить элемент</button>`;
+  panel.innerHTML=html;
+  bindProps(el);
+}
+
+function bindProps(el){
+  const bind=(id,prop,cb)=>{const inp=document.getElementById(id);if(inp)inp.addEventListener('input',e=>{el[prop]=e.target.value;if(cb)cb(e.target.value);updateElDiv(el)})};
+  bind('prop-x','x');bind('prop-y','y');bind('prop-w','width');
+  if(el.type==='image'){
+    bind('prop-h','height');bind('prop-imgurl','content');bind('prop-radius','borderRadius');
+    bind('prop-ibc','borderColor');bind('prop-ibw','borderWidth');bind('prop-filter','filter');
+    const opEl=document.getElementById('prop-opacity');if(opEl)opEl.addEventListener('input',e=>{el.style.opacity=parseFloat(e.target.value);updateElDiv(el)});
+    document.querySelectorAll('.shape-btn').forEach(btn=>{btn.addEventListener('click',()=>{el.style.shape=btn.dataset.shape;updateElDiv(el)})});
+  }else{
+    bind('prop-content','content');bind('prop-fontsize','fontSize');bind('prop-font','fontFamily');
+    bind('prop-bw','borderWidth');bind('prop-bc','borderColor');bind('prop-abbr','abbr');bind('prop-abbrtitle','abbrTitle');
+    const colEl=document.getElementById('prop-color');if(colEl)colEl.addEventListener('input',e=>{el.style.color=e.target.value;updateElDiv(el)});
+    const bgEl=document.getElementById('prop-bgcolor');if(bgEl)bgEl.addEventListener('input',e=>{el.style.backgroundColor=e.target.value;updateElDiv(el)});
+    const bgNone=document.getElementById('prop-bgnone');if(bgNone)bgNone.addEventListener('change',e=>{el.style.backgroundColor=e.target.checked?'transparent':el.style.backgroundColor;updateElDiv(el)});
+    // Format buttons in properties
+    const fmtBold=document.getElementById('fmt-bold');
+    if(fmtBold){fmtBold.addEventListener('click',()=>{el.style.fontWeight=el.style.fontWeight==='bold'?'normal':'bold';updateElDiv(el);updateProps();showTextToolbar(el,document.getElementById(el.id))})}
+    const fmtItalic=document.getElementById('fmt-italic');
+    if(fmtItalic){fmtItalic.addEventListener('click',()=>{el.style.fontStyle=el.style.fontStyle==='italic'?'normal':'italic';updateElDiv(el);updateProps();showTextToolbar(el,document.getElementById(el.id))})}
+    const fmtNeon=document.getElementById('fmt-neon');
+    if(fmtNeon){fmtNeon.addEventListener('click',()=>{el.style.neon=!el.style.neon;updateElDiv(el);updateProps();showTextToolbar(el,document.getElementById(el.id))})}
+    const fmtStrike=document.getElementById('fmt-strike');
+    if(fmtStrike){fmtStrike.addEventListener('click',()=>{el.style.textDecoration=el.style.textDecoration==='line-through'?'none':'line-through';updateElDiv(el);updateProps();showTextToolbar(el,document.getElementById(el.id))})}
+    const fmtUnderline=document.getElementById('fmt-underline');
+    if(fmtUnderline){fmtUnderline.addEventListener('click',()=>{el.style.textDecoration=el.style.textDecoration==='underline'?'none':'underline';updateElDiv(el);updateProps();showTextToolbar(el,document.getElementById(el.id))})}
+  }
+  // Update position on change
+  ['prop-x','prop-y','prop-w','prop-h'].forEach(id=>{
+    const inp=document.getElementById(id);
+    if(inp)inp.addEventListener('change',()=>updateElDiv(el));
+  });
+}
+
+function updateElDiv(el){
+  const div=document.getElementById(el.id);if(!div)return;
+  div.style.left=el.x+'px';div.style.top=el.y+'px';div.style.width=el.width+'px';
+  if(el.height!=='auto')div.style.height=el.height+'px';
+  if(el.type==='text'){
+    const contentDiv=div.querySelector('.el-text');
+    if(contentDiv){setContentHtml(contentDiv,el);applyTextStyle(contentDiv,el.style)}
+  }else if(el.type==='image'){
+    const img=div.querySelector('.el-img');
+    if(img){img.src=el.content;applyImgStyle(img,el.style)}
+  }
+}
+
+// Keyboard delete
+document.addEventListener('keydown',e=>{
+  if(e.key==='Delete'&&selectedId){
+    const active=document.activeElement;
+    if(active&&(active.contentEditable==='true'||active.tagName==='INPUT'||active.tagName==='TEXTAREA'||active.tagName==='SELECT'))return;
+    deleteEl(selectedId);
+  }
+});
+
+// Preview & Export
+function generateHTML(){
+  let bodyStyle=`background-color:${bgStyle.color};`;
+  if(bgStyle.url)bodyStyle+=`background-image:url('${bgStyle.url}');background-size:cover;background-position:center;background-repeat:no-repeat;`;
+  let els='';
+  elements.forEach(el=>{
+    let s=`position:absolute;left:${el.x}px;top:${el.y}px;width:${el.width}px;`;
+    if(el.height!=='auto')s+=`height:${el.height}px;`;
+    if(el.type==='image'){
+      let is=`width:100%;height:100%;object-fit:cover;`;
+      if(el.style.shape==='circle')is+='border-radius:50%;';
+      else if(el.style.shape==='avatar')is+='border-radius:50%;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);';
+      else if(el.style.shape==='window')is+='border-radius:8px;border:2px solid #ddd;box-shadow:0 4px 12px rgba(0,0,0,.1);';
+      else if(el.style.shape==='collage')is+='border:4px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.12);transform:rotate(-2deg);';
+      else if(el.style.shape==='pie')is+='border-radius:50%;clip-path:polygon(50% 50%,50% 0%,100% 0%,100% 100%,0% 100%,0% 0%,50% 0%);';
+      if(el.style.borderRadius)is+=`border-radius:${el.style.borderRadius};`;
+      if(el.style.borderWidth&&el.style.borderWidth!=='0px')is+=`border:${el.style.borderWidth} solid ${el.style.borderColor};`;
+      if(el.style.filter&&el.style.filter!=='none')is+=`filter:${el.style.filter};`;
+      if(el.style.opacity!==undefined&&el.style.opacity<1)is+=`opacity:${el.style.opacity};`;
+      els+=`<div style="${s}"><img src="${el.content}" style="${is}"></div>\n`;
+    }else{
+      let ts=`font-weight:${el.style.fontWeight};font-style:${el.style.fontStyle};text-decoration:${el.style.textDecoration};color:${el.style.color};font-size:${el.style.fontSize};font-family:${el.style.fontFamily};background-color:${el.style.backgroundColor};`;
+      if(el.style.borderWidth&&el.style.borderWidth!=='0px')ts+=`border:${el.style.borderWidth} solid ${el.style.borderColor};`;
+      if(el.style.neon)ts+=`text-shadow:0 0 5px ${el.style.color},0 0 15px ${el.style.color},0 0 30px ${el.style.color};`;
+      els+=`<div style="${s}${ts}">${el.content}</div>\n`;
+    }
+  });
+  return `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Zolter Site</title><link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet"><style>*{margin:0;padding:0}body{${bodyStyle}}abbr{border-bottom:1px dotted currentColor;cursor:help}</style></head><body>${els}</body></html>`;
+}
+
+document.getElementById('btn-preview').addEventListener('click',()=>{const w=window.open('','_blank');w.document.write(generateHTML());w.document.close()});
+document.getElementById('btn-export').addEventListener('click',()=>{
+  const blob=new Blob([generateHTML()],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='zolter-site.html';a.click();URL.revokeObjectURL(url);
+});
+
+})();
+</script>
+</body>
+</html>
+
+
+

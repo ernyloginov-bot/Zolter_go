@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter — JSON База данных</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-mono@5.0.8/index.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAF7F4;
+  --surface: #FFFFFF;
+  --surface-alt: #F2EDE7;
+  --surface-alt2: #E8E0D8;
+  --border: #D4C9BE;
+  --text: #2C2825;
+  --text-sec: #6B6560;
+  --text-light: #9B9490;
+  --accent: #B8A088;
+  --accent-dark: #8C7560;
+  --shadow: rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] {
+  --bg: #1A1816;
+  --surface: #24201C;
+  --surface-alt: #2A2622;
+  --surface-alt2: #3A3530;
+  --border: #4A433D;
+  --text: #D4C9BE;
+  --text-sec: #9B9490;
+  --text-light: #6B6560;
+  --accent: #B8A088;
+  --accent-dark: #D4C9BE;
+  --shadow: rgba(0,0,0,0.3);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+
+.topbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.logo { font-size: 16px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--text); text-decoration: none; }
+.logo span { color: var(--accent); }
+.page-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); padding: 0 16px; border-left: 1px solid var(--border); margin-left: 8px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.theme-toggle { width: 32px; height: 32px; background: none; border: 1px solid var(--border); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: var(--text-sec); }
+.theme-toggle:hover { background: var(--surface-alt); }
+
+.btn { padding: 8px 16px; background: none; border: 1px solid var(--border); color: var(--text-sec); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-family: inherit; display: flex; align-items: center; gap: 6px; border-radius: 4px; white-space: nowrap; }
+.btn:hover { background: var(--surface-alt); color: var(--text); border-color: var(--border); }
+.btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn.primary:hover { opacity: 0.85; }
+.btn.danger { border-color: #C0392B; color: #C0392B; }
+.btn.danger:hover { background: #C0392B; color: #fff; }
+.btn svg { width: 14px; height: 14px; }
+
+/* Main Layout */
+.workspace { flex: 1; display: flex; overflow: hidden; }
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header h3 {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+
+.db-name-input {
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  padding: 0 12px;
+  border-radius: 4px;
+}
+.db-name-input:focus { outline: none; border-color: var(--accent); }
+
+.db-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.db-item {
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-sec);
+}
+.db-item:hover { background: var(--surface-alt); color: var(--text); }
+.db-item.active { background: var(--surface-alt2); color: var(--text); font-weight: 600; }
+
+.db-item-count {
+  font-size: 11px;
+  background: var(--surface);
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: var(--text-light);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.db-item-delete {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: all 0.2s;
+}
+.db-item:hover .db-item-delete { opacity: 1; }
+.db-item-delete:hover { color: #C0392B; background: rgba(192,57,43,0.1); }
+
+.add-db-btn {
+  margin: 8px 12px;
+  padding: 10px;
+  background: var(--surface-alt);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--text-light);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.add-db-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+
+.sidebar-actions {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.toolbar {
+  height: 48px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.toolbar .spacer { flex: 1; }
+.toolbar .info { font-size: 12px; color: var(--text-light); font-family: 'IBM Plex Mono', monospace; }
+
+/* Table Container */
+.table-container {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  font-weight: 500;
+}
+
+.data-table th .th-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.data-table th .th-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+.data-table th:hover .th-actions { opacity: 1; }
+
+.th-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px;
+  border-radius: 3px;
+}
+.th-action-btn:hover { color: var(--text); background: var(--surface-alt2); }
+
+.data-table td {
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  min-width: 140px;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+
+.data-table tr:hover { background: var(--surface-alt); }
+
+.cell-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  resize: none;
+}
+.cell-input:focus { outline: 2px solid var(--accent); background: var(--bg); }
+
+.cell-value {
+  padding: 8px 12px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  cursor: text;
+}
+
+.type-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.type-badge.string { background: rgba(41, 128, 185, 0.1); color: #2980B9; }
+.type-badge.number { background: rgba(39, 174, 96, 0.1); color: #27AE60; }
+.type-badge.boolean { background: rgba(142, 68, 173, 0.1); color: #8E44AD; }
+.type-badge.null { background: rgba(155, 148, 144, 0.1); color: #9B9490; }
+.type-badge.array { background: rgba(230, 126, 34, 0.1); color: #E67E22; }
+.type-badge.object { background: rgba(192, 57, 43, 0.1); color: #C0392B; }
+
+.row-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+tr:hover .row-actions { opacity: 1; }
+
+.row-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.row-btn:hover { color: var(--text); background: var(--surface-alt); }
+.row-btn.delete:hover { color: #C0392B; border-color: #C0392B; }
+
+.add-row-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-light);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+.add-row-btn:hover { border-color: var(--accent); color: var(--accent-dark); background: var(--surface-alt); }
+
+/* Add Column Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-overlay.visible { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 24px 48px var(--shadow);
+}
+
+.modal h3 {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.modal-field {
+  margin-bottom: 16px;
+}
+
+.modal-field label {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+.modal-field input, .modal-field select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 0 12px;
+  border-radius: 4px;
+}
+.modal-field input:focus, .modal-field select:focus { outline: none; border-color: var(--accent); }
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+/* JSON Preview */
+.json-preview {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-sec);
+  max-height: 400px;
+  overflow: auto;
+  white-space: pre;
+  display: none;
+  margin: 16px;
+}
+.json-preview.visible { display: block; }
+
+/* Empty State */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  text-align: center;
+  color: var(--text-light);
+}
+.empty-state svg { width: 64px; height: 64px; margin-bottom: 24px; opacity: 0.3; }
+.empty-state h2 { font-size: 24px; font-weight: 300; margin-bottom: 12px; color: var(--text-sec); }
+.empty-state p { font-size: 14px; line-height: 1.6; max-width: 400px; }
+
+/* Scrollbar */
+.table-container::-webkit-scrollbar, .db-list::-webkit-scrollbar { width: 6px; height: 6px; }
+.table-container::-webkit-scrollbar-thumb, .db-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@media (max-width: 768px) {
+  .sidebar { width: 200px; }
+  .page-title { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+    <span class="page-title">JSON База данных</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn" id="btn-import" title="Импорт JSON">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor"><path d="M8 3v10M4 9l4 4 4-4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Импорт
+    </button>
+    <button class="btn primary" id="btn-export">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor"><path d="M8 10V0M4 6l4 4 4-4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10v4h12v-4" stroke-width="1.5"/></svg>
+      Скачать JSON
+    </button>
+    <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept=".json" hidden>
+
+<div class="workspace">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h3>Коллекции</h3>
+      <input class="db-name-input" id="db-name-input" value="users" placeholder="Имя коллекции">
+    </div>
+    <div class="db-list" id="db-list"></div>
+    <button class="add-db-btn" id="add-db-btn">+ Новая коллекция</button>
+    <div class="sidebar-actions">
+      <button class="btn" id="btn-toggle-json" style="width:100%">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" width="14" height="14"><path d="M4 3h2v5H4zM7 3h2v5H7zM10 3h2v5h-2zM4 10h5v2H4z" stroke-width="1.2"/></svg>
+        JSON превью
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="toolbar">
+      <button class="btn" id="btn-add-row">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor"><path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Добавить строку
+      </button>
+      <button class="btn" id="btn-add-column">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor"><path d="M3 8h10M8 3v10" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Добавить колонку
+      </button>
+      <span class="spacer"></span>
+      <span class="info" id="table-info">0 строк · 0 колонок</span>
+      <button class="btn danger" id="btn-clear-all">Очистить</button>
+    </div>
+
+    <div class="table-container" id="table-container">
+      <div class="empty-state" id="empty-state">
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor"><rect x="8" y="8" width="48" height="48" rx="4" stroke-width="2"/><path d="M8 20h48M8 32h48M8 44h48M20 8v48M36 8v48M52 8v48" stroke-width="1.5"/></svg>
+        <h2>Нет данных</h2>
+        <p>Создайте первую коллекцию и добавьте колонки, чтобы начать работу с JSON-базой данных.</p>
+      </div>
+
+      <table class="data-table" id="data-table" style="display:none;">
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+      <button class="add-row-btn" id="add-row-btn" style="display:none;">+ Добавить строку</button>
+    </div>
+
+    <div class="json-preview" id="json-preview"></div>
+  </div>
+</div>
+
+<!-- Add Column Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Добавить колонку</h3>
+    <div class="modal-field">
+      <label>Имя поля</label>
+      <input type="text" id="modal-field-name" placeholder="например: name, age, email">
+    </div>
+    <div class="modal-field">
+      <label>Тип данных</label>
+      <select id="modal-field-type">
+        <option value="string">string</option>
+        <option value="number">number</option>
+        <option value="boolean">boolean</option>
+        <option value="null">null</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="modal-cancel">Отмена</button>
+      <button class="btn primary" id="modal-confirm">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Theme
+  const savedTheme = localStorage.getItem('zolter-json-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('zolter-json-theme', newTheme);
+  });
+
+  // State
+  let databases = JSON.parse(localStorage.getItem('zolter-json-dbs') || '{}');
+  let currentDB = null;
+  let showJSON = false;
+
+  // Ensure at least one DB
+  if (Object.keys(databases).length === 0) {
+    databases = {
+      users: {
+        columns: ['id', 'name', 'email', 'age', 'active'],
+        data: [
+          { id: 1, name: 'Алексей Иванов', email: 'alex@example.com', age: 28, active: true },
+          { id: 2, name: 'Мария Петрова', email: 'maria@example.com', age: 34, active: true },
+          { id: 3, name: 'Дмитрий Козлов', email: 'dmitry@example.com', age: 22, active: false }
+        ]
+      }
+    };
+    saveDBs();
+  }
+
+  function saveDBs() {
+    localStorage.setItem('zolter-json-dbs', JSON.stringify(databases));
+  }
+
+  function getCurrentDB() {
+    if (!currentDB || !databases[currentDB]) {
+      const keys = Object.keys(databases);
+      currentDB = keys[0] || null;
+      if (currentDB) {
+        document.getElementById('db-name-input').value = currentDB;
+      }
+    }
+    return databases[currentDB];
+  }
+
+  function renderDBList() {
+    const list = document.getElementById('db-list');
+    list.innerHTML = '';
+    Object.keys(databases).forEach(name => {
+      const item = document.createElement('div');
+      item.className = 'db-item' + (name === currentDB ? ' active' : '');
+      const count = databases[name].data.length;
+      item.innerHTML = `
+        <span>${name}</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="db-item-count">${count}</span>
+          <button class="db-item-delete" data-db="${name}" title="Удалить">×</button>
+        </span>
+      `;
+      item.addEventListener('click', (e) => {
+        if (e.target.classList.contains('db-item-delete')) return;
+        switchDB(name);
+      });
+      item.querySelector('.db-item-delete').addEventListener('click', () => deleteDB(name));
+      list.appendChild(item);
+    });
+  }
+
+  function switchDB(name) {
+    currentDB = name;
+    document.getElementById('db-name-input').value = name;
+    renderDBList();
+    renderTable();
+    updateJSONPreview();
+  }
+
+  function deleteDB(name) {
+    if (!confirm(`Удалить коллекцию "${name}"?`)) return;
+    delete databases[name];
+    saveDBs();
+    if (currentDB === name) {
+      currentDB = Object.keys(databases)[0] || null;
+      if (currentDB) document.getElementById('db-name-input').value = currentDB;
+    }
+    renderDBList();
+    renderTable();
+    updateJSONPreview();
+  }
+
+  document.getElementById('add-db-btn').addEventListener('click', () => {
+    const name = prompt('Имя новой коллекции:');
+    if (!name || !name.trim()) return;
+    const key = name.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    if (databases[key]) { alert('Коллекция уже существует!'); return; }
+    databases[key] = { columns: ['id'], data: [{ id: 1 }] };
+    saveDBs();
+    switchDB(key);
+  });
+
+  document.getElementById('db-name-input').addEventListener('change', (e) => {
+    const newName = e.target.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    if (!newName || newName === currentDB) return;
+    if (databases[newName]) { alert('Коллекция уже существует!'); return; }
+    databases[newName] = databases[currentDB];
+    delete databases[currentDB];
+    saveDBs();
+    currentDB = newName;
+    renderDBList();
+  });
+
+  // Table Rendering
+  function renderTable() {
+    const db = getCurrentDB();
+    const table = document.getElementById('data-table');
+    const tbody = document.getElementById('table-body');
+    const thead = document.getElementById('table-head');
+    const empty = document.getElementById('empty-state');
+    const addBtn = document.getElementById('add-row-btn');
+    const info = document.getElementById('table-info');
+
+    if (!db) {
+      table.style.display = 'none';
+      empty.style.display = 'flex';
+      addBtn.style.display = 'none';
+      info.textContent = '0 строк · 0 колонок';
+      return;
+    }
+
+    empty.style.display = 'none';
+    table.style.display = 'table';
+    addBtn.style.display = 'block';
+
+    info.textContent = `${db.data.length} строк · ${db.columns.length} колонок`;
+
+    // Header
+    thead.innerHTML = '';
+    const tr = document.createElement('tr');
+    const thNum = document.createElement('th');
+    thNum.textContent = '#';
+    thNum.style.width = '40px';
+    thNum.style.textAlign = 'center';
+    tr.appendChild(thNum);
+
+    db.columns.forEach(col => {
+      const th = document.createElement('th');
+      th.innerHTML = `
+        <div class="th-content">
+          <span>${col}</span>
+          <div class="th-actions">
+            <button class="th-action-btn th-rename" data-col="${col}" title="Переименовать">✎</button>
+            <button class="th-action-btn th-delete" data-col="${col}" title="Удалить колонку">×</button>
+          </div>
+        </div>
+      `;
+      tr.appendChild(th);
+    });
+
+    const thActions = document.createElement('th');
+    thActions.style.width = '60px';
+    thActions.textContent = '';
+    tr.appendChild(thActions);
+
+    thead.appendChild(tr);
+
+    // Body
+    tbody.innerHTML = '';
+    db.data.forEach((row, idx) => {
+      const tr = document.createElement('tr');
+
+      // Row number
+      const tdNum = document.createElement('td');
+      tdNum.textContent = idx + 1;
+      tdNum.style.textAlign = 'center';
+      tdNum.style.color = 'var(--text-light)';
+      tdNum.style.fontFamily = "'IBM Plex Mono', monospace";
+      tdNum.style.fontSize = '12px';
+      tr.appendChild(tdNum);
+
+      db.columns.forEach(col => {
+        const td = document.createElement('td');
+        const val = row[col];
+        const type = getType(val);
+        const display = getDisplayValue(val);
+
+        td.innerHTML = `
+          <div class="cell-value" data-row="${idx}" data-col="${col}" title="Кликните для редактирования">
+            <span class="type-badge ${type}">${type}</span>
+            <span style="margin-left:8px;">${escapeHtml(display)}</span>
+          </div>
+        `;
+
+        td.querySelector('.cell-value').addEventListener('click', function() {
+          startEdit(this, idx, col, val);
+        });
+
+        tr.appendChild(td);
+      });
+
+      // Row actions
+      const tdActions = document.createElement('td');
+      tdActions.innerHTML = `
+        <div class="row-actions">
+          <button class="row-btn duplicate" data-idx="${idx}" title="Дублировать">⧉</button>
+          <button class="row-btn delete" data-idx="${idx}" title="Удалить">🗑</button>
+        </div>
+      `;
+      tdActions.querySelector('.duplicate').addEventListener('click', () => duplicateRow(idx));
+      tdActions.querySelector('.delete').addEventListener('click', () => deleteRow(idx));
+      tr.appendChild(tdActions);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function getType(val) {
+    if (val === null || val === undefined) return 'null';
+    if (Array.isArray(val)) return 'array';
+    if (typeof val === 'object') return 'object';
+    return typeof val;
+  }
+
+  function getDisplayValue(val) {
+    if (val === null || val === undefined) return 'null';
+    if (Array.isArray(val)) return `[${val.length}]`;
+    if (typeof val === 'object') return JSON.stringify(val);
+    return String(val);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function startEdit(el, rowIdx, col, val) {
+    if (el.querySelector('.cell-edit-input')) return;
+
+    const span = el.querySelector('span:last-child');
+    const currentText = getDisplayValue(val);
+
+    const input = document.createElement('input');
+    input.className = 'cell-edit-input';
+    input.style.cssText = 'width:100%;border:none;background:transparent;color:var(--text);font-family:"IBM Plex Mono",monospace;font-size:13px;outline:none;';
+    input.value = typeof val === 'object' ? JSON.stringify(val) : String(val ?? '');
+
+    span.textContent = '';
+    span.appendChild(input);
+    input.focus();
+    input.select();
+
+    const save = () => {
+      const db = getCurrentDB();
+      if (!db) return;
+      let newVal = input.value;
+
+      // Try to parse as JSON
+      try {
+        if (newVal === 'null') newVal = null;
+        else if (newVal === 'true') newVal = true;
+        else if (newVal === 'false') newVal = false;
+        else if (!isNaN(newVal) && newVal !== '') newVal = Number(newVal);
+        else if (newVal.startsWith('[') || newVal.startsWith('{')) newVal = JSON.parse(newVal);
+      } catch (e) {
+        // Keep as string
+      }
+
+      db.data[rowIdx][col] = newVal;
+      saveDBs();
+      renderTable();
+      updateJSONPreview();
+    };
+
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { input.blur(); }
+      if (e.key === 'Escape') { renderTable(); }
+    });
+  }
+
+  // Add Row
+  document.getElementById('btn-add-row').addEventListener('click', addRow);
+  document.getElementById('add-row-btn').addEventListener('click', addRow);
+
+  function addRow() {
+    const db = getCurrentDB();
+    if (!db) return;
+    const newRow = {};
+    db.columns.forEach(col => { newRow[col] = null; });
+    // Auto-increment id if exists
+    if (db.columns.includes('id')) {
+      const maxId = db.data.reduce((max, r) => Math.max(max, typeof r.id === 'number' ? r.id : 0), 0);
+      newRow.id = maxId + 1;
+    }
+    db.data.push(newRow);
+    saveDBs();
+    renderTable();
+    renderDBList();
+    updateJSONPreview();
+  }
+
+  function duplicateRow(idx) {
+    const db = getCurrentDB();
+    if (!db) return;
+    const newRow = JSON.parse(JSON.stringify(db.data[idx]));
+    if (newRow.id) newRow.id = db.data.reduce((max, r) => Math.max(max, typeof r.id === 'number' ? r.id : 0), 0) + 1;
+    db.data.splice(idx + 1, 0, newRow);
+    saveDBs();
+    renderTable();
+    renderDBList();
+    updateJSONPreview();
+  }
+
+  function deleteRow(idx) {
+    const db = getCurrentDB();
+    if (!db) return;
+    db.data.splice(idx, 1);
+    saveDBs();
+    renderTable();
+    renderDBList();
+    updateJSONPreview();
+  }
+
+  document.getElementById('btn-clear-all').addEventListener('click', () => {
+    const db = getCurrentDB();
+    if (!db) return;
+    if (!confirm('Очистить все данные в коллекции?')) return;
+    db.data = [];
+    saveDBs();
+    renderTable();
+    renderDBList();
+    updateJSONPreview();
+  });
+
+  // Add Column
+  document.getElementById('btn-add-column').addEventListener('click', () => {
+    showModal('Добавить колонку', (name, type) => {
+      const db = getCurrentDB();
+      if (!db) return;
+      if (db.columns.includes(name)) { alert('Колонка уже существует!'); return; }
+      db.columns.push(name);
+      db.data.forEach(row => { row[name] = type === 'number' ? 0 : type === 'boolean' ? false : null; });
+      saveDBs();
+      renderTable();
+      updateJSONPreview();
+    });
+  });
+
+  // Rename/Delete Column (delegated)
+  document.getElementById('table-head').addEventListener('click', (e) => {
+    const renameBtn = e.target.closest('.th-rename');
+    const deleteBtn = e.target.closest('.th-delete');
+
+    if (renameBtn) {
+      const col = renameBtn.dataset.col;
+      const newName = prompt(`Переименовать "${col}" в:`, col);
+      if (!newName || newName === col) return;
+      const db = getCurrentDB();
+      if (db.columns.includes(newName)) { alert('Колонка уже существует!'); return; }
+      const idx = db.columns.indexOf(col);
+      db.columns[idx] = newName;
+      db.data.forEach(row => {
+        row[newName] = row[col];
+        delete row[col];
+      });
+      saveDBs();
+      renderTable();
+      updateJSONPreview();
+    }
+
+    if (deleteBtn) {
+      const col = deleteBtn.dataset.col;
+      if (!confirm(`Удалить колонку "${col}"?`)) return;
+      const db = getCurrentDB();
+      db.columns = db.columns.filter(c => c !== col);
+      db.data.forEach(row => delete row[col]);
+      saveDBs();
+      renderTable();
+      updateJSONPreview();
+    }
+  });
+
+  // Modal
+  function showModal(title, callback) {
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-field-name').value = '';
+    document.getElementById('modal-field-type').value = 'string';
+    overlay.classList.add('visible');
+
+    const confirmBtn = document.getElementById('modal-confirm');
+    const cancelBtn = document.getElementById('modal-cancel');
+
+    const handler = () => {
+      const name = document.getElementById('modal-field-name').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const type = document.getElementById('modal-field-type').value;
+      if (!name) return;
+      callback(name, type);
+      overlay.classList.remove('visible');
+      confirmBtn.removeEventListener('click', handler);
+      cancelBtn.removeEventListener('click', cancelHandler);
+    };
+
+    const cancelHandler = () => {
+      overlay.classList.remove('visible');
+      confirmBtn.removeEventListener('click', handler);
+      cancelBtn.removeEventListener('click', cancelHandler);
+    };
+
+    confirmBtn.addEventListener('click', handler);
+    cancelBtn.addEventListener('click', cancelHandler);
+  }
+
+  // JSON Preview
+  document.getElementById('btn-toggle-json').addEventListener('click', () => {
+    showJSON = !showJSON;
+    document.getElementById('json-preview').classList.toggle('visible', showJSON);
+  });
+
+  function updateJSONPreview() {
+    const db = getCurrentDB();
+    if (!db || !showJSON) return;
+    const preview = document.getElementById('json-preview');
+    preview.textContent = JSON.stringify(db.data, null, 2);
+  }
+
+  // Export
+  document.getElementById('btn-export').addEventListener('click', () => {
+    const db = getCurrentDB();
+    if (!db) return;
+    const json = JSON.stringify(db.data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentDB || 'data'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // Import
+  document.getElementById('btn-import').addEventListener('click', () => {
+    document.getElementById('file-input').click();
+  });
+
+  document.getElementById('file-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data)) { alert('JSON должен быть массивом объектов!'); return; }
+
+        const name = file.name.replace('.json', '').toLowerCase().replace(/[^a-z0-9_]/g, '_');
+
+        // Extract columns
+        const columns = new Set();
+        data.forEach(obj => {
+          if (typeof obj === 'object' && obj !== null) {
+            Object.keys(obj).forEach(k => columns.add(k));
+          }
+        });
+
+        databases[name] = {
+          columns: Array.from(columns),
+          data: data
+        };
+        saveDBs();
+        switchDB(name);
+      } catch (err) {
+        alert('Ошибка парсинга JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'n') {
+      e.preventDefault();
+      document.getElementById('btn-add-row').click();
+    }
+  });
+
+  // Init
+  renderDBList();
+  renderTable();
+})();
+</script>
+</body>
+</html>
+

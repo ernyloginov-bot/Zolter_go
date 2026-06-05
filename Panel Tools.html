@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter Все инструменты</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<style>
+:root{--bg:#FAF7F4;--text:#2C2825;--text-sec:#6B6560;--text-light:#9B9490;--accent:#B8A088;--accent-dark:#8C7560;--border:#E8E0D8;--dot:#D4C9BE;--shadow:rgba(0,0,0,.06)}
+[data-theme="dark"]{--bg:#1A1816;--text:#D4C9BE;--text-sec:#9B9490;--text-light:#6B6560;--accent:#B8A088;--accent-dark:#D4C9BE;--border:#3A3530;--dot:#4A433D;--shadow:rgba(0,0,0,.4)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;transition:background .5s,color .5s}
+
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px}
+.logo{font-size:16px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--text);text-decoration:none}
+.logo span{color:var(--accent)}
+.theme-toggle{width:32px;height:32px;background:none;border:1px solid var(--border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--text-sec)}
+.theme-toggle:hover{background:rgba(184,160,136,.15)}
+
+/* Layout selector */
+.layout-selector{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:4px;padding:4px;background:var(--bg);border:1px solid var(--border);border-radius:40px}
+.layout-btn{padding:8px 16px;background:none;border:none;border-radius:36px;cursor:pointer;font-family:inherit;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-light);transition:all .3s;white-space:nowrap}
+.layout-btn:hover{color:var(--text)}
+.layout-btn.active{background:var(--text);color:var(--bg)}
+
+/* SVG connections */
+#connections{position:fixed;inset:0;z-index:1;pointer-events:none}
+#connections line{stroke:var(--dot);stroke-width:1;opacity:.25;stroke-dasharray:6 3}
+
+/* Nodes container */
+#nodes-container{position:fixed;inset:0;z-index:10;pointer-events:none}
+
+/* Each node */
+.node{position:absolute;pointer-events:auto;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform .1s ease-out;z-index:10}
+.node:hover{z-index:20}
+
+.node-dot{width:8px;height:8px;border-radius:50%;background:var(--dot);transition:all .3s;flex-shrink:0}
+.node:hover .node-dot{background:var(--accent);transform:scale(2);box-shadow:0 0 12px var(--accent)}
+
+.node.size-lg .node-dot{width:14px;height:14px}
+.node.size-lg:hover .node-dot{box-shadow:0 0 20px var(--accent)}
+
+.node.size-md .node-dot{width:10px;height:10px}
+.node.size-md:hover .node-dot{box-shadow:0 0 16px var(--accent)}
+
+.node-label{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text);text-align:center;white-space:nowrap;transition:all .3s;opacity:.75}
+.node:hover .node-label{color:var(--accent-dark);opacity:1;letter-spacing:2px}
+.node.size-lg .node-label{font-size:14px;font-weight:700;letter-spacing:2px}
+.node.size-md .node-label{font-size:12px;font-weight:600}
+
+.node-desc{font-size:9px;letter-spacing:1px;color:var(--text-light);text-align:center;opacity:0;max-width:140px;transition:all .3s;margin-top:-2px;pointer-events:none}
+.node:hover .node-desc{opacity:.6;margin-top:0}
+
+/* Decorative elements per layout */
+.orbit-ring{position:fixed;border:1px dashed var(--border);border-radius:50%;opacity:.12;pointer-events:none;z-index:2;transition:all .6s}
+.scatter-deco{position:fixed;border-radius:50%;opacity:.08;pointer-events:none;z-index:2}
+.gravity-pulse{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;border-radius:50%;pointer-events:none;z-index:2;animation:gpulse 4s ease-in-out infinite}
+@keyframes gpulse{0%,100%{opacity:.03;transform:translate(-50%,-50%) scale(1)}50%{opacity:.08;transform:translate(-50%,-50%) scale(1.2)}}
+
+.hint{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:50;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-light);opacity:.3;pointer-events:none}
+
+@media(max-width:768px){.layout-selector{flex-wrap:wrap;max-width:90vw;gap:2px;padding:3px}.layout-btn{padding:6px 10px;font-size:9px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+  <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>
+</div>
+
+<div class="layout-selector">
+  <button class="layout-btn active" data-layout="constellation">Созвездие</button>
+  <button class="layout-btn" data-layout="wheel">Барабан</button>
+  <button class="layout-btn" data-layout="scatter">Разброс</button>
+  <button class="layout-btn" data-layout="spiral">Спираль</button>
+  <button class="layout-btn" data-layout="gravity">Гравитация</button>
+</div>
+
+<svg id="connections"></svg>
+<div id="nodes-container"></div>
+
+<div class="hint">наведите · кликните чтобы открыть</div>
+
+<script>
+(function(){
+  const savedTheme=localStorage.getItem('zolter-hub-theme')||'light';
+  document.documentElement.setAttribute('data-theme',savedTheme);
+  document.getElementById('theme-toggle').addEventListener('click',()=>{
+    const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+    const n=isDark?'light':'dark';
+    document.documentElement.setAttribute('data-theme',n);
+    localStorage.setItem('zolter-hub-theme',n);
+    switchLayout(currentLayout);
+  });
+
+  const tools=[
+    {id:'start',name:'Главная',desc:'Стартовая страница',url:'index.html',size:'lg'},
+    {id:'about',name:'Узнать больше',desc:'О компании',url:'Additionally.html',size:'sm'},
+    {id:'editor',name:'Редактор кода',desc:'Пишите и редактируйте код',url:'Code editor.html',size:'md'},
+    {id:'fonts',name:'Пипетка',desc:'Вытащите цвет из изображения',url:'Pipette.html',size:'sm'},
+    {id:'pixel',name:'Пиксельная рисовалка',desc:'Рисование пикселями',url:'pixel.html',size:'md'},
+    {id:'calc',name:'Калькулятор',desc:'Математика',url:'Calculator.html',size:'sm'},
+    {id:'summarize',name:'Суммаризатор',desc:'Сжатие и сокращение текста',url:'Adder.html',size:'md'},
+    {id:'color',name:'Рисовалка css',desc:'рисование css',url:'CSS drawing tool.html',size:'sm'},
+    {id:'tests',name:'Таблицы json',desc:'json',url:'json tables.html',size:'md'},
+	{id:'2',name:'2 страница...',desc:'переход на 2 страницу с инструментами',url:'Panel Tools2.html',size:'sm'},
+  ];
+
+  const connections=[
+    ['start','about'],['start','editor'],['start','builder'],['start','pixel'],
+    ['editor','fonts'],['editor','summarize'],['editor','builder'],
+    ['fonts','color'],['fonts','summarize'],['pixel','builder'],['pixel','color'],
+    ['calc','summarize'],['calc','tests'],['tests','summarize'],['tests','builder'],
+    ['color','pixel'],['color','fonts'],['about','summarize'],
+  ];
+
+  let currentLayout='constellation';
+  let positions={};
+  let nodeElements=[];
+  let animId;
+
+  const svg=document.getElementById('connections');
+  const container=document.getElementById('nodes-container');
+
+  function getPositions(layout){
+    const W=window.innerWidth, H=window.innerHeight;
+    const cx=W/2, cy=H/2;
+    const pos={};
+    const n=tools.length;
+
+    if(layout==='constellation'){
+      const cPos=[
+        {x:.50,y:.50},{x:.28,y:.30},{x:.72,y:.22},{x:.80,y:.52},
+        {x:.66,y:.76},{x:.44,y:.70},{x:.24,y:.58},{x:.16,y:.40},
+        {x:.30,y:.80},{x:.86,y:.34}
+      ];
+      tools.forEach((t,i)=>{pos[t.id]={x:cPos[i].x*W,y:cPos[i].y*H}});
+    }
+    else if(layout==='wheel'){
+      pos['start']={x:cx,y:cy};
+      const r=Math.min(W,H)*.30;
+      tools.filter(t=>t.id!=='start').forEach((t,i)=>{
+        const a=(i/9)*Math.PI*2-Math.PI/2;
+        pos[t.id]={x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r};
+      });
+    }
+    else if(layout==='scatter'){
+      const m=80;
+      const used=[];
+      tools.forEach(t=>{
+        let x,y,att=0;
+        do{
+          x=m+Math.random()*(W-m*2);
+          y=m+Math.random()*(H-m*2);
+          att++;
+        }while(att<60&&used.some(u=>Math.hypot(u.x-x,u.y-y)<70));
+        used.push({x,y});
+        pos[t.id]={x,y};
+      });
+    }
+    else if(layout==='spiral'){
+      const maxR=Math.min(W,H)*.35;
+      tools.forEach((t,i)=>{
+        const a=i*1.05;
+        const r=(i+1)*(maxR/n);
+        pos[t.id]={x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r};
+      });
+    }
+    else if(layout==='gravity'){
+      pos['start']={x:cx,y:cy};
+      const gr=Math.min(W,H)*.28;
+      tools.filter(t=>t.id!=='start').forEach((t,i)=>{
+        const a=(i/9)*Math.PI*2;
+        const r=gr*(.4+Math.random()*.6);
+        pos[t.id]={x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r};
+      });
+    }
+    return pos;
+  }
+
+  function createNodeElements(){
+    container.innerHTML='';
+    nodeElements=[];
+    tools.forEach((t,i)=>{
+      const a=document.createElement('a');
+      a.className=`node size-${t.size}`;
+      a.href=t.url;
+      a.innerHTML=`
+        <div class="node-dot"></div>
+        <div class="node-label">${t.name}</div>
+        <div class="node-desc">${t.desc}</div>
+      `;
+      container.appendChild(a);
+      nodeElements.push(a);
+    });
+  }
+
+  function drawConnections(){
+    svg.innerHTML='';
+    connections.forEach(([fromId,toId])=>{
+      const f=positions[fromId], t=positions[toId];
+      if(!f||!t)return;
+      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',f.x);line.setAttribute('y1',f.y);
+      line.setAttribute('x2',t.x);line.setAttribute('y2',t.y);
+      svg.appendChild(line);
+    });
+  }
+
+  function clearDecorations(){
+    document.querySelectorAll('.orbit-ring,.scatter-deco,.gravity-pulse').forEach(e=>e.remove());
+  }
+
+  function addDecorations(layout){
+    clearDecorations();
+    const W=window.innerWidth, H=window.innerHeight;
+    const cx=W/2, cy=H/2;
+
+    if(layout==='wheel'){
+      const r=Math.min(W,H)*.30;
+      const ring=document.createElement('div');
+      ring.className='orbit-ring';
+      ring.style.cssText=`width:${r*2}px;height:${r*2}px;left:${cx-r}px;top:${cy-r}px`;
+      document.body.appendChild(ring);
+      // inner ring
+      const ring2=document.createElement('div');
+      ring2.className='orbit-ring';
+      ring2.style.cssText=`width:${r*.5}px;height:${r*.5}px;left:${cx-r*.5}px;top:${cy-r*.5}px`;
+      document.body.appendChild(ring2);
+    }
+    else if(layout==='scatter'){
+      for(let i=0;i<25;i++){
+        const d=document.createElement('div');
+        d.className='scatter-deco';
+        const sz=2+Math.random()*6;
+        d.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*W}px;top:${Math.random()*H}px;background:var(--dot)`;
+        document.body.appendChild(d);
+      }
+    }
+    else if(layout==='gravity'){
+      const gp=document.createElement('div');
+      gp.className='gravity-pulse';
+      gp.style.background=`radial-gradient(circle,var(--accent) 0%,transparent 70%)`;
+      document.body.appendChild(gp);
+    }
+    else if(layout==='spiral'){
+      for(let i=0;i<12;i++){
+        const d=document.createElement('div');
+        d.className='scatter-deco';
+        const sz=1+Math.random()*2;
+        d.style.cssText=`width:${sz}px;height:${sz}px;left:${cx+Math.cos(i*.8)*Math.min(W,H)*.35}px;top:${cy+Math.sin(i*.8)*Math.min(W,H)*.35}px;background:var(--dot);opacity:.15`;
+        document.body.appendChild(d);
+      }
+    }
+  }
+
+  function switchLayout(layout){
+    currentLayout=layout;
+    positions=getPositions(layout);
+
+    nodeElements.forEach((el,i)=>{
+      const t=tools[i];
+      const p=positions[t.id];
+      if(!p)return;
+      el.style.left=p.x+'px';
+      el.style.top=p.y+'px';
+      el.style.transform='translate(-50%,-50%)';
+    });
+
+    drawConnections();
+    addDecorations(layout);
+  }
+
+  function animate(){
+    const time=Date.now()/1000;
+    const W=window.innerWidth, H=window.innerHeight;
+    const cx=W/2, cy=H/2;
+
+    nodeElements.forEach((el,i)=>{
+      const t=tools[i];
+      if(!positions[t.id])return;
+      let bx=positions[t.id].x, by=positions[t.id].y;
+
+      if(currentLayout==='wheel'&&t.id!=='start'){
+        const others=tools.filter(x=>x.id!=='start');
+        const idx=others.indexOf(t);
+        if(idx>=0){
+          const r=Math.min(W,H)*.30;
+          const a=(idx/9)*Math.PI*2-Math.PI/2+time*.12;
+          bx=cx+Math.cos(a)*r;
+          by=cy+Math.sin(a)*r;
+          positions[t.id]={x:bx,y:by};
+        }
+      }
+      else if(currentLayout==='scatter'){
+        bx+=Math.sin(time*.4+i*1.1)*6;
+        by+=Math.cos(time*.35+i*.8)*5;
+      }
+      else if(currentLayout==='gravity'&&t.id!=='start'){
+        bx+=Math.sin(time*.7+i*.9)*8;
+        by+=Math.cos(time*.55+i*1.2)*6;
+      }
+      else if(currentLayout==='constellation'){
+        bx+=Math.sin(time*.25+i*1.5)*3;
+        by+=Math.cos(time*.2+i*1.1)*3;
+      }
+      else if(currentLayout==='spiral'){
+        bx+=Math.sin(time*.3+i*.6)*4;
+        by+=Math.cos(time*.25+i*.7)*3;
+      }
+
+      el.style.left=bx+'px';
+      el.style.top=by+'px';
+    });
+
+    if(currentLayout==='wheel'){
+      drawConnections();
+    }
+
+    animId=requestAnimationFrame(animate);
+  }
+
+  // Layout buttons
+  document.querySelectorAll('.layout-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.layout-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      cancelAnimationFrame(animId);
+      switchLayout(btn.dataset.layout);
+      animate();
+    });
+  });
+
+  // Handle resize
+  window.addEventListener('resize',()=>{switchLayout(currentLayout)});
+
+  // Init
+  createNodeElements();
+  switchLayout('constellation');
+  animate();
+})();
+</script>
+</body>
+</html>
+

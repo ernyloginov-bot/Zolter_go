@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter — Пипетка цвета</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-mono@5.0.8/index.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAF7F4;
+  --surface: #FFFFFF;
+  --surface-alt: #F2EDE7;
+  --surface-alt2: #E8E0D8;
+  --border: #D4C9BE;
+  --text: #2C2825;
+  --text-sec: #6B6560;
+  --text-light: #9B9490;
+  --accent: #B8A088;
+  --accent-dark: #8C7560;
+  --shadow: rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] {
+  --bg: #1A1816;
+  --surface: #24201C;
+  --surface-alt: #2A2622;
+  --surface-alt2: #3A3530;
+  --border: #4A433D;
+  --text: #D4C9BE;
+  --text-sec: #9B9490;
+  --text-light: #6B6560;
+  --accent: #B8A088;
+  --accent-dark: #D4C9BE;
+  --shadow: rgba(0,0,0,0.3);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+
+.topbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.logo { font-size: 16px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--text); text-decoration: none; }
+.logo span { color: var(--accent); }
+.page-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); padding: 0 16px; border-left: 1px solid var(--border); margin-left: 8px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.btn { padding: 8px 16px; background: none; border: 1px solid var(--border); color: var(--text-sec); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-family: inherit; display: flex; align-items: center; gap: 6px; border-radius: 4px; white-space: nowrap; }
+.btn:hover { background: var(--surface-alt); color: var(--text); border-color: var(--border); }
+.btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn.primary:hover { opacity: 0.85; }
+
+.theme-toggle { width: 32px; height: 32px; background: none; border: 1px solid var(--border); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: var(--text-sec); flex-shrink: 0; }
+.theme-toggle:hover { background: var(--surface-alt); }
+
+/* Workspace */
+.workspace { flex: 1; display: flex; overflow: hidden; }
+
+.canvas-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+}
+
+#main-canvas {
+  cursor: none;
+  image-rendering: auto;
+}
+
+/* Drop zone */
+.drop-zone {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  background: var(--bg);
+}
+
+.drop-zone.hidden { display: none; }
+
+.drop-box {
+  width: 300px;
+  height: 200px;
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.drop-box:hover, .drop-box.dragover { border-color: var(--accent); background: var(--surface-alt); }
+.drop-box svg { width: 48px; height: 48px; opacity: 0.3; }
+.drop-box p { font-size: 14px; color: var(--text-light); }
+.drop-box .hint { font-size: 12px; color: var(--text-light); opacity: 0.6; }
+
+#file-input { display: none; }
+
+/* Color Info Panel */
+.color-panel {
+  width: 300px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.color-preview-section {
+  padding: 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.color-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  border: 3px solid var(--border);
+  transition: background-color 0.1s;
+  background: #000;
+}
+
+.color-hex {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 28px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.color-hex:hover { background: var(--surface-alt); }
+
+.color-hex.copied { background: rgba(39,174,96,0.15); color: #27AE60; }
+
+.color-rgb {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  color: var(--text-sec);
+  margin-top: 4px;
+}
+
+.color-hsl {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+/* Magnifier */
+.magnifier-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.magnifier-section h4 {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+
+#magnifier-canvas {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  image-rendering: pixelated;
+}
+
+/* Zoom Control */
+.zoom-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.zoom-section h4 {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+
+.zoom-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.zoom-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text-sec);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 16px;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.zoom-btn:hover { background: var(--surface-alt2); color: var(--text); }
+
+.zoom-value {
+  flex: 1;
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  color: var(--text-sec);
+}
+
+/* History */
+.history-section {
+  padding: 16px;
+  flex: 1;
+}
+
+.history-section h4 {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.history-clear {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: inherit;
+}
+.history-clear:hover { color: #C0392B; }
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.history-swatch {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+}
+.history-swatch:hover { transform: scale(1.1); border-color: var(--text); }
+
+.history-swatch .swatch-hex {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  font-family: 'IBM Plex Mono', monospace;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 1px 3px;
+  border-radius: 2px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.history-swatch:hover .swatch-hex { opacity: 1; }
+
+/* Format Selector */
+.format-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.format-section h4 {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+
+.format-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.format-btn {
+  flex: 1;
+  padding: 6px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text-sec);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.format-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Copy all button */
+.copy-all-btn {
+  margin: 8px 16px 16px;
+  padding: 10px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text-sec);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: 4px;
+  transition: all 0.2s;
+  width: calc(100% - 32px);
+}
+.copy-all-btn:hover { background: var(--surface-alt2); color: var(--text); }
+
+/* Crosshair tooltip */
+.crosshair-info {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px var(--shadow);
+  display: none;
+}
+
+.crosshair-info.visible { display: block; }
+
+.crosshair-color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+  border: 1px solid var(--border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .color-panel { width: 240px; }
+  .page-title { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+    <span class="page-title">Пипетка цвета</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn" id="btn-new-image">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" width="14" height="14"><path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Новое фото
+    </button>
+    <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="workspace">
+  <div class="canvas-area" id="canvas-area">
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-box" id="drop-box">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor"><rect x="6" y="6" width="36" height="36" rx="4" stroke-width="2"/><circle cx="17" cy="17" r="3" stroke-width="2"/><path d="M6 34l10-10 8 8 6-6 12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <p>Перетащите фото сюда</p>
+        <span class="hint">или нажмите для выбора файла</span>
+      </div>
+    </div>
+
+    <canvas id="main-canvas" style="display:none;"></canvas>
+
+    <div class="crosshair-info" id="crosshair-info">
+      <span class="crosshair-color-dot" id="crosshair-dot"></span>
+      <span id="crosshair-hex">#000000</span>
+    </div>
+  </div>
+
+  <div class="color-panel">
+    <div class="color-preview-section">
+      <div class="color-circle" id="color-circle"></div>
+      <div class="color-hex" id="color-hex" title="Нажмите чтобы скопировать">#000000</div>
+      <div class="color-rgb" id="color-rgb">rgb(0, 0, 0)</div>
+      <div class="color-hsl" id="color-hsl">hsl(0, 0%, 0%)</div>
+    </div>
+
+    <div class="format-section">
+      <h4>Формат</h4>
+      <div class="format-btns">
+        <button class="format-btn active" data-format="hex">HEX</button>
+        <button class="format-btn" data-format="rgb">RGB</button>
+        <button class="format-btn" data-format="hsl">HSL</button>
+      </div>
+    </div>
+
+    <div class="magnifier-section">
+      <h4>Лупа (15×15)</h4>
+      <canvas id="magnifier-canvas" width="150" height="150"></canvas>
+    </div>
+
+    <div class="zoom-section">
+      <h4>Масштаб</h4>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoom-out">−</button>
+        <span class="zoom-value" id="zoom-value">1×</span>
+        <button class="zoom-btn" id="zoom-in">+</button>
+        <button class="zoom-btn" id="zoom-reset" title="Сбросить">⟲</button>
+      </div>
+    </div>
+
+    <div class="history-section">
+      <h4>
+        История
+        <button class="history-clear" id="history-clear">Очистить</button>
+      </h4>
+      <div class="history-grid" id="history-grid"></div>
+    </div>
+
+    <button class="copy-all-btn" id="copy-all">Копировать все цвета</button>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept="image/*">
+
+<script>
+(function() {
+  // Theme
+  const savedTheme = localStorage.getItem('zolter-eyepicker-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('zolter-eyepicker-theme', newTheme);
+  });
+
+  // State
+  const mainCanvas = document.getElementById('main-canvas');
+  const mainCtx = mainCanvas.getContext('2d', { willReadFrequently: true });
+  const magCanvas = document.getElementById('magnifier-canvas');
+  const magCtx = magCanvas.getContext('2d');
+
+  let currentImage = null;
+  let zoom = 1;
+  let imageScale = 1; // how much image is scaled to fit canvas
+  let format = 'hex'; // hex, rgb, hsl
+  let colorHistory = JSON.parse(localStorage.getItem('zolter-color-history') || '[]');
+  let lastColor = '#000000';
+  let canvasOffsetX = 0;
+  let canvasOffsetY = 0;
+  let currentWidth = 0;
+  let currentHeight = 0;
+
+  // Format buttons
+  document.querySelectorAll('.format-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      format = btn.dataset.format;
+      updateColorDisplay(lastColor);
+    });
+  });
+
+  // Zoom
+  function setZoom(newZoom) {
+    zoom = Math.max(0.1, Math.min(5, newZoom));
+    document.getElementById('zoom-value').textContent = Math.round(zoom * 100) + '%';
+    resizeCanvas();
+  }
+
+  document.getElementById('zoom-in').addEventListener('click', () => setZoom(zoom + 0.25));
+  document.getElementById('zoom-out').addEventListener('click', () => setZoom(zoom - 0.25));
+  document.getElementById('zoom-reset').addEventListener('click', () => { zoom = 1; setZoom(1); });
+
+  // File handling
+  const dropZone = document.getElementById('drop-zone');
+  const dropBox = document.getElementById('drop-box');
+  const fileInput = document.getElementById('file-input');
+
+  dropBox.addEventListener('click', () => fileInput.click());
+  document.getElementById('btn-new-image').addEventListener('click', () => fileInput.click());
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropBox.classList.add('dragover');
+  });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropBox.classList.remove('dragover');
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropBox.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) loadImage(file);
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) loadImage(file);
+    fileInput.value = '';
+  });
+
+  function loadImage(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        currentImage = img;
+        resizeCanvas();
+        dropZone.classList.add('hidden');
+        mainCanvas.style.display = 'block';
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function resizeCanvas() {
+    if (!currentImage) return;
+
+    const area = document.getElementById('canvas-area');
+    const areaW = area.clientWidth;
+    const areaH = area.clientHeight;
+
+    const imgW = currentImage.naturalWidth;
+    const imgH = currentImage.naturalHeight;
+
+    // Fit image to area with padding
+    const padding = 40;
+    const maxW = areaW - padding;
+    const maxH = areaH - padding;
+
+    const fitRatio = Math.min(maxW / imgW, maxH / imgH);
+    imageScale = fitRatio * zoom;
+
+    currentWidth = Math.round(imgW * imageScale);
+    currentHeight = Math.round(imgH * imageScale);
+
+    canvasOffsetX = Math.round((areaW - currentWidth) / 2);
+    canvasOffsetY = Math.round((areaH - currentHeight) / 2);
+
+    mainCanvas.width = currentWidth;
+    mainCanvas.height = currentHeight;
+    mainCanvas.style.width = currentWidth + 'px';
+    mainCanvas.style.height = currentHeight + 'px';
+
+    mainCtx.imageSmoothingEnabled = false;
+    mainCtx.drawImage(currentImage, 0, 0, currentWidth, currentHeight);
+  }
+
+  // Canvas interaction
+  mainCanvas.addEventListener('mousemove', (e) => {
+    const rect = mainCanvas.getBoundingClientRect();
+    const x = Math.floor(e.clientX - rect.left);
+    const y = Math.floor(e.clientY - rect.top);
+    
+    if (x < 0 || x >= currentWidth || y < 0 || y >= currentHeight) {
+      document.getElementById('crosshair-info').classList.remove('visible');
+      return;
+    }
+
+    const pixel = mainCtx.getImageData(x, y, 1, 1).data;
+    const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+    
+    lastColor = hex;
+    updateColorDisplay(hex);
+    drawMagnifier(x, y, pixel);
+    drawCrosshair(x, y);
+
+    // Update tooltip
+    const info = document.getElementById('crosshair-info');
+    const dot = document.getElementById('crosshair-dot');
+    const hexSpan = document.getElementById('crosshair-hex');
+    
+    dot.style.backgroundColor = hex;
+    hexSpan.textContent = hex;
+    
+    info.style.left = (x + canvasOffsetX + 20) + 'px';
+    info.style.top = (y + canvasOffsetY - 10) + 'px';
+    info.classList.add('visible');
+  });
+
+  mainCanvas.addEventListener('mouseleave', () => {
+    document.getElementById('crosshair-info').classList.remove('visible');
+  });
+
+  mainCanvas.addEventListener('click', () => {
+    if (lastColor !== '#000000' || colorHistory.length > 0) {
+      addToHistory(lastColor);
+    }
+  });
+
+  function drawMagnifier(x, y, pixel) {
+    const magSize = 15;
+    magCanvas.width = magSize * 10;
+    magCanvas.height = magSize * 10;
+    
+    magCtx.imageSmoothingEnabled = false;
+    magCtx.clearRect(0, 0, magCanvas.width, magCanvas.height);
+    
+    const halfMag = Math.floor(magSize / 2);
+    const sx = Math.max(0, x - halfMag);
+    const sy = Math.max(0, y - halfMag);
+    const sw = Math.min(magSize, currentWidth - sx);
+    const sh = Math.min(magSize, currentHeight - sy);
+    
+    magCtx.drawImage(mainCanvas, sx, sy, sw, sh, 0, 0, sw * 10, sh * 10);
+    
+    // Grid lines
+    magCtx.strokeStyle = 'rgba(128,128,128,0.3)';
+    magCtx.lineWidth = 1;
+    for (let i = 0; i <= sw; i++) {
+      magCtx.beginPath();
+      magCtx.moveTo(i * 10, 0);
+      magCtx.lineTo(i * 10, sh * 10);
+      magCtx.stroke();
+    }
+    for (let i = 0; i <= sh; i++) {
+      magCtx.beginPath();
+      magCtx.moveTo(0, i * 10);
+      magCtx.lineTo(sw * 10, i * 10);
+      magCtx.stroke();
+    }
+    
+    // Center crosshair on magnifier
+    const cx = (x - sx) * 10 + 5;
+    const cy = (y - sy) * 10 + 5;
+    magCtx.strokeStyle = 'rgba(255,0,0,0.8)';
+    magCtx.lineWidth = 1.5;
+    magCtx.beginPath();
+    magCtx.moveTo(cx, cy - 8);
+    magCtx.lineTo(cx, cy + 8);
+    magCtx.moveTo(cx - 8, cy);
+    magCtx.lineTo(cx + 8, cy);
+    magCtx.stroke();
+  }
+
+  function drawCrosshair(x, y) {
+    // We don't redraw the whole canvas, just overlay crosshair
+    // The crosshair is handled via CSS cursor: none and overlay
+  }
+
+  // Color utilities
+  function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
+
+  function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 };
+  }
+
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    
+    return {
+      h: Math.round(h * 360),
+      s: Math.round(s * 100),
+      l: Math.round(l * 100)
+    };
+  }
+
+  function formatColor(hex) {
+    const rgb = hexToRgb(hex);
+    switch (format) {
+      case 'hex': return hex;
+      case 'rgb': return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+      case 'hsl':
+        const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+        return `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+      default: return hex;
+    }
+  }
+
+  function updateColorDisplay(hex) {
+    const rgb = hexToRgb(hex);
+    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    
+    document.getElementById('color-circle').style.backgroundColor = hex;
+    
+    const hexEl = document.getElementById('color-hex');
+    hexEl.textContent = formatColor(hex);
+    hexEl.style.color = hex;
+    
+    document.getElementById('color-rgb').textContent = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+    document.getElementById('color-hsl').textContent = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+  }
+
+  // Copy color
+  document.getElementById('color-hex').addEventListener('click', () => {
+    navigator.clipboard.writeText(formatColor(lastColor)).then(() => {
+      const hexEl = document.getElementById('color-hex');
+      hexEl.classList.add('copied');
+      setTimeout(() => hexEl.classList.remove('copied'), 1000);
+    });
+  });
+
+  // History
+  function addToHistory(hex) {
+    // Don't add duplicates at the top
+    if (colorHistory.length > 0 && colorHistory[0] === hex) return;
+    colorHistory.unshift(hex);
+    if (colorHistory.length > 20) colorHistory.pop();
+    localStorage.setItem('zolter-color-history', JSON.stringify(colorHistory));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const grid = document.getElementById('history-grid');
+    grid.innerHTML = '';
+    colorHistory.forEach(hex => {
+      const swatch = document.createElement('div');
+      swatch.className = 'history-swatch';
+      swatch.style.backgroundColor = hex;
+      swatch.innerHTML = `<span class="swatch-hex">${hex}</span>`;
+      swatch.addEventListener('click', () => {
+        navigator.clipboard.writeText(formatColor(hex));
+        updateColorDisplay(hex);
+      });
+      grid.appendChild(swatch);
+    });
+  }
+
+  document.getElementById('history-clear').addEventListener('click', () => {
+    colorHistory = [];
+    localStorage.setItem('zolter-color-history', JSON.stringify(colorHistory));
+    renderHistory();
+  });
+
+  document.getElementById('copy-all').addEventListener('click', () => {
+    if (colorHistory.length === 0) return;
+    const text = colorHistory.map(h => formatColor(h)).join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-all');
+      btn.textContent = 'Скопировано!';
+      setTimeout(() => { btn.textContent = 'Копировать все цвета'; }, 1500);
+    });
+  });
+
+  // Resize handler
+  window.addEventListener('resize', () => {
+    if (currentImage) resizeCanvas();
+  });
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '+' || e.key === '=') setZoom(zoom + 0.25);
+    if (e.key === '-') setZoom(zoom - 0.25);
+    if (e.key === 'c' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      navigator.clipboard.writeText(formatColor(lastColor));
+    }
+  });
+
+  // Init
+  renderHistory();
+})();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zolter — Конструктор тестов</title>
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-mono@5.0.8/index.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAF7F4; --surface: #FFFFFF; --surface-alt: #F2EDE7; --surface-alt2: #E8E0D8;
+  --border: #D4C9BE; --text: #2C2825; --text-sec: #6B6560; --text-light: #9B9490;
+  --accent: #B8A088; --accent-dark: #8C7560; --green: #27AE60; --red: #C0392B; --blue: #2980B9;
+  --shadow: rgba(0,0,0,0.06);
+}
+[data-theme="dark"] {
+  --bg: #1A1816; --surface: #24201C; --surface-alt: #2A2622; --surface-alt2: #3A3530;
+  --border: #4A433D; --text: #D4C9BE; --text-sec: #9B9490; --text-light: #6B6560;
+  --accent: #B8A088; --accent-dark: #D4C9BE; --shadow: rgba(0,0,0,0.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background .3s,color .3s}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo{font-size:16px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--text);text-decoration:none}
+.logo span{color:var(--accent)}
+.page-title{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text-light);padding:0 16px;border-left:1px solid var(--border);margin-left:8px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.btn{padding:8px 16px;background:none;border:1px solid var(--border);color:var(--text-sec);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:6px;border-radius:4px;white-space:nowrap}
+.btn:hover{background:var(--surface-alt);color:var(--text);border-color:var(--border)}
+.btn.primary{background:var(--text);color:var(--bg);border-color:var(--text)}.btn.primary:hover{opacity:.85}
+.btn.success{border-color:var(--green);color:var(--green)}.btn.success:hover{background:var(--green);color:#fff}
+.btn.danger{border-color:var(--red);color:var(--red)}.btn.danger:hover{background:var(--red);color:#fff}
+.btn svg{width:14px;height:14px}
+.theme-toggle{width:32px;height:32px;background:none;border:1px solid var(--border);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--text-sec);flex-shrink:0}
+.theme-toggle:hover{background:var(--surface-alt)}
+.workspace{flex:1;display:flex;overflow:hidden}
+.sidebar{width:300px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.sidebar-header{padding:16px;border-bottom:1px solid var(--border)}
+.test-name-input{width:100%;height:36px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:0 12px;border-radius:4px;margin-top:8px}
+.test-name-input:focus{outline:none;border-color:var(--accent)}
+.sidebar-header h3{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-light)}
+.tree{flex:1;overflow-y:auto;padding:8px}
+.tree::-webkit-scrollbar{width:4px}.tree::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.tree-item{margin-bottom:2px}
+.tree-tab{padding:10px 12px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;transition:all .2s;min-height:40px}
+.tree-tab:hover{background:var(--surface-alt)}.tree-tab.active{background:var(--surface-alt2);color:var(--accent-dark)}
+.tree-tab-icon{font-size:14px;opacity:.5}
+.tree-tab-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;outline:none;border:none;background:none;color:inherit;font-family:inherit;font-size:inherit;font-weight:inherit}
+.tree-tab-name:focus{background:var(--bg);padding:2px 4px;border-radius:3px}
+.tree-tab-actions{display:flex;gap:2px;opacity:0;transition:opacity .2s}
+.tree-tab:hover .tree-tab-actions{opacity:1}
+.tree-sec{padding:6px 12px 6px 32px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-sec);transition:all .2s;min-height:32px}
+.tree-sec:hover{background:var(--surface-alt);color:var(--text)}.tree-sec.active{background:var(--surface-alt2);color:var(--accent-dark);font-weight:500}
+.tree-sec-icon{font-size:12px;opacity:.5}
+.tree-sec-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;outline:none;border:none;background:none;color:inherit;font-family:inherit;font-size:inherit;font-weight:inherit}
+.tree-sec-name:focus{background:var(--bg);padding:2px 4px;border-radius:3px}
+.tree-sec-actions{display:flex;gap:2px;opacity:0;transition:opacity .2s}
+.tree-sec:hover .tree-sec-actions{opacity:1}
+.tree-q{padding:4px 12px 4px 52px;font-size:11px;color:var(--text-light);cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:space-between;transition:all .2s;min-height:28px}
+.tree-q:hover{background:var(--surface-alt);color:var(--text)}.tree-q.active{color:var(--accent-dark);font-weight:500}
+.tree-q-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;outline:none;border:none;background:none;color:inherit;font-family:inherit;font-size:inherit}
+.tree-q-name:focus{background:var(--bg);padding:1px 4px;border-radius:3px}
+.tree-q-type{font-size:9px;letter-spacing:1px;text-transform:uppercase;background:var(--surface-alt);padding:1px 6px;border-radius:3px;color:var(--text-light);flex-shrink:0}
+.tree-q-delete{opacity:0;background:none;border:none;color:var(--text-light);cursor:pointer;font-size:14px;padding:2px;border-radius:3px;transition:all .2s}
+.tree-q:hover .tree-q-delete{opacity:.7}.tree-q-delete:hover{color:var(--red)!important;opacity:1!important;background:rgba(192,57,43,.1)}
+.tree-action-btn{padding:7px 12px;background:none;border:1px dashed var(--border);border-radius:6px;color:var(--text-light);cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:1px;transition:all .2s;margin:4px 8px;width:calc(100% - 16px)}
+.tree-action-btn:hover{border-color:var(--accent);color:var(--accent-dark)}
+.tree-sec-btn{margin-left:24px}.tree-q-btn{margin-left:44px}
+.sidebar-actions{padding:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.editor{flex:1;overflow-y:auto;padding:24px 32px}
+.editor::-webkit-scrollbar{width:6px}.editor::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.editor-header{margin-bottom:24px}
+.editor-header h2{font-size:24px;font-weight:300;margin-bottom:4px}
+.editor-header h2 strong{font-weight:700;color:var(--accent-dark)}
+.editor-subtitle{font-size:13px;color:var(--text-light)}
+.question-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:16px}
+.question-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.question-type-badge{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;background:var(--surface-alt);padding:4px 12px;border-radius:20px;color:var(--text-sec)}
+.question-card-actions{display:flex;gap:6px;flex-wrap:wrap}
+.question-input{width:100%;min-height:40px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:15px;padding:10px 14px;border-radius:6px;margin-bottom:16px}
+.question-input:focus{outline:none;border-color:var(--accent)}
+.question-textarea{min-height:60px;resize:vertical}
+.answers-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.answer-row{display:flex;align-items:center;gap:8px}
+.answer-radio,.answer-checkbox{accent-color:var(--green);width:18px;height:18px;cursor:pointer;flex-shrink:0}
+.answer-input{flex:1;height:38px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:0 12px;border-radius:4px}
+.answer-input:focus{outline:none;border-color:var(--accent)}.answer-input.correct{border-color:var(--green);background:rgba(39,174,96,.05)}
+.answer-delete{background:none;border:none;color:var(--text-light);cursor:pointer;font-size:16px;padding:4px 6px;border-radius:3px;transition:all .2s;flex-shrink:0}
+.answer-delete:hover{color:var(--red);background:rgba(192,57,43,.1)}
+.correct-answer-row{display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px;background:rgba(39,174,96,.08);border-radius:6px;border:1px solid rgba(39,174,96,.2)}
+.correct-answer-row label{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--green);font-weight:600;white-space:nowrap}
+.correct-answer-row input{flex:1;height:36px;border:1px solid rgba(39,174,96,.3);background:rgba(39,174,96,.05);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:0 12px;border-radius:4px}
+.add-answer-btn{padding:8px 16px;background:none;border:1px dashed var(--border);border-radius:6px;color:var(--text-light);cursor:pointer;font-family:inherit;font-size:12px;transition:all .2s;width:100%}
+.add-answer-btn:hover{border-color:var(--accent);color:var(--accent-dark)}
+.type-selector{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.type-option{padding:8px 16px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;letter-spacing:1px;text-transform:uppercase;transition:all .2s;background:var(--surface);color:var(--text-sec)}
+.type-option:hover{border-color:var(--accent)}.type-option.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.empty-editor{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;color:var(--text-light)}
+.empty-editor svg{width:64px;height:64px;margin-bottom:24px;opacity:.2}
+.empty-editor h3{font-size:20px;font-weight:300;margin-bottom:8px;color:var(--text-sec)}
+.empty-editor p{font-size:13px;line-height:1.6;max-width:360px}
+.preview-panel{width:400px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.preview-header{padding:16px;border-bottom:1px solid var(--border);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-light)}
+.preview-content{flex:1;overflow-y:auto;padding:16px}
+.preview-card{background:var(--surface-alt);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px}
+.preview-card .q-num{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.preview-card .q-text{font-size:14px;font-weight:500;margin-bottom:12px;line-height:1.5}
+.preview-card .q-answers{display:flex;flex-direction:column;gap:4px}
+.preview-card .q-answer{padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;font-size:13px}
+.preview-card .q-answer.is-correct{border-color:var(--green);background:rgba(39,174,96,.08)}
+.preview-card .q-answer::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:8px}
+.preview-card .q-answer.is-correct::before{background:var(--green)}.preview-card .q-answer:not(.is-correct)::before{background:var(--border)}
+.preview-card .q-spell{display:inline-block;padding:8px 16px;background:var(--surface);border:1px solid var(--border);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:16px;color:var(--green);letter-spacing:2px}
+.stats-row{display:flex;gap:12px;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface-alt);flex-shrink:0}
+.stat-item{text-align:center;flex:1}
+.stat-item .stat-val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;color:var(--accent-dark)}
+.stat-item .stat-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)}
+@media(max-width:1100px){.sidebar{width:240px}.preview-panel{width:320px}.page-title{display:none}}
+@media(max-width:800px){.sidebar{width:220px}.preview-panel{display:none}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+    <span class="page-title">Конструктор тестов</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn" id="btn-preview-toggle">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" width="14" height="14"><circle cx="8" cy="8" r="3" stroke-width="1.5"/><path d="M2 8c0-3 3-6 6-6s6 3 6 6-3 6-6 6-6-3-6-6z" stroke-width="1.5"/></svg>
+      Превью
+    </button>
+    <button class="btn primary" id="btn-export">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" width="14" height="14"><path d="M8 10V0M4 6l4 4 4-4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10v4h12v-4" stroke-width="1.5"/></svg>
+      Скачать тест
+    </button>
+    <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+<div class="workspace">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h3>Название теста</h3>
+      <input class="test-name-input" id="test-name" value="Мой тест" placeholder="Название теста">
+    </div>
+    <div class="tree" id="tree"></div>
+    <div class="sidebar-actions">
+      <button class="btn success" id="btn-add-tab" style="width:100%">+ Новая вкладка</button>
+    </div>
+  </div>
+  <div class="editor" id="editor">
+    <div class="empty-editor" id="empty-editor">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor"><rect x="8" y="8" width="48" height="48" rx="4" stroke-width="2"/><path d="M20 24h24M20 32h24M20 40h16" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <h3>Создайте первую вкладку</h3>
+      <p>Начните с создания вкладки и разделов, затем добавляйте вопросы разных типов.</p>
+    </div>
+    <div id="editor-content" style="display:none"></div>
+  </div>
+  <div class="preview-panel" id="preview-panel" style="display:none">
+    <div class="preview-header">Предпросмотр теста</div>
+    <div class="preview-content" id="preview-content"></div>
+    <div class="stats-row">
+      <div class="stat-item"><div class="stat-val" id="stat-tabs">0</div><div class="stat-label">Вкладок</div></div>
+      <div class="stat-item"><div class="stat-val" id="stat-secs">0</div><div class="stat-label">Разделов</div></div>
+      <div class="stat-item"><div class="stat-val" id="stat-qs">0</div><div class="stat-label">Вопросов</div></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+const savedTheme=localStorage.getItem('zolter-test-theme')||'light';
+document.documentElement.setAttribute('data-theme',savedTheme);
+document.getElementById('theme-toggle').addEventListener('click',()=>{
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  const n=d?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);
+  localStorage.setItem('zolter-test-theme',n);
+});
+let test={name:'Мой тест',tabs:[{id:'tab-1',name:'Вкладка 1',sections:[{id:'sec-1',name:'Раздел 1',questions:[{id:'q-1',type:'choice',text:'Столица Франции?',answers:['Париж','Лондон','Берлин','Мадрид'],correct:[0]}]}]}]};
+let currentTab='tab-1',currentSec='sec-1',currentQ='q-1',showPreview=false,idCounter=10;
+function genId(p){return p+'-'+(++idCounter)}
+function getTab(i){return test.tabs.find(t=>t.id===i)}
+function getSec(ti,si){const t=getTab(ti);return t?t.sections.find(s=>s.id===si):null}
+function getQ(ti,si,qi){const s=getSec(ti,si);return s?s.questions.find(q=>q.id===qi):null}
+function totalQ(){let c=0;test.tabs.forEach(t=>t.sections.forEach(s=>c+=s.questions.length));return c}
+function escH(t){if(!t)return'';const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function renderTree(){
+  const tree=document.getElementById('tree');tree.innerHTML='';
+  test.tabs.forEach(tab=>{
+    const item=document.createElement('div');item.className='tree-item';
+    const tabHeader=document.createElement('div');tabHeader.className='tree-tab'+(tab.id===currentTab?' active':'');
+    tabHeader.innerHTML=`<span class="tree-tab-icon">📂</span><input class="tree-tab-name" value="${escH(tab.name)}" data-tab-id="${tab.id}"><div class="tree-tab-actions">
+      <button data-act="add-sec" data-tab="${tab.id}" title="Добавить раздел" style="background:none;border:none;cursor:pointer;color:var(--text-light);font-size:14px;padding:2px;border-radius:3px">+</button>
+      <button data-act="del-tab" data-tab="${tab.id}" title="Удалить вкладку" style="background:none;border:none;cursor:pointer;color:var(--text-light);font-size:14px;padding:2px;border-radius:3px">×</button>
+    </div>`;
+    const tabNameInput=tabHeader.querySelector('.tree-tab-name');
+    tabNameInput.addEventListener('change',e=>{tab.name=e.target.value.trim()||'Без названия';e.target.value=tab.name;updatePreview()});
+    tabNameInput.addEventListener('click',e=>e.stopPropagation());
+    tabHeader.addEventListener('click',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return;currentTab=tab.id;if(tab.sections.length>0){currentSec=tab.sections[0].id;currentQ=tab.sections[0].questions[0]?.id||null}renderTree();renderEditor()});
+    tabHeader.querySelectorAll('[data-act]').forEach(btn=>{btn.addEventListener('click',e=>{e.stopPropagation();const a=e.target.dataset.act,tb=e.target.dataset.tab;if(a==='add-sec'){const t=getTab(tb);const si=genId('sec');t.sections.push({id:si,name:'Раздел '+t.sections.length+1,questions:[]});currentSec=si;currentTab=tb;currentQ=null;renderTree();renderEditor()}else if(a==='del-tab'){if(test.tabs.length<=1)return;if(!confirm('Удалить вкладку "'+tab.name+'"?'))return;test.tabs=test.tabs.filter(t=>t.id!==tb);if(currentTab===tb){currentTab=test.tabs[0].id;currentSec=test.tabs[0].sections[0]?.id||null;currentQ=null}renderTree();renderEditor()}})});
+    item.appendChild(tabHeader);
+    tab.sections.forEach(sec=>{
+      const secEl=document.createElement('div');
+      secEl.className='tree-sec'+(sec.id===currentSec?' active':'');
+      secEl.innerHTML=`<span class="tree-sec-icon">📁</span><input class="tree-sec-name" value="${escH(sec.name)}" data-sec-id="${sec.id}"><div class="tree-sec-actions">
+        <button data-act="add-q" data-tab="${tab.id}" data-sec="${sec.id}" title="Добавить вопрос" style="background:none;border:none;cursor:pointer;color:var(--text-light);font-size:14px;padding:2px;border-radius:3px">+</button>
+        <button data-act="del-sec" data-tab="${tab.id}" data-sec="${sec.id}" title="Удалить раздел" style="background:none;border:none;cursor:pointer;color:var(--text-light);font-size:14px;padding:2px;border-radius:3px">×</button>
+      </div>`;
+      const secNameInput=secEl.querySelector('.tree-sec-name');
+      secNameInput.addEventListener('change',e=>{sec.name=e.target.value.trim()||'Без названия';e.target.value=sec.name;updatePreview()});
+      secNameInput.addEventListener('click',e=>e.stopPropagation());
+      secEl.addEventListener('click',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return;currentSec=sec.id;currentTab=tab.id;if(sec.questions.length>0)currentQ=sec.questions[0].id;renderTree();renderEditor()});
+      secEl.querySelectorAll('[data-act]').forEach(btn=>{btn.addEventListener('click',e=>{e.stopPropagation();const a=e.target.dataset.act;if(a==='add-q'){const s=getSec(e.target.dataset.tab,e.target.dataset.sec);if(!s)return;const qi=genId('q');s.questions.push({id:qi,type:'choice',text:'',answers:['',''],correct:[0]});currentQ=qi;currentSec=sec.id;currentTab=tab.id;renderTree();renderEditor()}else if(a==='del-sec'){const t=getTab(e.target.dataset.tab);if(!t||t.sections.length<=1)return;if(!confirm('Удалить раздел "'+sec.name+'"?'))return;t.sections=t.sections.filter(s=>s.id!==sec.id);if(currentSec===sec.id){currentSec=t.sections[0].id;currentQ=t.sections[0].questions[0]?.id||null}renderTree();renderEditor()}})});
+      item.appendChild(secEl);
+      sec.questions.forEach(q=>{
+        const qEl=document.createElement('div');qEl.className='tree-q'+(q.id===currentQ?' active':'');
+        const typeNames={choice:'Выбор',multi:'Мульти',truefalse:'Да/Нет',spell:'Правописание',fill:'Пропуск',match:'Сопоставление',order:'Порядок'};
+        qEl.innerHTML=`<input class="tree-q-name" value="${escH(q.text||'Без вопроса')}" data-q-id="${q.id}"><span class="tree-q-type">${typeNames[q.type]||'?'}</span><button class="tree-q-delete" data-q-del="${q.id}" title="Удалить вопрос">×</button>`;
+        const qNameInput=qEl.querySelector('.tree-q-name');
+        qNameInput.addEventListener('change',e=>{q.text=e.target.value.trim();e.target.value=q.text;updatePreview()});
+        qNameInput.addEventListener('click',e=>e.stopPropagation());
+        qEl.addEventListener('click',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return;currentQ=q.id;currentSec=sec.id;currentTab=tab.id;renderTree();renderEditor()});
+        qEl.querySelector('.tree-q-delete').addEventListener('click',e=>{e.stopPropagation();sec.questions=sec.questions.filter(x=>x.id!==q.id);if(currentQ===q.id)currentQ=sec.questions[0]?.id||null;renderTree();renderEditor()});
+        item.appendChild(qEl);
+      });
+      const addQBtn=document.createElement('button');addQBtn.className='tree-action-btn tree-q-btn';addQBtn.textContent='+ Вопрос';
+      addQBtn.addEventListener('click',()=>{const qi=genId('q');sec.questions.push({id:qi,type:'choice',text:'',answers:['',''],correct:[0]});currentQ=qi;currentSec=sec.id;renderTree();renderEditor()});
+      item.appendChild(addQBtn);
+    });
+    const addSecBtn=document.createElement('button');addSecBtn.className='tree-action-btn tree-sec-btn';addSecBtn.textContent='+ Раздел';
+    addSecBtn.addEventListener('click',()=>{const si=genId('sec');tab.sections.push({id:si,name:'Раздел '+tab.sections.length+1,questions:[]});currentSec=si;currentQ=null;renderTree();renderEditor()});
+    item.appendChild(addSecBtn);tree.appendChild(item);
+  });
+}
+function renderEditor(){
+  const empty=document.getElementById('empty-editor');const content=document.getElementById('editor-content');
+  if(test.tabs.length===0||!currentTab||!currentSec||!currentQ){empty.style.display='flex';content.style.display='none';return}
+  empty.style.display='none';content.style.display='block';
+  const q=getQ(currentTab,currentSec,currentQ);if(!q){content.innerHTML='';return}
+  const sec=getSec(currentTab,currentSec);const tab=getTab(currentTab);
+  const typeNames={choice:'Один ответ',multi:'Несколько ответов',truefalse:'Верно/Неверно',spell:'Правописание',fill:'Заполнить пропуск',match:'Сопоставление',order:'Порядок'};
+  let html=`<div class="editor-header"><h2>Редактирование <strong>вопроса</strong></h2><div class="editor-subtitle">${escH(tab.name)} → ${escH(sec.name)}</div></div>
+  <div class="question-card"><div class="question-card-header"><span class="question-type-badge">${typeNames[q.type]}</span>
+    <div class="question-card-actions"><button class="btn" onclick="window.duplicateQ()">⧉ Дублировать</button><button class="btn danger" onclick="window.deleteQ()">Удалить</button></div></div>
+  <div class="type-selector">${['choice','multi','truefalse','spell','fill','match','order'].map(t=>`<div class="type-option ${q.type===t?'active':''}" data-type="${t}">${typeNames[t]}</div>`).join('')}</div>
+  <input class="question-input" id="q-text" value="${escH(q.text)}" placeholder="Текст вопроса...">`;
+  if(q.type==='choice'||q.type==='multi'){
+    html+=`<div class="answers-list" id="answers-list">`;
+    q.answers.forEach((a,i)=>{const ic=q.correct.includes(i);const inpType=q.type==='multi'?'checkbox':'radio';
+      html+=`<div class="answer-row"><input type="${inpType}" class="${inpType==='checkbox'?'answer-checkbox':'answer-radio'}" name="correct-ans" data-idx="${i}" ${ic?'checked':''}>
+      <input class="answer-input ${ic?'correct':''}" value="${escH(a)}" data-ans-idx="${i}" placeholder="Вариант ${i+1}">
+      <button class="answer-delete" data-del-idx="${i}" ${q.answers.length<=2?'disabled':''}>×</button></div>`});
+    html+=`</div><button class="add-answer-btn" id="add-answer">+ Добавить вариант</button>`;
+  }else if(q.type==='truefalse'){
+    const correct=q.correct[0];
+    html+=`<div style="display:flex;gap:16px;margin:16px 0">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:16px 24px;border:2px solid ${correct===true?'var(--green)':'var(--border)'};border-radius:8px;flex:1;justify-content:center">
+        <input type="radio" name="tf-ans" value="true" ${correct===true?'checked':''}> <span style="font-size:16px;font-weight:600;color:${correct===true?'var(--green)':'var(--text)'}">Верно</span></label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:16px 24px;border:2px solid ${correct===false?'var(--red)':'var(--border)'};border-radius:8px;flex:1;justify-content:center">
+        <input type="radio" name="tf-ans" value="false" ${correct===false?'checked':''}> <span style="font-size:16px;font-weight:600;color:${correct===false?'var(--red)':'var(--text)'}">Неверно</span></label></div>`;
+  }else if(q.type==='spell'){
+    html+=`<div class="correct-answer-row"><label>Правильное слово:</label><input id="spell-correct" value="${escH(q.correctAnswer||'')}" placeholder="Введите правильное слово..."></div>`;
+  }else if(q.type==='fill'){
+    html+=`<textarea class="question-input question-textarea" id="fill-text" placeholder="Текст с пропусками. Используйте ___ для пропусков.">${escH(q.fillText||q.text)}</textarea>
+    <div class="correct-answer-row"><label>Ответы (через запятую):</label><input id="fill-answers" value="${(q.fillAnswers||[]).join(', ')}" placeholder="ответ1, ответ2"></div>`;
+  }else if(q.type==='match'){
+    const pairs=q.pairs||[];html+=`<div class="answers-list" id="match-list">`;
+    pairs.forEach((p,i)=>{html+=`<div class="answer-row">
+      <input class="answer-input" value="${escH(p.left)}" data-pair-idx="${i}" data-pair-side="left" placeholder="Левая часть">
+      <span style="color:var(--text-light)">↔</span>
+      <input class="answer-input" value="${escH(p.right)}" data-pair-idx="${i}" data-pair-side="right" placeholder="Правая часть">
+      <button class="answer-delete" data-pair-del="${i}" ${pairs.length<=2?'disabled':''}>×</button></div>`});
+    html+=`</div><button class="add-answer-btn" id="add-pair">+ Добавить пару</button>`;
+  }else if(q.type==='order'){
+    const items=q.orderItems||[''];
+    html+=`<div style="font-size:12px;color:var(--text-light);margin-bottom:12px">Перечислите элементы в <strong>правильном порядке</strong> (сверху вниз):</div>`;
+    html+=`<div class="answers-list" id="order-list">`;
+    items.forEach((item,i)=>{
+      html+=`<div class="answer-row">
+        <span style="font-family:'IBM Plex Mono',monospace;color:var(--accent);font-weight:600;font-size:14px;width:24px;text-align:center">${i+1}</span>
+        <input class="answer-input" value="${escH(item)}" data-order-idx="${i}" placeholder="Элемент ${i+1}">
+        <button class="answer-delete" data-order-del="${i}" ${items.length<=2?'disabled':''}>×</button></div>`;
+    });
+    html+=`</div><button class="add-answer-btn" id="add-order">+ Добавить элемент</button>`;
+  }
+  html+=`</div>`;content.innerHTML=html;
+  const qTextEl=document.getElementById('q-text');if(qTextEl)qTextEl.addEventListener('input',e=>{q.text=e.target.value;renderTree();updatePreview()});
+  content.querySelectorAll('.type-option').forEach(opt=>{opt.addEventListener('click',()=>{
+    q.type=opt.dataset.type;
+    if(q.type==='choice'||q.type==='multi'){if(!q.answers||!q.answers.length)q.answers=['',''];if(!q.correct||!q.correct.length)q.correct=[0]}
+    else if(q.type==='truefalse'){if(q.correct===undefined)q.correct=[true]}
+    else if(q.type==='spell'){if(!q.correctAnswer)q.correctAnswer=''}
+    else if(q.type==='fill'){if(!q.fillAnswers)q.fillAnswers=[]}
+    else if(q.type==='match'){if(!q.pairs)q.pairs=[{left:'',right:''},{left:'',right:''}]}
+    else if(q.type==='order'){if(!q.orderItems)q.orderItems=['','']}
+    renderEditor();updatePreview()})});
+  if(q.type==='choice'||q.type==='multi'){
+    content.querySelectorAll('.answer-input').forEach(inp=>{inp.addEventListener('input',e=>{q.answers[parseInt(e.target.dataset.ansIdx)]=e.target.value;updatePreview()})});
+    content.querySelectorAll('.answer-radio,.answer-checkbox').forEach(inp=>{inp.addEventListener('change',e=>{const idx=parseInt(e.target.dataset.idx);if(q.type==='choice'){q.correct=[idx]}else{if(e.target.checked){if(!q.correct.includes(idx))q.correct.push(idx)}else{q.correct=q.correct.filter(i=>i!==idx)}}renderEditor();updatePreview()})});
+    content.querySelectorAll('.answer-delete').forEach(btn=>{btn.addEventListener('click',()=>{const idx=parseInt(btn.dataset.delIdx);q.answers.splice(idx,1);q.correct=q.correct.map(i=>i>idx?i-1:i).filter(i=>i!==idx);renderEditor();updatePreview()})});
+    const addBtn=document.getElementById('add-answer');if(addBtn)addBtn.addEventListener('click',()=>{q.answers.push('');renderEditor();updatePreview()});
+  }
+  if(q.type==='truefalse'){content.querySelectorAll('input[name="tf-ans"]').forEach(r=>{r.addEventListener('change',e=>{q.correct=[e.target.value==='true'];updatePreview()})})}
+  if(q.type==='spell'){const si=document.getElementById('spell-correct');if(si)si.addEventListener('input',e=>{q.correctAnswer=e.target.value;updatePreview()})}
+  if(q.type==='fill'){const ft=document.getElementById('fill-text');if(ft)ft.addEventListener('input',e=>{q.fillText=e.target.value;q.text=e.target.value;updatePreview()});
+    const fa=document.getElementById('fill-answers');if(fa)fa.addEventListener('input',e=>{q.fillAnswers=e.target.value.split(',').map(s=>s.trim()).filter(s=>s);updatePreview()})}
+  if(q.type==='match'){
+    content.querySelectorAll('[data-pair-idx]').forEach(inp=>{inp.addEventListener('input',e=>{const idx=parseInt(e.target.dataset.pairIdx);const side=e.target.dataset.pairSide;q.pairs[idx][side]=e.target.value;updatePreview()})});
+    content.querySelectorAll('[data-pair-del]').forEach(btn=>{btn.addEventListener('click',()=>{const idx=parseInt(btn.dataset.pairDel);q.pairs.splice(idx,1);renderEditor();updatePreview()})});
+    const apBtn=document.getElementById('add-pair');if(apBtn)apBtn.addEventListener('click',()=>{q.pairs.push({left:'',right:''});renderEditor();updatePreview()});
+  }
+  if(q.type==='order'){
+    content.querySelectorAll('[data-order-idx]').forEach(inp=>{inp.addEventListener('input',e=>{const idx=parseInt(e.target.dataset.orderIdx);q.orderItems[idx]=e.target.value;updatePreview()})});
+    content.querySelectorAll('[data-order-del]').forEach(btn=>{btn.addEventListener('click',()=>{const idx=parseInt(btn.dataset.orderDel);q.orderItems.splice(idx,1);renderEditor();updatePreview()})});
+    const aoBtn=document.getElementById('add-order');if(aoBtn)aoBtn.addEventListener('click',()=>{q.orderItems.push('');renderEditor();updatePreview()});
+  }
+  updatePreview();
+}
+window.duplicateQ=function(){const q=getQ(currentTab,currentSec,currentQ);if(!q)return;const nq=JSON.parse(JSON.stringify(q));nq.id=genId('q');const s=getSec(currentTab,currentSec);const idx=s.questions.findIndex(x=>x.id===currentQ);s.questions.splice(idx+1,0,nq);currentQ=nq.id;renderTree();renderEditor()};
+window.deleteQ=function(){if(!confirm('Удалить этот вопрос?'))return;const s=getSec(currentTab,currentSec);s.questions=s.questions.filter(q=>q.id!==currentQ);currentQ=s.questions[0]?.id||null;renderTree();renderEditor()};
+function updatePreview(){
+  if(!showPreview)return;const c=document.getElementById('preview-content');let html='',qn=0;
+  test.tabs.forEach(tab=>{tab.sections.forEach(sec=>{sec.questions.forEach(q=>{
+    qn++;html+=`<div class="preview-card"><div class="q-num">Вопрос ${qn}</div><div style="font-size:10px;color:var(--text-light);margin-bottom:4px">${escH(tab.name)} → ${escH(sec.name)}</div><div class="q-text">${escH(q.text||'Без текста')}</div>`;
+    if(q.type==='choice'||q.type==='multi'){html+=`<div class="q-answers">`;q.answers.forEach((a,i)=>{const ic=q.correct.includes(i);html+=`<div class="q-answer ${ic?'is-correct':''}">${escH(a)||'(пусто)'}</div>`});html+=`</div>`}
+    else if(q.type==='truefalse'){html+=`<div class="q-answers"><div class="q-answer ${q.correct[0]?'is-correct':''}">Верно</div><div class="q-answer ${!q.correct[0]?'is-correct':''}">Неверно</div></div>`}
+    else if(q.type==='spell'){html+=`<div style="margin-top:8px"><span class="q-spell">${escH(q.correctAnswer||'—')}</span></div>`}
+    else if(q.type==='fill'){const txt=escH(q.fillText||'');html+=`<div style="font-size:14px;line-height:2">${txt.replace(/___/g,'<span style="border-bottom:2px solid var(--accent);padding:0 4px;color:var(--accent-dark);font-weight:600">______</span>')}</div>`;if(q.fillAnswers&&q.fillAnswers.length)html+=`<div style="margin-top:8px;font-size:12px;color:var(--text-light)">Ответы: ${q.fillAnswers.join(', ')}</div>`}
+    else if(q.type==='match'){html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px">`;(q.pairs||[]).forEach(p=>{html+=`<div style="padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:4px;font-size:12px">${escH(p.left)}</div><div style="padding:6px 10px;background:var(--surface);border:1px solid var(--green);border-radius:4px;font-size:12px;color:var(--green)">${escH(p.right)}</div>`});html+=`</div>`}
+    else if(q.type==='order'){html+=`<div style="margin-top:8px">`;(q.orderItems||[]).forEach((item,i)=>{html+=`<div style="padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:4px;font-size:12px;margin-bottom:4px"><span style="color:var(--accent);font-weight:600;margin-right:8px">${i+1}.</span>${escH(item)}</div>`});html+=`</div>`}
+    html+=`</div>`})})});
+  c.innerHTML=html;
+  document.getElementById('stat-tabs').textContent=test.tabs.length;
+  document.getElementById('stat-secs').textContent=test.tabs.reduce((s,t)=>s+t.sections.length,0);
+  document.getElementById('stat-qs').textContent=totalQ();
+}
+document.getElementById('btn-add-tab').addEventListener('click',()=>{const ti=genId('tab'),si=genId('sec');test.tabs.push({id:ti,name:'Вкладка '+test.tabs.length+1,sections:[{id:si,name:'Раздел 1',questions:[]}]});currentTab=ti;currentSec=si;currentQ=null;renderTree();renderEditor()});
+document.getElementById('btn-preview-toggle').addEventListener('click',()=>{showPreview=!showPreview;document.getElementById('preview-panel').style.display=showPreview?'flex':'none';if(showPreview)updatePreview()});
+document.getElementById('test-name').addEventListener('input',e=>{test.name=e.target.value});
+document.getElementById('btn-export').addEventListener('click',exportTest);
+function exportTest(){
+  let tabsData=[],qNum=0;
+  test.tabs.forEach(tab=>{let sections=[];tab.sections.forEach(sec=>{let questions=[];sec.questions.forEach(q=>{qNum++;questions.push({id:q.id,num:qNum,type:q.type,text:q.text,answers:q.answers||[],correct:q.correct||[],correctAnswer:q.correctAnswer||'',fillText:q.fillText||q.text,fillAnswers:q.fillAnswers||[],pairs:q.pairs||[],orderItems:q.orderItems||[]})});sections.push({id:sec.id,name:sec.name,questions})});tabsData.push({id:tab.id,name:tab.name,sections})});
+  const html=`<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${escH(test.name)}</title><link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'IBM Plex Sans',sans-serif;background:#FAF7F4;color:#2C2825;min-height:100vh;padding:40px 20px}.container{max-width:720px;margin:0 auto}h1{font-size:32px;font-weight:300;letter-spacing:-1px;margin-bottom:8px}h1 strong{font-weight:700;color:#8C7560}.subtitle{font-size:14px;color:#9B9490;margin-bottom:24px}.tabs-bar{display:flex;gap:4px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px;border-bottom:2px solid #E8E0D8}.tab-btn{padding:10px 20px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#6B6560;transition:all .2s;white-space:nowrap;position:relative;bottom:-2px}.tab-btn:hover{color:#2C2825}.tab-btn.active{color:#8C7560;border-bottom-color:#8C7560;font-weight:600}.sections-bar{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}.sec-btn{padding:6px 14px;background:#F2EDE7;border:1px solid #D4C9BE;border-radius:20px;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:1px;color:#6B6560;transition:all .2s}.sec-btn:hover{background:#E8E0D8}.sec-btn.active{background:#2C2825;color:#FAF7F4;border-color:#2C2825}.tab-content{display:none}.tab-content.active{display:block}.section-content{display:none}.section-content.active{display:block}.q-card{background:#fff;border:1px solid #E8E0D8;border-radius:10px;padding:24px;margin-bottom:16px}.q-num{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#B8A088;margin-bottom:4px}.q-text{font-size:16px;font-weight:500;margin-bottom:16px;line-height:1.5}.q-hint{font-size:11px;color:#9B9490;margin-bottom:12px;font-style:italic}.answer-btn{display:block;width:100%;padding:12px 16px;background:#FAF7F4;border:1px solid #D4C9BE;border-radius:6px;margin-bottom:6px;cursor:pointer;font-family:inherit;font-size:14px;text-align:left;transition:all .2s}.answer-btn:hover{border-color:#B8A088;background:#F2EDE7}.answer-btn.selected{border-color:#8C7560;background:#E8E0D8}.answer-btn.correct{border-color:#27AE60!important;background:rgba(39,174,96,.08)!important}.answer-btn.wrong{border-color:#C0392B!important;background:rgba(192,57,43,.08)!important}.spell-input{width:100%;height:48px;border:2px solid #D4C9BE;background:#FAF7F4;font-family:'IBM Plex Mono',monospace;font-size:18px;padding:0 16px;border-radius:8px;text-align:center;letter-spacing:2px}.spell-input:focus{outline:none;border-color:#B8A088}.spell-input.correct{border-color:#27AE60!important;background:rgba(39,174,96,.05)}.spell-input.wrong{border-color:#C0392B!important;background:rgba(192,57,43,.05)}.fill-input{display:inline-block;width:120px;height:32px;border:none;border-bottom:2px solid #B8A088;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:14px;padding:0 4px;text-align:center;vertical-align:middle;margin:0 4px}.fill-input:focus{outline:none;border-bottom-color:#8C7560}.fill-input.correct{border-bottom-color:#27AE60}.fill-input.wrong{border-bottom-color:#C0392B}.tf-btn{display:inline-flex;padding:14px 32px;border:2px solid #D4C9BE;border-radius:8px;cursor:pointer;font-family:inherit;font-size:15px;font-weight:600;transition:all .2s;margin:0 8px;background:#FAF7F4}.tf-btn:hover{border-color:#B8A088}.tf-btn.selected{border-color:#8C7560;background:#E8E0D8}.tf-btn.correct{border-color:#27AE60!important;background:rgba(39,174,96,.08)!important;color:#27AE60}.tf-btn.wrong{border-color:#C0392B!important;background:rgba(192,57,43,.08)!important;color:#C0392B}.match-select{padding:8px 12px;border:1px solid #D4C9BE;border-radius:4px;font-family:inherit;font-size:13px;background:#FAF7F4}.match-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}.match-label{min-width:140px;font-size:14px}.order-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#FAF7F4;border:1px solid #D4C9BE;border-radius:6px;margin-bottom:6px}.order-item-num{font-family:'IBM Plex Mono',monospace;font-weight:700;color:#8C7560;width:24px;text-align:center}.order-item select{flex:1;padding:6px 10px;border:1px solid #D4C9BE;border-radius:4px;font-family:inherit;font-size:13px;background:#fff}.order-item select.correct{border-color:#27AE60;background:rgba(39,174,96,.08)}.order-item select.wrong{border-color:#C0392B;background:rgba(192,57,43,.08)}.submit-btn{display:block;width:100%;padding:16px;background:#2C2825;color:#FAF7F4;border:none;border-radius:8px;font-family:inherit;font-size:14px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-top:32px;transition:opacity .2s}.submit-btn:hover{opacity:.85}.submit-btn:disabled{opacity:.4;cursor:not-allowed}.result-card{background:#fff;border:1px solid #E8E0D8;border-radius:10px;padding:40px 32px;text-align:center;margin-top:24px}.grade-circle{width:100px;height:100px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:700;color:#fff;border:4px solid rgba(255,255,255,.3)}.grade-circle.grade-5{background:linear-gradient(135deg,#27AE60,#2ECC71)}.grade-circle.grade-4{background:linear-gradient(135deg,#2980B9,#3498DB)}.grade-circle.grade-3{background:linear-gradient(135deg,#E67E22,#F1C40F)}.grade-circle.grade-2{background:linear-gradient(135deg,#C0392B,#E74C3C)}.grade-circle.grade-1{background:linear-gradient(135deg,#7F2020,#C0392B)}.result-score{font-size:20px;font-weight:600;color:#8C7560;margin-bottom:4px}.result-percent{font-size:14px;color:#9B9490}.grade-label{font-size:18px;font-weight:600;margin-top:12px}.grade-label.grade-5{color:#27AE60}.grade-label.grade-4{color:#2980B9}.grade-label.grade-3{color:#E67E22}.grade-label.grade-2{color:#C0392B}.grade-label.grade-1{color:#7F2020}.result-label{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#9B9490;margin-top:8px}.feedback{margin-top:8px;font-size:13px;font-weight:500}.feedback.correct-fb{color:#27AE60}.feedback.wrong-fb{color:#C0392B}.hidden{display:none}@media(max-width:600px){body{padding:20px 12px}h1{font-size:24px}.tab-btn{padding:8px 14px;font-size:11px}}</style></head><body><div class="container"><h1>${escH(test.name)}</h1><div class="subtitle">Тест с проверкой результатов и оценкой по 5-балльной системе</div><div id="tabs-bar" class="tabs-bar"></div><div id="sections-bar" class="sections-bar"></div><div id="tab-contents"></div><button class="submit-btn" id="submit-btn" onclick="checkAnswers()">Проверить ответы</button><div id="result" class="result-card hidden"><div class="grade-circle" id="grade-circle"></div><div class="grade-label" id="grade-label"></div><div class="result-score" id="score"></div><div class="result-percent" id="percent"></div><div class="result-label">результат теста</div></div></div><script>
+var tabsData=${JSON.stringify(tabsData)};
+var answers={};
+var activeTab='';
+var activeSec='';
+function init(){
+  var tabsBar=document.getElementById('tabs-bar');
+  var tabContents=document.getElementById('tab-contents');
+  activeTab=tabsData[0].id;
+  activeSec=tabsData[0].sections[0].id;
+  tabsData.forEach(function(tab){
+    var btn=document.createElement('button');
+    btn.className='tab-btn'+(tab.id===activeTab?' active':'');
+    btn.textContent=tab.name;
+    btn.onclick=function(){switchTab(tab.id)};
+    tabsBar.appendChild(btn);
+    var tabDiv=document.createElement('div');
+    tabDiv.className='tab-content'+(tab.id===activeTab?' active':'');
+    tabDiv.id='tab-'+tab.id;
+    var secBar=document.createElement('div');
+    secBar.className='sections-bar';
+    tab.sections.forEach(function(sec){
+      var sbtn=document.createElement('button');
+      sbtn.className='sec-btn'+(sec.id===activeSec?' active':'');
+      sbtn.textContent=sec.name;
+      sbtn.onclick=function(){switchSec(tab.id,sec.id)};
+      secBar.appendChild(sbtn);
+    });
+    tabDiv.appendChild(secBar);
+    tab.sections.forEach(function(sec){
+      var secDiv=document.createElement('div');
+      secDiv.className='section-content'+(sec.id===activeSec?' active':'');
+      secDiv.id='sec-'+sec.id;
+      sec.questions.forEach(function(q){
+        secDiv.appendChild(createQuestion(q));
+      });
+      tabDiv.appendChild(secDiv);
+    });
+    tabContents.appendChild(tabDiv);
+  });
+}
+function switchTab(tabId){
+  activeTab=tabId;
+  var tab=tabsData.find(function(t){return t.id===tabId});
+  activeSec=tab.sections[0].id;
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.toggle('active',b.textContent===tab.name)});
+  document.querySelectorAll('.tab-content').forEach(function(d){d.classList.toggle('active',d.id==='tab-'+tabId)});
+  var tabDiv=document.getElementById('tab-'+tabId);
+  if(tabDiv){
+    tabDiv.querySelectorAll('.section-content').forEach(function(s){s.classList.remove('active')});
+    var firstSec=tabDiv.querySelector('.section-content');
+    if(firstSec){firstSec.classList.add('active');activeSec=firstSec.id.replace('sec-','')}
+    tabDiv.querySelectorAll('.sec-btn').forEach(function(b,i){b.classList.toggle('active',i===0)});
+  }
+}
+function switchSec(tabId,secId){
+  activeSec=secId;
+  var tabDiv=document.getElementById('tab-'+tabId);
+  if(!tabDiv)return;
+  tabDiv.querySelectorAll('.section-content').forEach(function(s){s.classList.toggle('active',s.id==='sec-'+secId)});
+  tabDiv.querySelectorAll('.sec-btn').forEach(function(b){b.classList.toggle('active',b.textContent===tabsData.find(function(t){return t.id===tabId}).sections.find(function(s){return s.id===secId}).name)});
+}
+function createQuestion(q){
+  var card=document.createElement('div');
+  card.className='q-card';
+  card.setAttribute('data-qid',q.id);
+  var hints={choice:'Выберите один вариант',multi:'Можно выбрать несколько',truefalse:'Верно или неверно?',spell:'Введите слово точно',fill:'Заполните пропуски',match:'Соедините пары',order:'Расположите в правильном порядке'};
+  card.innerHTML='<div class="q-num">Вопрос '+q.num+'</div><div class="q-text">'+escH(q.text)+'</div><div class="q-hint">'+(hints[q.type]||'')+'</div><div class="q-body" id="qbody-'+q.id+'"></div><div class="feedback" id="fb-'+q.id+'"></div>';
+  var body=card.querySelector('#qbody-'+q.id);
+  if(q.type==='choice'){
+    q.answers.forEach(function(a,i){
+      var btn=document.createElement('button');
+      btn.className='answer-btn';
+      btn.textContent=a;
+      btn.onclick=function(){selectAnswer(q.id,i,this)};
+      body.appendChild(btn);
+    });
+  }else if(q.type==='multi'){
+    q.answers.forEach(function(a,i){
+      var btn=document.createElement('button');
+      btn.className='answer-btn';
+      btn.textContent=a;
+      btn.onclick=function(){toggleMulti(q.id,i,this)};
+      body.appendChild(btn);
+    });
+  }else if(q.type==='truefalse'){
+    var wrap=document.createElement('div');wrap.style.textAlign='center';wrap.style.margin='12px 0';
+    var b1=document.createElement('button');b1.className='tf-btn';b1.textContent='✓ Верно';b1.onclick=function(){selectTF(q.id,true,this)};
+    var b2=document.createElement('button');b2.className='tf-btn';b2.textContent='✗ Неверно';b2.onclick=function(){selectTF(q.id,false,this)};
+    wrap.appendChild(b1);wrap.appendChild(b2);body.appendChild(wrap);
+  }else if(q.type==='spell'){
+    var inp=document.createElement('input');inp.className='spell-input';inp.id='spell-'+q.id;inp.placeholder='Введите ответ...';body.appendChild(inp);
+  }else if(q.type==='fill'){
+    var wrap=document.createElement('div');wrap.style.fontSize='15px';wrap.style.lineHeight='2.2';
+    var parts=(q.fillText||'').split('___');
+    parts.forEach(function(part,i){
+      wrap.appendChild(document.createTextNode(escH(part)));
+      if(i<parts.length-1){
+        var inp=document.createElement('input');
+        inp.className='fill-input';
+        inp.id='fill-'+q.id+'-'+i;
+        inp.setAttribute('data-qid',q.id);
+        inp.setAttribute('data-blank',i);
+        wrap.appendChild(inp);
+      }
+    });
+    body.appendChild(wrap);
+  }else if(q.type==='match'){
+    var rightOpts=q.pairs.map(function(p){return p.right});
+    // Shuffle for display
+    var shuffled=[].concat(rightOpts).sort(function(){return Math.random()-0.5});
+    q.pairs.forEach(function(p,i){
+      var row=document.createElement('div');row.className='match-row';
+      var lbl=document.createElement('span');lbl.className='match-label';lbl.textContent=p.left;
+      var arrow=document.createElement('span');arrow.textContent='→';arrow.style.color='#9B9490';
+      var sel=document.createElement('select');sel.className='match-select';sel.id='match-'+q.id+'-'+i;sel.setAttribute('data-qid',q.id);sel.setAttribute('data-pair',i);
+      var defOpt=document.createElement('option');defOpt.value='';defOpt.textContent='— выберите —';sel.appendChild(defOpt);
+      shuffled.forEach(function(opt){var o=document.createElement('option');o.value=opt;o.textContent=opt;sel.appendChild(o)});
+      row.appendChild(lbl);row.appendChild(arrow);row.appendChild(sel);body.appendChild(row);
+    });
+  }else if(q.type==='order'){
+    var items=q.orderItems||[];
+    var shuffled=[].concat(items).sort(function(){return Math.random()-0.5});
+    items.forEach(function(item,i){
+      var row=document.createElement('div');row.className='order-item';
+      var num=document.createElement('span');num.className='order-item-num';num.textContent=(i+1);
+      var sel=document.createElement('select');sel.className='order-select';sel.id='order-'+q.id+'-'+i;sel.setAttribute('data-qid',q.id);sel.setAttribute('data-pos',i);
+      var defOpt=document.createElement('option');defOpt.value='';defOpt.textContent='— выберите элемент —';sel.appendChild(defOpt);
+      shuffled.forEach(function(opt){var o=document.createElement('option');o.value=opt;o.textContent=opt;sel.appendChild(o)});
+      row.appendChild(num);row.appendChild(sel);body.appendChild(row);
+    });
+  }
+  return card;
+}
+function selectAnswer(qId,idx,el){
+  var card=el.closest('.q-card');
+  card.querySelectorAll('.answer-btn').forEach(function(b){b.classList.remove('selected')});
+  el.classList.add('selected');
+  answers[qId]=[idx];
+}
+function toggleMulti(qId,idx,el){
+  el.classList.toggle('selected');
+  if(!answers[qId])answers[qId]=[];
+  var i=answers[qId].indexOf(idx);
+  if(i>=0)answers[qId].splice(i,1);else answers[qId].push(idx);
+}
+function selectTF(qId,val,el){
+  var card=el.closest('.q-card');
+  card.querySelectorAll('.tf-btn').forEach(function(b){b.classList.remove('selected')});
+  el.classList.add('selected');
+  answers[qId]=[val];
+}
+function getGrade(percentage){
+  if(percentage>=85)return 5;
+  if(percentage>=70)return 4;
+  if(percentage>=50)return 3;
+  if(percentage>=30)return 2;
+  return 1;
+}
+function getGradeText(grade){
+  var texts={5:'Отлично!',4:'Хорошо',3:'Удовлетворительно',2:'Плохо',1:'Очень плохо'};
+  return texts[grade]||'';
+}
+function checkAnswers(){
+  var correct=0;
+  var total=0;
+  tabsData.forEach(function(tab){
+    tab.sections.forEach(function(sec){
+      sec.questions.forEach(function(q){
+        total++;
+        var fb=document.getElementById('fb-'+q.id);
+        var isCorrect=false;
+        var card=document.querySelector('.q-card[data-qid="'+q.id+'"]');
+        if(q.type==='choice'){
+          var sel=answers[q.id];
+          isCorrect=sel&&sel[0]===q.correct[0];
+          card.querySelectorAll('.answer-btn').forEach(function(b,i){
+            b.disabled=true;
+            if(i===q.correct[0])b.classList.add('correct');
+            else if(sel&&sel[0]===i&&!isCorrect)b.classList.add('wrong');
+          });
+        }else if(q.type==='multi'){
+          var sel=answers[q.id]||[];
+          var cSet=new Set(q.correct);
+          var sSet=new Set(sel);
+          isCorrect=sSet.size===cSet.size&&[...sSet].every(function(x){return cSet.has(x)});
+          card.querySelectorAll('.answer-btn').forEach(function(b,i){
+            b.disabled=true;
+            if(q.correct.includes(i))b.classList.add('correct');
+            else if(sel.includes(i)&&!q.correct.includes(i))b.classList.add('wrong');
+          });
+        }else if(q.type==='truefalse'){
+          var sel=answers[q.id];
+          isCorrect=sel&&sel[0]===q.correct[0];
+          card.querySelectorAll('.tf-btn').forEach(function(b,i){
+            b.disabled=true;
+            var v=i===0;
+            if(v===q.correct[0])b.classList.add('correct');
+            else if(sel&&sel[0]===v&&!isCorrect)b.classList.add('wrong');
+          });
+        }else if(q.type==='spell'){
+          var inp=document.getElementById('spell-'+q.id);
+          var val=inp.value.trim().toLowerCase();
+          isCorrect=val===q.correctAnswer.toLowerCase();
+          inp.classList.add(isCorrect?'correct':'wrong');
+          inp.disabled=true;
+        }else if(q.type==='fill'){
+          isCorrect=true;
+          var blanks=(q.fillText||'').split('___');
+          var numBlanks=blanks.length-1;
+          for(var i=0;i<numBlanks;i++){
+            var inp=document.getElementById('fill-'+q.id+'-'+i);
+            if(!inp)continue;
+            var v=inp.value.trim().toLowerCase();
+            var correctVal=(q.fillAnswers[i]||'').toLowerCase();
+            if(v!==correctVal){isCorrect=false;inp.classList.add('wrong')}
+            else{inp.classList.add('correct')}
+            inp.disabled=true;
+          }
+        }else if(q.type==='match'){
+          isCorrect=true;
+          q.pairs.forEach(function(p,i){
+            var sel=document.getElementById('match-'+q.id+'-'+i);
+            if(sel.value!==p.right)isCorrect=false;
+            sel.disabled=true;
+            if(sel.value===p.right)sel.classList.add('correct');
+            else sel.classList.add('wrong');
+          });
+        }else if(q.type==='order'){
+          isCorrect=true;
+          q.orderItems.forEach(function(item,i){
+            var sel=document.getElementById('order-'+q.id+'-'+i);
+            if(sel.value!==item)isCorrect=false;
+            sel.disabled=true;
+            if(sel.value===item)sel.classList.add('correct');
+            else sel.classList.add('wrong');
+          });
+        }
+        if(isCorrect)correct++;
+        fb.textContent=isCorrect?'✓ Правильно!':'✗ Неправильно. Ответ: '+getCorrectAnswer(q);
+        fb.className='feedback '+(isCorrect?'correct-fb':'wrong-fb');
+      });
+    });
+  });
+  var percent=total>0?Math.round(correct/total*100):0;
+  var grade=getGrade(percent);
+  var gradeText=getGradeText(grade);
+  document.getElementById('grade-circle').textContent=grade;
+  document.getElementById('grade-circle').className='grade-circle grade-'+grade;
+  document.getElementById('grade-label').textContent=gradeText;
+  document.getElementById('grade-label').className='grade-label grade-'+grade;
+  document.getElementById('score').textContent=correct+' / '+total;
+  document.getElementById('percent').textContent=percent+'%';
+  document.getElementById('result').classList.remove('hidden');
+  document.getElementById('submit-btn').disabled=true;
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+function getCorrectAnswer(q){
+  if(q.type==='choice'||q.type==='multi')return q.answers.filter(function(_,i){return q.correct.includes(i)}).join(', ');
+  if(q.type==='truefalse')return q.correct[0]?'Верно':'Неверно';
+  if(q.type==='spell')return q.correctAnswer;
+  if(q.type==='fill')return q.fillAnswers.join(', ');
+  if(q.type==='match')return q.pairs.map(function(p){return p.left+' → '+p.right}).join('; ');
+  if(q.type==='order')return q.orderItems.join(' → ');
+  return '';
+}
+function escH(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML}
+init();
+<\/script></body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=(test.name||'test').replace(/\s+/g,'_')+'.html';a.click();
+  URL.revokeObjectURL(url);
+}
+renderTree();renderEditor();
+})();
+</script>
+</body>
+</html>
+
