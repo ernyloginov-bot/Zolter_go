@@ -3,72 +3,187 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zolter Магазин приложений</title>
+<title>Zolter Store | Приложения</title>
 <link href="https://cdn.jsdelivr.net/npm/fontsource-ibm-plex-sans@5.0.8/index.min.css" rel="stylesheet">
 <style>
-:root { --bg: #FAF7F4; --text: #2C2825; --text-sec: #6B6560; --text-light: #9B9490; --accent: #B8A088; --accent-dark: #8C7560; --border: #E8E0D8; }
-[data-theme="dark"] { --bg: #1A1816; --text: #D4C9BE; --text-sec: #9B9490; --text-light: #6B6560; --accent: #B8A088; --accent-dark: #D4C9BE; --border: #3A3530; }
+:root { 
+  --bg: #FAF7F4; --text: #2C2825; --text-sec: #6B6560; --text-light: #9B9490; 
+  --accent: #B8A088; --accent-dark: #8C7560; --border: #E8E0D8; 
+  --btn-bg: #B8A088; --btn-text: #FAF7F4;
+}
+[data-theme="dark"] { 
+  --bg: #1A1816; --text: #D4C9BE; --text-sec: #9B9490; --text-light: #6B6560; 
+  --accent: #C9A96E; --accent-dark: #E0C78A; --border: #3A3530;
+  --btn-bg: #C9A96E; --btn-text: #1A1816;
+}
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); transition: background .4s, color .4s; min-height: 100vh; }
+body { 
+  font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); 
+  transition: background .4s, color .4s; min-height: 100vh; line-height: 1.6;
+}
 
-.topbar { position: sticky; top: 0; z-index: 100; padding: 20px 48px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, var(--bg) 60%, transparent); }
-.logo { font-size: 16px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--text); text-decoration: none; }
+/* Header */
+.topbar { 
+  position: sticky; top: 0; z-index: 100; padding: 20px 48px; 
+  display: flex; justify-content: space-between; align-items: center; 
+  background: linear-gradient(to bottom, var(--bg) 85%, transparent); 
+  border-bottom: 1px solid transparent; transition: border-color .4s;
+}
+.topbar.scrolled { border-bottom-color: var(--border); }
+.logo { 
+  font-size: 16px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; 
+  color: var(--text); text-decoration: none; 
+}
 .logo span { color: var(--accent); }
-.theme-toggle { width: 32px; height: 32px; background: none; border: 1px solid var(--border); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-sec); transition: .2s; }
-.theme-toggle:hover { background: rgba(184,160,136,.12); }
+.theme-toggle { 
+  width: 32px; height: 32px; background: none; border: 1px solid var(--border); 
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; 
+  justify-content: center; color: var(--text-sec); transition: .2s; 
+}
+.theme-toggle:hover { background: rgba(184,160,136,.12); color: var(--text); }
 
+/* Content */
 .content { max-width: 800px; margin: 0 auto; padding: 80px 48px 160px; }
-h1 { font-size: clamp(32px, 4vw, 56px); font-weight: 200; letter-spacing: -1.5px; margin-bottom: 12px; }
+h1 { 
+  font-size: clamp(32px, 5vw, 56px); font-weight: 200; letter-spacing: -1.5px; 
+  margin-bottom: 12px; line-height: 1.1;
+}
 h1 strong { font-weight: 700; color: var(--accent-dark); }
-.intro { font-size: 16px; line-height: 1.7; color: var(--text-sec); margin-bottom: 40px; max-width: 560px; }
+.intro { 
+  font-size: 16px; color: var(--text-sec); margin-bottom: 48px; max-width: 560px; 
+}
 
-.section-label { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--accent); margin-bottom: 32px; display: flex; align-items: center; gap: 16px; }
+/* Category Tabs */
+.section-label { 
+  font-size: 10px; letter-spacing: 4px; text-transform: uppercase; 
+  color: var(--accent); margin-bottom: 24px; display: flex; align-items: center; gap: 16px; 
+}
 .section-label::before { content: ''; width: 40px; height: 1px; background: var(--accent); }
 
-.search-wrap { position: relative; margin-bottom: 56px; }
-#search { width: 100%; padding: 18px 0; border: none; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); font-family: inherit; font-size: 20px; outline: none; transition: border-color .3s; }
+.categories { 
+  display: flex; gap: 8px; margin-bottom: 40px; flex-wrap: wrap; 
+}
+.cat-btn { 
+  padding: 8px 16px; background: transparent; border: 1px solid var(--border); 
+  border-radius: 20px; color: var(--text-sec); font-size: 12px; 
+  letter-spacing: 1px; text-transform: uppercase; cursor: pointer; 
+  transition: all .25s; 
+}
+.cat-btn:hover { border-color: var(--accent); color: var(--text); }
+.cat-btn.active { 
+  background: var(--accent); border-color: var(--accent); color: var(--btn-text); 
+}
+
+/* Search */
+.search-wrap { position: relative; margin-bottom: 48px; }
+#search { 
+  width: 100%; padding: 16px 0; border: none; border-bottom: 1px solid var(--border); 
+  background: transparent; color: var(--text); font-family: inherit; 
+  font-size: 18px; outline: none; transition: border-color .3s; 
+}
 #search:focus { border-bottom-color: var(--accent); }
 #search::placeholder { color: var(--text-light); }
 
-.app-item { padding: 28px 0; border-bottom: 1px solid var(--border); animation: fadeIn .3s ease-out both; }
+/* App Card */
+.app-item { 
+  padding: 32px 0; border-bottom: 1px solid var(--border); 
+  animation: fadeIn .4s ease-out both; 
+}
 .app-item:last-child { border-bottom: none; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-.app-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; flex-wrap: wrap; }
-.app-name { font-size: 20px; font-weight: 600; letter-spacing: -0.2px; }
-.app-category { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); background: rgba(184,160,136,.12); padding: 4px 12px; border-radius: 20px; }
-.app-desc { color: var(--text-sec); font-size: 15px; line-height: 1.6; margin-bottom: 12px; }
-.app-meta { display: flex; gap: 24px; font-size: 12px; color: var(--text-light); letter-spacing: 0.5px; flex-wrap: wrap; }
+.app-header { 
+  display: flex; align-items: baseline; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; 
+}
+.app-name { 
+  font-size: 22px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); 
+}
+.app-category { 
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase; 
+  color: var(--accent); background: rgba(184,160,136,.12); 
+  padding: 4px 14px; border-radius: 20px; font-weight: 500;
+}
+.app-desc { 
+  color: var(--text-sec); font-size: 15px; line-height: 1.7; margin-bottom: 20px; 
+}
+.app-desc a { 
+  color: var(--accent-dark); text-decoration: none; border-bottom: 1px dashed var(--accent); 
+  transition: border-color .2s; 
+}
+.app-desc a:hover { border-bottom-style: solid; }
+
+.app-meta { 
+  display: flex; gap: 24px; font-size: 12px; color: var(--text-light); 
+  letter-spacing: 0.5px; margin-bottom: 24px; flex-wrap: wrap; 
+}
 .app-meta span { display: flex; align-items: center; gap: 6px; }
-.app-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent-dark); text-decoration: none; transition: gap .25s; cursor: pointer; }
-.app-link:hover { gap: 10px; }
 
-.highlight { background: rgba(184,160,136,.35); color: inherit; padding: 0 3px; border-radius: 2px; transition: background .2s; }
-[data-theme="dark"] .highlight { background: rgba(184,160,136,.2); }
+/* Download Button */
+.download-btn { 
+  display: inline-flex; align-items: center; gap: 10px; 
+  padding: 14px 28px; background: var(--btn-bg); color: var(--btn-text); 
+  border: none; border-radius: 6px; font-size: 13px; font-weight: 600; 
+  letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; 
+  transition: all .25s; text-decoration: none; 
+}
+.download-btn:hover { 
+  background: var(--accent-dark); transform: translateY(-2px); 
+  box-shadow: 0 8px 24px rgba(136, 116, 96, 0.15); 
+}
+.download-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
 
-.empty-state { padding: 40px 0; text-align: center; color: var(--text-light); font-size: 15px; animation: fadeIn .3s ease-out; }
+/* Highlight for search */
+.highlight { 
+  background: rgba(184,160,136,.35); color: inherit; padding: 0 3px; 
+  border-radius: 2px; font-weight: 500; 
+}
+[data-theme="dark"] .highlight { background: rgba(201,169,110,.25); }
+
+.empty-state { 
+  padding: 48px 0; text-align: center; color: var(--text-light); font-size: 15px; 
+  animation: fadeIn .3s ease-out; 
+}
+
+/* Footer */
+footer { 
+  position: fixed; bottom: 0; left: 0; right: 0; padding: 24px 48px; 
+  background: var(--bg); border-top: 1px solid var(--border); 
+  text-align: center; font-size: 12px; color: var(--text-light); 
+  letter-spacing: 0.5px; z-index: 90; 
+}
 
 @media (max-width: 768px) {
-  .content { padding: 40px 24px 100px; }
-  .app-meta { gap: 10px 20px; }
-  .topbar { padding: 16px 24px; }
+  .content { padding: 40px 24px 120px; }
+  .topbar, footer { padding: 16px 24px; }
+  .app-meta { gap: 12px 20px; }
+  .download-btn { width: 100%; justify-content: center; }
 }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <a href="index.html" class="logo">ZOLT<span>ER</span></a>
+<div class="topbar" id="topbar">
+  <a href="#" class="logo">ZOLT<span>ER</span></a>
   <button class="theme-toggle" id="theme-toggle" title="Сменить тему">
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="4" stroke-width="1.5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+      <circle cx="8" cy="8" r="4" stroke-width="1.5"/>
+      <path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5l1.5-1.5M11 5l1.5-1.5" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
   </button>
 </div>
 
 <div class="content">
   <h1>Магазин <strong>приложений</strong></h1>
-  <p class="intro">Инструменты для разработки, дизайна и продуктивности. Все приложения созданы командой Zolter и доступны для установки в один клик.</p>
+  <p class="intro">Инструменты для разработки, дизайна и продуктивности. Все приложения созданы командой Zolter и доступны для скачивания в один клик.</p>
 
-  <div class="section-label">Каталог</div>
+  <div class="section-label">Категории</div>
+  <div class="categories" id="categoryTabs">
+    <button class="cat-btn active" data-cat="all">Все</button>
+    <button class="cat-btn" data-cat="dev">Разработка</button>
+    <button class="cat-btn" data-cat="design">Дизайн</button>
+    <button class="cat-btn" data-cat="tools">Утилиты</button>
+    <button class="cat-btn" data-cat="media">Медиа</button>
+  </div>
 
   <div class="search-wrap">
     <input type="text" id="search" placeholder="Поиск по названию или описанию...">
@@ -77,8 +192,13 @@ h1 strong { font-weight: 700; color: var(--accent-dark); }
   <div id="app-list"></div>
 </div>
 
+<footer>
+  Zolter Store © 2026. Все права защищены.
+</footer>
+
 <script>
 (function() {
+  // Theme init
   const savedTheme = localStorage.getItem('zolter-store-theme') || 'light';
   document.documentElement.setAttribute('data-theme', savedTheme);
 
@@ -89,61 +209,110 @@ h1 strong { font-weight: 700; color: var(--accent-dark); }
     localStorage.setItem('zolter-store-theme', newTheme);
   });
 
+  // Sticky header effect
+  window.addEventListener('scroll', () => {
+    document.getElementById('topbar').classList.toggle('scrolled', window.scrollY > 10);
+  });
+
+  // App data - ONLY ONE APP with YOUR Yandex Disk link
   const apps = [
-    { id: 1, name: 'Редактор иконок', desc: 'Рисуйте иконки для своиз приложений и сохраняйте их в ico или png. <a href="https://disk.yandex.ru/d/f8c9t2AgN5rARQ">скачать</a>', category: 'Тврорчевство', category: 'Разработка', rating: 'нет отценок', size: '30 МБ' },
-    
+    {
+      id: 1,
+      name: 'Zolter Icon Editor',
+      desc: 'Профессиональный редактор пиксельных иконок. Рисуйте, заливайте, экспортируйте в ICO/PNG. Поддержка тёмной темы, отмена действий, выбор размера сетки. <strong>Полностью на Python + Tkinter.</strong> <a href="https://disk.yandex.ru/d/f8c9t2AgN5rARQ" target="_blank">Открыть папку на Яндекс.Диске</a>',
+      category: 'design',
+      categories: ['design', 'dev', 'tools'],
+      version: '0.1',
+      size: '~15 МБ (exe)',
+      platform: 'Windows',
+      // 👇 ВАША ССЫЛКА НА ЯНДЕКС.ДИСК:
+      downloadUrl: 'https://disk.yandex.ru/d/f8c9t2AgN5rARQ'
+    }
   ];
 
   const list = document.getElementById('app-list');
   const searchInput = document.getElementById('search');
+  const catTabs = document.getElementById('categoryTabs');
+  let currentCat = 'all';
 
+  // Safe text highlight
   function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
-  function highlightText(text, query) {
-    if (!query) return text;
+  function highlightText(html, query) {
+    if (!query) return html;
     const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-    return text.replace(regex, '<span class="highlight">$1</span>');
+    return html.replace(regex, '<span class="highlight">$1</span>');
   }
 
   function render(query = '') {
     list.innerHTML = '';
     const q = query.trim().toLowerCase();
-    const filtered = q 
-      ? apps.filter(a => a.name.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q))
-      : apps;
+    
+    const filtered = apps.filter(app => {
+      const matchCat = currentCat === 'all' || app.categories.includes(currentCat);
+      const matchSearch = !q || 
+        app.name.toLowerCase().includes(q) || 
+        app.desc.toLowerCase().includes(q) ||
+        app.categories.some(c => c.includes(q));
+      return matchCat && matchSearch;
+    });
 
     if (filtered.length === 0) {
-      list.innerHTML = '<div class="empty-state">Ничего не найдено</div>';
+      list.innerHTML = '<div class="empty-state">Приложения не найдены</div>';
       return;
     }
 
     filtered.forEach((app, i) => {
       const div = document.createElement('div');
       div.className = 'app-item';
-      div.style.animationDelay = `${i * 0.04}s`;
+      div.style.animationDelay = `${i * 0.05}s`;
+      
+      const displayCat = app.categories[0];
+      const catLabels = {
+        'dev': 'Разработка',
+        'design': 'Дизайн', 
+        'tools': 'Утилиты',
+        'media': 'Медиа'
+      };
+
       div.innerHTML = `
         <div class="app-header">
           <span class="app-name">${highlightText(app.name, query)}</span>
-          <span class="app-category">${app.category}</span>
+          <span class="app-category">${catLabels[displayCat] || displayCat}</span>
         </div>
         <div class="app-desc">${highlightText(app.desc, query)}</div>
         <div class="app-meta">
-          <span>★ ${app.rating}</span>
-          <span>⚙ ${app.size}</span>
+          <span>📦 ${app.size}</span>
+          <span>💻 ${app.platform}</span>
+          <span>🔖 v${app.version}</span>
         </div>
-        <a href="#" class="app-link" onclick="event.preventDefault();alert('Установка ${app.name}...')">Установить →</a>
+        <a href="${app.downloadUrl}" target="_blank" rel="noopener" class="download-btn">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Скачать на Яндекс.Диск
+        </a>
       `;
       list.appendChild(div);
     });
   }
 
-  searchInput.addEventListener('input', (e) => render(e.target.value));
+  // Category filter
+  catTabs.addEventListener('click', e => {
+    if (e.target.classList.contains('cat-btn')) {
+      catTabs.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+      e.target.classList.add('active');
+      currentCat = e.target.dataset.cat;
+      render(searchInput.value);
+    }
+  });
+
+  // Live search
+  searchInput.addEventListener('input', e => render(e.target.value));
+
+  // Init
   render();
 })();
 </script>
 </body>
 </html>
-
-
