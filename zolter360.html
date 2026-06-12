@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zolter Guard | Инструкция</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FAF7F4;
+      --text: #2C2825;
+      --muted: #6B6560;
+      --accent: #B8A088;
+      --border: #E8E0D8;
+      --code-bg: #F2EDE7;
+      --transition: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      --font-serif: 'Playfair Display', serif;
+      --font-sans: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    [data-theme="dark"] {
+      --bg: #1A1816;
+      --text: #D4C9BE;
+      --muted: #9B9490;
+      --accent: #C9A96E;
+      --border: #332F2B;
+      --code-bg: #24201C;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      transition: background var(--transition), color var(--transition);
+      -webkit-font-smoothing: antialiased;
+      padding: 4rem 2rem;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    
+    /* Typography */
+    h1, h2, h3 { font-family: var(--font-serif); font-weight: 600; line-height: 1.2; }
+    h1 { font-size: 2.5rem; margin-bottom: 1rem; letter-spacing: -0.02em; }
+    h2 { font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    p { margin-bottom: 1.5rem; color: var(--muted); }
+    strong { color: var(--text); font-weight: 600; }
+    
+    /* Elements */
+    .divider { width: 40px; height: 1px; background: var(--accent); margin: 2rem 0; }
+    code {
+      font-family: var(--font-mono);
+      background: var(--code-bg);
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: var(--text);
+    }
+    
+    /* Lists */
+    ul { list-style: none; margin-bottom: 1.5rem; }
+    li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.8rem;
+      color: var(--muted);
+    }
+    li::before {
+      content: "-";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    /* Header & Nav */
+    header { margin-bottom: 4rem; display: flex; justify-content: space-between; align-items: flex-start; }
+    .logo { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; color: var(--text); text-decoration: none; display: block; margin-bottom: 0.5rem; }
+    .logo span { color: var(--accent); font-style: italic; }
+    
+    .theme-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s;
+    }
+    .theme-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    /* Steps */
+    .step { margin-bottom: 2rem; }
+    .step-number {
+      font-family: var(--font-serif); font-size: 3rem; color: var(--accent); opacity: 0.3;
+      line-height: 1; margin-bottom: 0.5rem;
+    }
+    .step-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text); }
+
+    footer { margin-top: 5rem; padding-top: 2rem; border-top: 1px solid var(--border); text-align: center; font-size: 0.85rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div>
+        <a href="#" class="logo">ZOLT<span>ER</span></a>
+        <p style="margin-bottom:0">Руководство для пользователей</p>
+      </div>
+      <button class="theme-btn" id="themeToggle" aria-label="Сменить тему">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+    </header>
+
+    <h1>Zolter 360</h1>
+    <div class="divider"></div>
+    <p>Инструмент для обслуживания системы и базовой безопасности. Программа работает по принципу "по требованию". Она не потребляет ресурсы в фоновом режиме и запускается только тогда, когда это необходимо пользователю.</p>
+
+    <h2>Философия работы</h2>
+    <p>Большинство системных утилит работают постоянно, нагружая процессор и оперативную память. Zolter Guard создан иначе. Вы запускаете его, выполняете задачу и закрываете. Это обеспечивает максимальную производительность вашего компьютера в моменты работы.</p>
+
+    <h2>Оптимизация системы</h2>
+    <p>Раздел позволяет освободить ресурсы и ускорить работу диска.</p>
+    <ul>
+      <li><strong>Очистка временных файлов.</strong> Удаление кэша системы и временных данных, которые накапливаются со временем и занимают место.</li>
+      <li><strong>Дефрагментация.</strong> Оптимизация структуры данных на жестких дисках (HDD). Для SSD дисков запускается процедура TRIM.</li>
+      <li><strong>Управление автозагрузкой.</strong> Просмотр списка программ, которые запускаются вместе с Windows. Отключение лишних элементов ускоряет загрузку системы.</li>
+      <li><strong>Мониторинг RAM.</strong> Отображение текущего использования оперативной памяти в реальном времени.</li>
+    </ul>
+
+    <h2>Безопасность</h2>
+    <p>Базовая защита от распространенных угроз без установки тяжелого антивируса.</p>
+    <ul>
+      <li><strong>Быстрое сканирование.</strong> Проверка ключевых системных папок на наличие известных угроз при запуске оптимизации.</li>
+      <li><strong>Проверка файлов.</strong> Анализ конкретного файла по запросу пользователя. Сравнение хэш-суммы файла с базой известных вредоносных программ.</li>
+      <li><strong>Анализ ссылок.</strong> Проверка URL-адресов на наличие признаков фишинга (поддельных страниц входа).</li>
+      <li><strong>Обновление баз.</strong> Загрузка актуальных сигнатур угроз при каждом запуске программы.</li>
+    </ul>
+
+    <h2>Пошаговая инструкция</h2>
+
+    <div class="step">
+      <div class="step-number">01</div>
+      <div class="step-title">Запуск</div>
+      <p>Запустите файл <code>Zolter360.exe</code>. Для полноценной работы функций очистки рекомендуется запускать программу от имени администратора.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-number">02</div>
+      <div class="step-title">Выбор раздела</div>
+      <p>В левом меню выберите нужный раздел: Обзор, Оптимизация или Безопасность. На главной странице отображается статус системы (загрузка RAM и место на диске).</p>
+    </div>
+
+    <div class="step">
+      <div class="step-number">03</div>
+      <div class="step-title">Выполнение задачи</div>
+      <p>Нажмите соответствующую кнопку. Например, "Очистить темп" или "Быстрое сканирование". Дождитесь завершения процесса. В журнале операций (Log) отобразится результат.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-number">04</div>
+      <div class="step-title">Завершение</div>
+      <p>После выполнения задач закройте программу. Она не оставляет следов в памяти и не замедляет систему.</p>
+    </div>
+
+    <footer>
+      <p>Zolter 360. Версия 0.1 Руководство для пользователей.</p>
+      <p>Все права защищены. 2026.</p>
+    </footer>
+  </div>
+
+  <script>
+    const themeBtn = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    const savedTheme = localStorage.getItem('zolter-docs-theme') || 'light';
+    html.setAttribute('data-theme', savedTheme);
+    
+    themeBtn.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('zolter-docs-theme', next);
+    });
+  </script>
+</body>
+</html>
