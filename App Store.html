@@ -214,7 +214,7 @@ footer {
     document.getElementById('topbar').classList.toggle('scrolled', window.scrollY > 10);
   });
 
-  // App data - ONLY ONE APP with YOUR Yandex Disk link
+  // App data
   const apps = [
     {
       id: 1,
@@ -225,19 +225,17 @@ footer {
       version: '0.1',
       size: '~30 МБ (exe)',
       platform: 'Windows',
-      // 👇 ВАША ССЫЛКА НА ЯНДЕКС.ДИСК:
       downloadUrl: 'https://disk.yandex.ru/d/f8c9t2AgN5rARQ'
-    }
+    },
     {
       id: 2,
       name: 'Zolter 360 (временно недоступно по техническим причинам)',
       desc: 'Инструмент для обслуживания системы и базовой безопасности. Программа работает по принципу "по требованию". Она не потребляет ресурсы в фоновом режиме и запускается только тогда, когда это необходимо пользователю. <a href="zolter360.html" target="_blank">Открыть инструкцию</a>',
-      category: 'улита',
-      categories: ['безопасность', 'оптимизация', 'улита'],
+      category: 'tools',
+      categories: ['tools'],
       version: '0.1',
       size: '~12 МБ (exe)',
       platform: 'Windows',
-      // 👇 ВАША ССЫЛКА НА ЯНДЕКС.ДИСК:
       downloadUrl: 'error.txt'
     }
   ];
@@ -296,9 +294,9 @@ footer {
         </div>
         <div class="app-desc">${highlightText(app.desc, query)}</div>
         <div class="app-meta">
-          <span>📦 ${app.size}</span>
-          <span>💻 ${app.platform}</span>
-          <span>🔖 v${app.version}</span>
+          <span>Размер: ${app.size}</span>
+          <span>Платформа: ${app.platform}</span>
+          <span>Версия: v${app.version}</span>
         </div>
         <a href="${app.downloadUrl}" target="_blank" rel="noopener" class="download-btn">
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
